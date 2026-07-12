@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { siakadCourses } from "@/db/schema/master";
-import { siakadKrsHeader, siakadKrsItems } from "@/db/schema/krs";
-import { siakadStudents } from "@/db/schema/civitas";
-import { eq } from "drizzle-orm";
+import { siakadKrs, siakadKrsItems } from "@/db/schema/krs";
 
 // List available courses for KRS selection
 export async function GET() {
@@ -30,30 +28,34 @@ export async function POST(req: Request) {
 
     // Insert KRS header
     const krsHead = await db
-      .insert(siakadKrsHeader)
+      .insert(siakadKrs)
       .values({
         studentId,
-        academicPeriodId: "20261", // Ganjil 2026/2027 placeholder UUID
-        totalSksApproved: 0,
-        approvalStatus: "draft",
+        academicPeriodId: periods[0]?.id ?? "00000000-0000-0000-0000-000000000000",
+        totalSks: 0,
+        status: "draft",
       })
       .returning();
 
-    const headerId = krsHead[0].id;
+    const insertedHeader = krsHead[0];
+    if (!insertedHeader) {
+      return NextResponse.json({ success: false, error: "Failed to create KRS header" }, { status: 500 });
+    }
+    const headerId = insertedHeader.id;
 
     // Insert items
     for (const cId of courseIds) {
       await db.insert(siakadKrsItems).values({
-        krsHeaderId: headerId,
-        courseId: cId,
-        status: "pending",
+        krsId: headerId,
+        classId: cId,
+        status: "diajukan",
       });
     }
 
     return NextResponse.json({
       success: true,
       message: "KRS submitted successfully!",
-      header: krsHead[0],
+      header: insertedHeader,
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

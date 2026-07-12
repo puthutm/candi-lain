@@ -48,7 +48,6 @@ export default function StudentDashboard() {
   const [assignmentAnswer, setAssignmentAnswer] = useState("");
   const [submissionStatus, setSubmissionStatus] = useState<string>("belum_dikerjakan");
 
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   // Seeded student ID (e.g. Budi Santoso)
@@ -64,7 +63,6 @@ export default function StudentDashboard() {
   };
 
   const fetchEnrolledClasses = async () => {
-    setLoading(true);
     try {
       // Find classes from the classes list. For simplicity and to test, let's load all classes.
       const res = await fetch("/api/classes");
@@ -75,7 +73,6 @@ export default function StudentDashboard() {
     } catch (err) {
       showMsg("Gagal memuat daftar kelas", "error");
     } finally {
-      setLoading(false);
     }
   };
 

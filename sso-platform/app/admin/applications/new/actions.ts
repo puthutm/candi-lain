@@ -2,7 +2,7 @@
 import { getSessionUser, isSuperAdmin } from "@/lib/auth-helper";
 import { ClientService } from "@/lib/services/client";
 
-export async function registerAppAction(prevState: any, formData: FormData) {
+export async function registerAppAction(_prevState: any, formData: FormData) {
   const user = await getSessionUser();
   if (!user || !isSuperAdmin(user)) {
     return { error: "Unauthorized access" };

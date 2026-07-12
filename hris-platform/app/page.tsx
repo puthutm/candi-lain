@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function HomePage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function checkSession() {
@@ -21,7 +20,6 @@ export default function HomePage() {
       } catch (err) {
         router.push("/login");
       } finally {
-        setLoading(false);
       }
     }
     checkSession();

@@ -22,7 +22,7 @@ async function verifyAccess(appId: string) {
 }
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -79,11 +79,16 @@ export async function POST(
       return NextResponse.json({ error: "Missing required fields (userId, roleId)" }, { status: 400 });
     }
 
+    const grantedBy = access.user?.id;
+    if (!grantedBy) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const userRole = await RBACService.assignRoleToUser({
       userId,
       applicationId: id,
       roleId,
-      grantedBy: access.user.id,
+      grantedBy,
     });
 
     return NextResponse.json(userRole);

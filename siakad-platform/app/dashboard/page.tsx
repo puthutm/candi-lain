@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 type TabType = "dashboard" | "kurikulum" | "krs" | "khs" | "layanan";

@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { applications } from "@/db/schema/applications";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { generateSecureRandomString, isValidRedirectUri } from "../utils";
 import { auditQueue } from "../redis";
 import bcrypt from "bcrypt";

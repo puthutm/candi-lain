@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-
+import { useState } from "react";
 type AdminTab = "dashboard" | "krs_validation" | "pddikti" | "audit";
 
 interface KrsSubmission {

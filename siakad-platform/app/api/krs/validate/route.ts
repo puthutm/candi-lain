@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { siakadKrsHeader } from "@/db/schema/krs";
+import { siakadKrs } from "@/db/schema/krs";
 import { siakadStudents } from "@/db/schema/civitas";
 import { eq } from "drizzle-orm";
 
@@ -8,14 +8,14 @@ export async function GET() {
   try {
     const list = await db
       .select({
-        id: siakadKrsHeader.id,
-        approvalStatus: siakadKrsHeader.approvalStatus,
-        createdAt: siakadKrsHeader.createdAt,
+        id: siakadKrs.id,
+        approvalStatus: siakadKrs.status,
+        createdAt: siakadKrs.submittedAt,
         studentName: siakadStudents.fullName,
         nim: siakadStudents.nim,
       })
-      .from(siakadKrsHeader)
-      .leftJoin(siakadStudents, eq(siakadKrsHeader.studentId, siakadStudents.id));
+      .from(siakadKrs)
+      .leftJoin(siakadStudents, eq(siakadKrs.studentId, siakadStudents.id));
 
     return NextResponse.json({ success: true, submissions: list });
   } catch (error: any) {
@@ -26,20 +26,19 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { headerId, approvalStatus, notes } = body;
+    const { headerId, approvalStatus } = body;
 
     if (!headerId || !approvalStatus) {
       return NextResponse.json({ success: false, error: "Missing parameters" }, { status: 400 });
     }
 
     await db
-      .update(siakadKrsHeader)
+      .update(siakadKrs)
       .set({
-        approvalStatus,
-        approverNotes: notes || "",
-        approvedAt: new Date(),
+        status: approvalStatus,
+        submittedAt: new Date(),
       })
-      .where(eq(siakadKrsHeader.id, headerId));
+      .where(eq(siakadKrs.id, headerId));
 
     return NextResponse.json({
       success: true,

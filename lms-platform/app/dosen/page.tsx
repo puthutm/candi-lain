@@ -72,7 +72,6 @@ export default function DosenDashboard() {
       const data = await res.json();
       if (data.success) {
         // Let's retrieve classes directly using a sync list
-        const classesRes = await fetch("/api/sync-list"); // wait, we can just get them from our sync response or mock direct fetch
         // Let's write a small route to query classes, or pull it directly.
         // For simplicity, let's create a sync list API or just fetch them.
       }

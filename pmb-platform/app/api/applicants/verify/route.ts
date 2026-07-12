@@ -51,8 +51,8 @@ export async function POST(req: Request) {
         .where(eq(pmbApplicants.id, targetApplicantId))
         .limit(1);
 
-      if (applicantList.length > 0) {
-        const applicant = applicantList[0];
+      const applicant = applicantList[0];
+      if (applicant) {
         const fromStage = applicant.currentStage;
         let toStage = fromStage;
 

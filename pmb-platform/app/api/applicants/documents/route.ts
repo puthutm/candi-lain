@@ -23,6 +23,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Jenis dokumen tidak valid" }, { status: 400 });
     }
 
+    const selectedDocType = docType[0]!;
+
     // Check if doc already uploaded
     const existing = await db
       .select()
@@ -30,13 +32,15 @@ export async function POST(req: Request) {
       .where(
         and(
           eq(pmbApplicantDocuments.applicantId, applicantId),
-          eq(pmbApplicantDocuments.documentTypeId, docType[0].id)
+          eq(pmbApplicantDocuments.documentTypeId, selectedDocType.id)
         )
       )
       .limit(1);
 
+    const existingDoc = existing[0];
+
     let docRow;
-    if (existing.length > 0) {
+    if (existingDoc) {
       docRow = await db
         .update(pmbApplicantDocuments)
         .set({
@@ -45,14 +49,14 @@ export async function POST(req: Request) {
           revisionNote: null,
           uploadedAt: new Date(),
         })
-        .where(eq(pmbApplicantDocuments.id, existing[0].id))
+        .where(eq(pmbApplicantDocuments.id, existingDoc.id))
         .returning();
     } else {
       docRow = await db
         .insert(pmbApplicantDocuments)
         .values({
           applicantId,
-          documentTypeId: docType[0].id,
+          documentTypeId: selectedDocType.id,
           fileUrl,
           status: "menunggu_verifikasi",
           revisionNote: null,
@@ -73,23 +77,21 @@ export async function POST(req: Request) {
         .where(eq(pmbApplicants.id, applicantId))
         .limit(1);
 
-      if (applicantList.length > 0) {
-        const applicant = applicantList[0];
-        if (applicant.currentStage !== "unggah_berkas") {
-          await db
-            .update(pmbApplicants)
-            .set({ currentStage: "unggah_berkas", updatedAt: new Date() })
-            .where(eq(pmbApplicants.id, applicantId));
+      const applicant = applicantList[0];
+      if (applicant && applicant.currentStage !== "unggah_berkas") {
+        await db
+          .update(pmbApplicants)
+          .set({ currentStage: "unggah_berkas", updatedAt: new Date() })
+          .where(eq(pmbApplicants.id, applicantId));
 
-          await db
-            .insert(pmbApplicantStatusHistory)
-            .values({
-              applicantId,
-              fromStage: applicant.currentStage,
-              toStage: "unggah_berkas",
-              note: "Semua 4 dokumen persyaratan wajib telah diunggah. Menunggu verifikasi.",
-            });
-        }
+        await db
+          .insert(pmbApplicantStatusHistory)
+          .values({
+            applicantId,
+            fromStage: applicant.currentStage,
+            toStage: "unggah_berkas",
+            note: "Semua 4 dokumen persyaratan wajib telah diunggah. Menunggu verifikasi.",
+          });
       }
     }
 

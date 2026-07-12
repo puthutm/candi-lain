@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { refCategories, refItems, organizations, userOrganizations } from "@/db/schema/reference";
-import { eq, and, not, sql } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { auditQueue } from "../redis";
 
 export interface RefItemTree {
