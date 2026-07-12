@@ -2,7 +2,7 @@
 
 import { Suspense, useActionState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { loginAction } from "./actions";
+import { loginAction } from "@/app/actions";
 
 function LoginContent() {
   const router = useRouter();
