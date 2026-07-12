@@ -6,8 +6,9 @@ import { redis } from "../redis";
 import { env } from "../env";
 import { isValidPassword } from "../utils";
 import { auditQueue } from "../redis";
+import { randomUUID } from "crypto";
 
-export type AuthResult = 
+export type AuthResult =
   | { success: true; user: typeof users.$inferSelect }
   | { success: false; error: "INVALID_CREDENTIALS" | "USER_INACTIVE" | "USER_LOCKED" };
 
@@ -44,17 +45,15 @@ export class AuthenticationService {
     let searchCondition = eq(users.username, usernameOrEmail);
     if (usernameOrEmail.includes("@")) {
       searchCondition = eq(users.email, usernameOrEmail);
-    } else if (usernameOrEmail === "26090182") { // Budi Santoso's NIM
+    } else if (usernameOrEmail === "26090182") {
+      // Budi Santoso's NIM
       searchCondition = eq(users.username, "mahasiswa");
-    } else if (usernameOrEmail === "0428058203" || usernameOrEmail === "198305282009121003") { // Dr. Hendra's NIP
+    } else if (usernameOrEmail === "0428058203" || usernameOrEmail === "198305282009121003") {
+      // Dr. Hendra's NIP
       searchCondition = eq(users.username, "dosen");
     }
 
-    const userList = await db
-      .select()
-      .from(users)
-      .where(searchCondition)
-      .limit(1);
+    const userList = await db.select().from(users).where(searchCondition).limit(1);
 
     const user = userList[0];
     if (!user) {
@@ -76,7 +75,7 @@ export class AuthenticationService {
       // Failed login attempt tracking
       const failedAttemptsKey = `auth:failed_attempts:${user.id}`;
       const failedAttempts = await redis.incr(failedAttemptsKey);
-      
+
       // Set expiry on failed attempts key to 24 hours
       await redis.expire(failedAttemptsKey, 86400);
 
@@ -114,29 +113,34 @@ export class AuthenticationService {
    * Create a session for a user and save it in Redis
    */
   static async createSession(
-    userId: string, 
+    userId: string,
     metadata?: { userAgent?: string; ipAddress?: string }
   ): Promise<Session> {
-    const sessionId = crypto.randomUUID();
-    const maxAgeSeconds = env.SESSION_MAX_AGE || 86400;
-    
-    const now = new Date();
-    const expires = new Date(now.getTime() + maxAgeSeconds * 1000);
+    try {
+      const sessionId = randomUUID();
+      const maxAgeSeconds = env.SESSION_MAX_AGE || 86400;
 
-    const session: Session = {
-      id: sessionId,
-      userId,
-      createdAt: now.toISOString(),
-      expiresAt: expires.toISOString(),
-      userAgent: metadata?.userAgent,
-      ipAddress: metadata?.ipAddress,
-    };
+      const now = new Date();
+      const expires = new Date(now.getTime() + maxAgeSeconds * 1000);
 
-    // Save session in Redis
-    const sessionKey = `auth:session:${sessionId}`;
-    await redis.set(sessionKey, JSON.stringify(session), "EX", maxAgeSeconds);
+      const session: Session = {
+        id: sessionId,
+        userId,
+        createdAt: now.toISOString(),
+        expiresAt: expires.toISOString(),
+        userAgent: metadata?.userAgent,
+        ipAddress: metadata?.ipAddress,
+      };
 
-    return session;
+      // Save session in Redis
+      const sessionKey = `auth:session:${sessionId}`;
+      await redis.set(sessionKey, JSON.stringify(session), "EX", maxAgeSeconds);
+
+      return session;
+    } catch (err) {
+      console.error("❌ createSession failed", err);
+      throw err;
+    }
   }
 
   /**
@@ -207,7 +211,7 @@ export class AuthenticationService {
     // Invalidate all active sessions for this user in Redis
     let cursor = "0";
     const sessionPattern = "auth:session:*";
-    
+
     do {
       const [newCursor, keys] = await redis.scan(cursor, "MATCH", sessionPattern, "COUNT", 100);
       cursor = newCursor;
@@ -215,8 +219,8 @@ export class AuthenticationService {
       for (const key of keys) {
         const sessionData = await redis.get(key);
         if (sessionData) {
-          const session = JSON.parse(sessionData) as Session;
-          if (session.userId === userId) {
+          const parsed = JSON.parse(sessionData) as Session;
+          if (parsed.userId === userId) {
             await redis.del(key);
           }
         }
