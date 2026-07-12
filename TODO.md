@@ -1,0 +1,3 @@
+- [x] Patch `pmb-platform/Dockerfile` to ensure `/app/public` exists in builder stage
+- [ ] Build `pmb-platform` image to verify Dockerfile fix (blocked: Docker CLI not available in current terminal)
+- [x] Mark verification result
