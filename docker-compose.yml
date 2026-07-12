@@ -30,17 +30,18 @@ services:
       timeout: 5s
       retries: 5
 
-  migrate-all:
-    image: node:20-alpine
-    container_name: erp-migrate-all
-    working_dir: /workspace
-    volumes:
-      - ./:/workspace
-    depends_on:
-      db:
-        condition: service_healthy
-    command: sh /workspace/docker/migrate-all.sh
-    restart: "no"
+  # migrate-all:
+  #   image: node:20-alpine
+  #   container_name: erp-migrate-all
+  #   working_dir: /workspace
+  #   volumes:
+  #     - ./:/workspace
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   command: sh /workspace/docker/migrate-all.sh
+  #   restart: "no"
+
 
   sso-platform:
     build:
@@ -55,8 +56,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      migrate-all:
-        condition: service_completed_successfully
     env_file:
       - path: ./sso-platform/.env
         required: false
@@ -78,8 +77,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      migrate-all:
-        condition: service_completed_successfully
     env_file:
       - path: ./reference-data/.env
         required: false
@@ -100,8 +97,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      migrate-all:
-        condition: service_completed_successfully
     env_file:
       - path: ./pmb-platform/.env
         required: false
@@ -122,8 +117,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      migrate-all:
-        condition: service_completed_successfully
     env_file:
       - path: ./siakad-platform/.env
         required: false
@@ -144,8 +137,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      migrate-all:
-        condition: service_completed_successfully
     env_file:
       - path: ./lms-platform/.env
         required: false
@@ -166,8 +157,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      migrate-all:
-        condition: service_completed_successfully
     env_file:
       - path: ./keuangan-platform/.env
         required: false
@@ -188,8 +177,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      migrate-all:
-        condition: service_completed_successfully
     env_file:
       - path: ./hris-platform/.env
         required: false
