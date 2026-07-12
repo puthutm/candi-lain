@@ -22,7 +22,8 @@ export function proxy(request: NextRequest) {
     const sessionCookie = request.cookies.get("sso_session")?.value;
     if (!sessionCookie) {
       const loginUrl = new URL("/", request.url);
-      loginUrl.searchParams.set("return_to", request.url);
+      // Force relative return path to avoid leaking internal/container hostnames
+      loginUrl.searchParams.set("return_to", path);
       return NextResponse.redirect(loginUrl.toString());
     }
   }
