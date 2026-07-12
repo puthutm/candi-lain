@@ -1,6 +1,3 @@
-- [ ] Add `reference-data/drizzle.config.ts`
-- [ ] Add `db:generate`, `db:migrate`, `db:studio` scripts to all platform `package.json` files
-- [ ] Start Postgres service with Docker Compose
-- [ ] Run Drizzle migrations for all services via `migrate-all`
-- [ ] Verify resulting DB schemas/tables for all service databases
-- [ ] Summarize executed migrations and applied table changes
+- [x] Update `sso-platform/app/actions.ts` to sanitize `return_to` and prevent redirect to container/internal hosts
+- [x] Update `sso-platform/app/page.tsx` redirect handling to support safe absolute URLs and relative paths
+- [x] Verify consistency with existing `/login` page redirect behavior

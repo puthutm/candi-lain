@@ -13,7 +13,11 @@ function LoginContent() {
 
   useEffect(() => {
     if (state?.success && state.redirectTo) {
-      router.push(state.redirectTo);
+      if (state.redirectTo.startsWith("http://") || state.redirectTo.startsWith("https://")) {
+        window.location.href = state.redirectTo;
+      } else {
+        router.push(state.redirectTo);
+      }
     }
   }, [state, router]);
 

@@ -3,13 +3,43 @@ import { cookies } from "next/headers";
 import { AuthenticationService } from "@/lib/services/auth";
 import { ensureDatabaseSeeded } from "@/lib/seed";
 
+function sanitizeReturnTo(rawReturnTo: string | null): string {
+  const fallback = "/home";
+  if (!rawReturnTo) return fallback;
+
+  const value = rawReturnTo.trim();
+  if (!value) return fallback;
+
+  // Relative path: allow only internal navigation
+  if (value.startsWith("/")) {
+    if (value.startsWith("//")) return fallback;
+    return value;
+  }
+
+  // Absolute URL: only keep path/query/hash and reject localhost/container hosts
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return fallback;
+
+    const hostname = parsed.hostname.toLowerCase();
+    const blockedHosts = new Set(["localhost", "127.0.0.1", "::1", "0.0.0.0", "bce0a9b3b4ea"]);
+    if (blockedHosts.has(hostname)) return fallback;
+
+    const path = `${parsed.pathname || "/home"}${parsed.search}${parsed.hash}`;
+    if (!path.startsWith("/")) return fallback;
+    return path;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function loginAction(_prevState: any, formData: FormData) {
   // Ensure database is seeded before attempting login
   await ensureDatabaseSeeded();
 
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
-  const returnTo = formData.get("return_to") as string || "/home";
+  const returnTo = sanitizeReturnTo((formData.get("return_to") as string) || null);
 
   if (!username || !password) {
     return { error: "Username and password are required" };
