@@ -18,11 +18,12 @@ export function proxy(request: NextRequest) {
 
   // Fast session precheck for protected pages
   const path = request.nextUrl.pathname;
-  if (path.startsWith("/home") || path.startsWith("/admin")) {
+  const isRscRequest = request.nextUrl.searchParams.has("_rsc");
+  if (!isRscRequest && (path.startsWith("/home") || path.startsWith("/admin"))) {
     const sessionCookie = request.cookies.get("sso_session")?.value;
     if (!sessionCookie) {
       const loginUrl = new URL("/", request.url);
-      // Preserve pathname + query so RSC requests don't lose context and cause redirect loops
+      // Preserve pathname + query for normal document navigation redirects
       const returnTo = `${path}${request.nextUrl.search || ""}`;
       loginUrl.searchParams.set("return_to", returnTo);
       return NextResponse.redirect(loginUrl.toString());
