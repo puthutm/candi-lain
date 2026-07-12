@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
@@ -46,7 +44,8 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - ./sso-platform/.env
+      - path: ./sso-platform/.env
+        required: false
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/sso_platform
       - REDIS_URL=redis://redis:6379
@@ -65,7 +64,8 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - ./reference-data/.env
+      - path: ./reference-data/.env
+        required: false
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/reference_data
       - REDIS_URL=redis://redis:6379
@@ -84,7 +84,8 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - ./pmb-platform/.env
+      - path: ./pmb-platform/.env
+        required: false
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/pmb_platform
       - REDIS_URL=redis://redis:6379
@@ -103,7 +104,8 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - ./siakad-platform/.env
+      - path: ./siakad-platform/.env
+        required: false
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/siakad_platform
       - REDIS_URL=redis://redis:6379
@@ -122,7 +124,8 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - ./lms-platform/.env
+      - path: ./lms-platform/.env
+        required: false
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/lms_platform
       - REDIS_URL=redis://redis:6379
@@ -141,7 +144,8 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - ./keuangan-platform/.env
+      - path: ./keuangan-platform/.env
+        required: false
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/keuangan_platform
       - REDIS_URL=redis://redis:6379
@@ -160,7 +164,8 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - ./hris-platform/.env
+      - path: ./hris-platform/.env
+        required: false
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/hris_platform
       - REDIS_URL=redis://redis:6379
