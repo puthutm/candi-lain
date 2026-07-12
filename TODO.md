@@ -1,5 +1,6 @@
-- [x] Patch `pmb-platform/Dockerfile` to ensure `/app/public` exists in builder stage
-- [ ] Build `pmb-platform` image to verify Dockerfile fix (blocked: Docker CLI not available in current terminal)
-- [x] Mark verification result
-- [x] Patch `lms-platform` API routes to remove fragile cross-service relative imports
-- [ ] Verify `lms-platform` build in your server environment
+- [ ] Add `reference-data/drizzle.config.ts`
+- [ ] Add `db:generate`, `db:migrate`, `db:studio` scripts to all platform `package.json` files
+- [ ] Start Postgres service with Docker Compose
+- [ ] Run Drizzle migrations for all services via `migrate-all`
+- [ ] Verify resulting DB schemas/tables for all service databases
+- [ ] Summarize executed migrations and applied table changes
