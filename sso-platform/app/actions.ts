@@ -87,27 +87,36 @@ export async function loginAction(_prevState: LegacyLoginActionState | LoginActi
     };
   }
 
-  const result = await AuthenticationService.authenticate(username, password);
-  if (!result.success) {
-    return mapAuthErrorToState(result.error);
+  try {
+    const result = await AuthenticationService.authenticate(username, password);
+    if (!result.success) {
+      return mapAuthErrorToState(result.error);
+    }
+
+    // Create session
+    const session = await AuthenticationService.createSession(result.user.id);
+
+    // Set session cookie
+    const cookieStore = await cookies();
+    cookieStore.set("sso_session", session.id, {
+      path: "/",
+      httpOnly: true,
+      secure: env.SESSION_COOKIE_SECURE,
+      sameSite: "lax",
+      maxAge: env.SESSION_MAX_AGE,
+    });
+
+    return {
+      status: "success",
+      success: true,
+      redirectTo: returnTo,
+    };
+  } catch (err) {
+    console.error("❌ loginAction failed", err);
+    return {
+      status: "error",
+      code: "AUTH_FAILED",
+      message: "Authentication failed",
+    };
   }
-
-  // Create session
-  const session = await AuthenticationService.createSession(result.user.id);
-  
-  // Set session cookie
-  const cookieStore = await cookies();
-  cookieStore.set("sso_session", session.id, {
-    path: "/",
-    httpOnly: true,
-    secure: env.SESSION_COOKIE_SECURE,
-    sameSite: "lax",
-    maxAge: env.SESSION_MAX_AGE,
-  });
-
-  return {
-    status: "success",
-    success: true,
-    redirectTo: returnTo,
-  };
 }
