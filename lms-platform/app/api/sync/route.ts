@@ -1,54 +1,69 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { lmsClasses, classEnrollments } from "@/db/schema/classes";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
-// Import SIAKAD tables through package alias to avoid fragile relative paths
-import { siakadAcademicPeriods, siakadCourses } from "@/../siakad-platform/db/schema/master";
-import { siakadClasses } from "@/../siakad-platform/db/schema/classes";
-import { siakadKrs, siakadKrsItems } from "@/../siakad-platform/db/schema/krs";
+const SIAKAD_BASE_URL = process.env.SIAKAD_BASE_URL || "http://localhost:3003";
+
+type SiakadPeriod = {
+  id: string;
+  name: string;
+  status: string;
+};
+
+type SiakadClass = {
+  id: string;
+  className: string;
+  dosenUtamaId?: string | null;
+  courseCode: string;
+  courseName: string;
+  sks: number;
+};
+
+type SiakadKrsItem = {
+  krsItemId: string;
+  classId: string;
+  studentId: string;
+};
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
+  }
+  return res.json() as Promise<T>;
+}
 
 export async function POST() {
   try {
+    // Fetch data from SIAKAD via API (decoupled microservice integration)
+    const periods = await fetchJson<SiakadPeriod[]>(`${SIAKAD_BASE_URL}/api/integration/periods`);
+    const activePeriod = periods.find((p) => p.status === "berjalan") || periods[0];
+
+    if (!activePeriod) {
+      throw new Error("Active academic period not found in SIAKAD");
+    }
+
+    const classesList = await fetchJson<SiakadClass[]>(
+      `${SIAKAD_BASE_URL}/api/integration/classes?academicPeriodId=${activePeriod.id}`
+    );
+
+    const krsItemsList = await fetchJson<SiakadKrsItem[]>(
+      `${SIAKAD_BASE_URL}/api/integration/krs-items?academicPeriodId=${activePeriod.id}&status=disetujui_pa`
+    );
+
     const result = await db.transaction(async (tx) => {
-      // 1. Fetch active period from SIAKAD
-      const periods = await tx
-        .select()
-        .from(siakadAcademicPeriods);
+      const syncedClasses: { siakadClassId: string; lmsClassId: string }[] = [];
 
-      const activePeriod = periods.find((p) => p.status === "berjalan") || periods[0]!;
-
-      if (!activePeriod) {
-        throw new Error("Active academic period not found in SIAKAD");
-      }
-
-      // 2. Fetch classes of active period from SIAKAD
-      const classesList = await tx
-        .select({
-          classId: siakadClasses.id,
-          className: siakadClasses.className,
-          dosenUtamaId: siakadClasses.dosenUtamaId,
-          courseId: siakadClasses.courseId,
-          courseCode: siakadCourses.code,
-          courseName: siakadCourses.name,
-          sks: siakadCourses.sks,
-        })
-        .from(siakadClasses)
-        .innerJoin(siakadCourses, eq(siakadClasses.courseId, siakadCourses.id))
-        .where(eq(siakadClasses.academicPeriodId, activePeriod.id));
-
-      const syncedClasses = [];
-
-      // 3. Upsert into lmsClasses
+      // Upsert classes
       for (const cls of classesList) {
-        // Check if class already exists in LMS
         const existingLmsClass = await tx
           .select()
           .from(lmsClasses)
-          .where(eq(lmsClasses.siakadClassId, cls.classId))
+          .where(eq(lmsClasses.siakadClassId, cls.id))
           .limit(1);
 
-        let lmsClassId;
+        let lmsClassId: string;
         if (existingLmsClass.length > 0) {
           lmsClassId = existingLmsClass[0]!.id;
           await tx
@@ -68,7 +83,7 @@ export async function POST() {
             .insert(lmsClasses)
             .values({
               classType: "akademik",
-              siakadClassId: cls.classId,
+              siakadClassId: cls.id,
               courseCode: cls.courseCode,
               courseName: cls.courseName,
               sks: cls.sks,
@@ -82,44 +97,23 @@ export async function POST() {
           lmsClassId = inserted!.id;
         }
 
-        syncedClasses.push({ siakadClassId: cls.classId, lmsClassId });
+        syncedClasses.push({ siakadClassId: cls.id, lmsClassId });
       }
 
-      // 4. Fetch approved KRS items for this active period
-      const krsItemsList = await tx
-        .select({
-          krsItemId: siakadKrsItems.id,
-          classId: siakadKrsItems.classId,
-          studentId: siakadKrs.studentId,
-        })
-        .from(siakadKrsItems)
-        .innerJoin(siakadKrs, eq(siakadKrsItems.krsId, siakadKrs.id))
-        .where(
-          and(
-            eq(siakadKrs.academicPeriodId, activePeriod.id),
-            eq(siakadKrs.status, "disetujui_pa")
-          )
-        );
-
+      // Upsert enrollments
       let enrollmentCount = 0;
       for (const item of krsItemsList) {
-        // Find corresponding LMS class
         const targetLmsClass = syncedClasses.find((sc) => sc.siakadClassId === item.classId);
         if (!targetLmsClass) continue;
 
-        // Idempotent enrollments check
         const existingEnrollment = await tx
           .select()
           .from(classEnrollments)
-          .where(
-            and(
-              eq(classEnrollments.classId, targetLmsClass.lmsClassId),
-              eq(classEnrollments.userId, item.studentId)
-            )
-          )
-          .limit(1);
+          .where(eq(classEnrollments.classId, targetLmsClass.lmsClassId))
+          .limit(1000);
 
-        if (existingEnrollment.length === 0) {
+        const exists = existingEnrollment.some((e) => e.userId === item.studentId);
+        if (!exists) {
           await tx.insert(classEnrollments).values({
             classId: targetLmsClass.lmsClassId,
             userId: item.studentId,
