@@ -2,6 +2,7 @@
 import { cookies } from "next/headers";
 import { AuthenticationService } from "@/lib/services/auth";
 import { ensureDatabaseSeeded } from "@/lib/seed";
+import { env } from "@/lib/env";
 
 function sanitizeReturnTo(rawReturnTo: string | null): string {
   const fallback = "/home";
@@ -22,8 +23,8 @@ function sanitizeReturnTo(rawReturnTo: string | null): string {
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return fallback;
 
     const hostname = parsed.hostname.toLowerCase();
-    const blockedHosts = new Set(["localhost", "127.0.0.1", "::1", "0.0.0.0", "bce0a9b3b4ea"]);
-    if (blockedHosts.has(hostname)) return fallback;
+    const blockedHosts = new Set(["localhost", "127.0.0.1", "::1", "0.0.0.0", "bce0a9b3b4ea", "5a2a0587d098"]);
+    if (blockedHosts.has(hostname) || /^[a-f0-9]{12}$/i.test(hostname)) return fallback;
 
     const path = `${parsed.pathname || "/home"}${parsed.search}${parsed.hash}`;
     if (!path.startsWith("/")) return fallback;
@@ -34,12 +35,36 @@ function sanitizeReturnTo(rawReturnTo: string | null): string {
 }
 
 type LoginActionState = {
+  status?: "idle" | "error" | "success";
+  code?: "VALIDATION_ERROR" | "INVALID_CREDENTIALS" | "USER_INACTIVE" | "USER_LOCKED" | "AUTH_FAILED";
+  message?: string;
+  redirectTo?: string;
+  fieldErrors?: {
+    username?: string;
+    password?: string;
+  };
+} | null;
+
+function mapAuthErrorToState(error: string): LoginActionState {
+  switch (error) {
+    case "INVALID_CREDENTIALS":
+      return { status: "error", code: "INVALID_CREDENTIALS", message: "Invalid username/email or password" };
+    case "USER_INACTIVE":
+      return { status: "error", code: "USER_INACTIVE", message: "Your account is deactivated. Please contact support." };
+    case "USER_LOCKED":
+      return { status: "error", code: "USER_LOCKED", message: "Your account is locked due to too many failed attempts." };
+    default:
+      return { status: "error", code: "AUTH_FAILED", message: "Authentication failed" };
+  }
+}
+
+type LegacyLoginActionState = {
   error?: string;
   success?: boolean;
   redirectTo?: string;
 } | null;
 
-export async function loginAction(_prevState: LoginActionState, formData: FormData) {
+export async function loginAction(_prevState: LegacyLoginActionState | LoginActionState, formData: FormData) {
   // Ensure database is seeded before attempting login
   await ensureDatabaseSeeded();
 
@@ -48,21 +73,20 @@ export async function loginAction(_prevState: LoginActionState, formData: FormDa
   const returnTo = sanitizeReturnTo((formData.get("return_to") as string) || null);
 
   if (!username || !password) {
-    return { error: "Username and password are required" };
+    return {
+      status: "error",
+      code: "VALIDATION_ERROR",
+      message: "Username and password are required",
+      fieldErrors: {
+        username: !username ? "Username is required" : undefined,
+        password: !password ? "Password is required" : undefined,
+      },
+    };
   }
 
   const result = await AuthenticationService.authenticate(username, password);
   if (!result.success) {
-    if (result.error === "INVALID_CREDENTIALS") {
-      return { error: "Invalid username/email or password" };
-    }
-    if (result.error === "USER_INACTIVE") {
-      return { error: "Your account is deactivated. Please contact support." };
-    }
-    if (result.error === "USER_LOCKED") {
-      return { error: "Your account is locked due to too many failed attempts." };
-    }
-    return { error: "Authentication failed" };
+    return mapAuthErrorToState(result.error);
   }
 
   // Create session
@@ -71,11 +95,16 @@ export async function loginAction(_prevState: LoginActionState, formData: FormDa
   // Set session cookie
   const cookieStore = await cookies();
   cookieStore.set("sso_session", session.id, {
+    path: "/",
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 86400,
+    maxAge: env.SESSION_MAX_AGE,
   });
 
-  return { success: true, redirectTo: returnTo };
+  return {
+    status: "success",
+    success: true,
+    redirectTo: returnTo,
+  };
 }

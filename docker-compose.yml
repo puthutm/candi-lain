@@ -63,6 +63,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/sso_platform
       - REDIS_URL=redis://redis:6379
+      - NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=erp-unsia-sso-server-actions-key-2026
 
   reference-data:
     build:
