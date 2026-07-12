@@ -55,14 +55,6 @@ export default async function HomePage() {
           SSO Portal
         </span>
         <div className="flex items-center gap-4">
-          {isUserAdmin && (
-            <Link
-              href="/admin"
-              className="rounded-lg bg-indigo-500/20 px-4 py-2 text-xs font-semibold text-indigo-400 border border-indigo-500/30 transition-all hover:bg-indigo-500/30"
-            >
-              Admin Dashboard
-            </Link>
-          )}
           <span className="text-sm text-slate-400">{user.fullName}</span>
           <form action={logoutAction}>
             <button
@@ -75,75 +67,107 @@ export default async function HomePage() {
         </div>
       </nav>
 
-      {/* Main content */}
-      <main className="z-10 flex-1 px-8 py-12 max-w-6xl mx-auto w-full">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {getGreeting()}, {user.fullName}!
-          </h1>
-          <p className="mt-2 text-slate-400 text-sm">
-            Select an application below to sign in automatically.
-          </p>
-        </div>
+      {/* Layout: sidebar (icon only) + main */}
+      <div className="z-10 flex flex-1">
+        {/* Sidebar */}
+        <aside className="w-[56px] shrink-0 border-r border-white/10 bg-slate-950/60 backdrop-blur-md">
+          <div className="flex h-full flex-col items-center gap-3 py-6">
+            {isUserAdmin && (
+              <Link
+                href="/admin"
+                className="group inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] transition-all hover:-translate-y-0.5 hover:border-indigo-500/30 hover:bg-white/[0.04]"
+                aria-label="Admin Dashboard"
+              >
+                {/* gear icon */}
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-slate-300 group-hover:text-indigo-400"
+                >
+                  <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
+                  <path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1a2 2 0 0 1-1.4 3.4h-.2a1.8 1.8 0 0 0-2 1.2 2 2 0 0 1-3.9 0 1.8 1.8 0 0 0-2-1.2h-.2a2 2 0 0 1-1.4-3.4l.1-.1a1.8 1.8 0 0 0 .4-2 1.8 1.8 0 0 0-1.6-1H4.7a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.1a1.8 1.8 0 0 0 1.6-1 1.8 1.8 0 0 0-.4-2l-.1-.1A2 2 0 0 1 7.4 2.5h.2a1.8 1.8 0 0 0 2-1.2 2 2 0 0 1 3.9 0 1.8 1.8 0 0 0 2 1.2h.2a2 2 0 0 1 1.4 3.4l-.1.1a1.8 1.8 0 0 0-.4 2 1.8 1.8 0 0 0 1.6 1h.1a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.1a1.8 1.8 0 0 0-1.6 1z" />
+                </svg>
+              </Link>
+            )}
+          </div>
+        </aside>
 
-        <hr className="my-8 border-white/10" />
-
-        {/* Applications Grid */}
-        {userApps.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 p-12 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-slate-500 text-lg font-bold">
-              ℹ
-            </div>
-            <h3 className="mt-4 text-lg font-semibold">No Applications Assigned</h3>
-            <p className="mt-2 text-sm text-slate-400 max-w-sm">
-              Your account has not been assigned any active applications yet. Please contact your system administrator to assign roles.
+        {/* Main content */}
+        <main className="flex-1 px-8 py-12 max-w-6xl w-full mx-auto">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {getGreeting()}, {user.fullName}!
+            </h1>
+            <p className="mt-2 text-slate-400 text-sm">
+              Select an application below to sign in automatically.
             </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {userApps.map((app) => {
-              // Construct a default authorization redirection flow link with mockup PKCE
-              const defaultUri = app.redirectUris[0] || "http://localhost:3000";
-              const authUrl = `/oauth/authorize?client_id=${app.clientId}&redirect_uri=${encodeURIComponent(
-                defaultUri
-              )}&response_type=code&scope=openid+profile&code_challenge=E9Melhoa2OwvFrGMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256&state=sso_portal_direct`;
 
-              return (
-                <a
-                  key={app.id}
-                  href={authUrl}
-                  className="group relative flex flex-col justify-between rounded-xl border border-white/10 bg-white/[0.02] p-6 shadow-md transition-all hover:-translate-y-1 hover:border-indigo-500/30 hover:bg-white/[0.04]"
-                >
-                  <div className="flex items-start gap-4">
-                    {app.logoUrl ? (
-                      <img
-                        src={app.logoUrl}
-                        alt={`${app.name} Logo`}
-                        className="h-12 w-12 rounded-lg border border-white/10 p-1 bg-white/5 object-contain"
-                      />
-                    ) : (
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-xl font-bold text-indigo-400">
-                        {app.name.charAt(0).toUpperCase()}
+          <hr className="my-8 border-white/10" />
+
+          {/* Applications Grid */}
+          {userApps.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 p-12 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-slate-500 text-lg font-bold">
+                ℹ
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">No Applications Assigned</h3>
+              <p className="mt-2 text-sm text-slate-400 max-w-sm">
+                Your account has not been assigned any active applications yet. Please contact your system administrator to assign roles.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {userApps.map((app) => {
+                // Construct a default authorization redirection flow link with mockup PKCE
+                const defaultUri = app.redirectUris[0] || "http://localhost:3000";
+                const authUrl = `/oauth/authorize?client_id=${app.clientId}&redirect_uri=${encodeURIComponent(
+                  defaultUri
+                )}&response_type=code&scope=openid+profile&code_challenge=E9Melhoa2OwvFrGMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256&state=sso_portal_direct`;
+
+                return (
+                  <a
+                    key={app.id}
+                    href={authUrl}
+                    className="group relative flex flex-col justify-between rounded-xl border border-white/10 bg-white/[0.02] p-6 shadow-md transition-all hover:-translate-y-1 hover:border-indigo-500/30 hover:bg-white/[0.04]"
+                  >
+                    <div className="flex items-start gap-4">
+                      {app.logoUrl ? (
+                        <img
+                          src={app.logoUrl}
+                          alt={`${app.name} Logo`}
+                          className="h-12 w-12 rounded-lg border border-white/10 p-1 bg-white/5 object-contain"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-xl font-bold text-indigo-400">
+                          {app.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="text-lg font-bold group-hover:text-indigo-400 transition-colors">
+                          {app.name}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-400 line-clamp-2">
+                          {app.description || "No description provided."}
+                        </p>
                       </div>
-                    )}
-                    <div>
-                      <h3 className="text-lg font-bold group-hover:text-indigo-400 transition-colors">
-                        {app.name}
-                      </h3>
-                      <p className="mt-1 text-xs text-slate-400 line-clamp-2">
-                        {app.description || "No description provided."}
-                      </p>
                     </div>
-                  </div>
-                  <div className="mt-6 flex items-center justify-end text-xs font-semibold text-indigo-400 group-hover:underline">
-                    Access Application &rarr;
-                  </div>
-                </a>
-              );
-            })}
-          </div>
-        )}
-      </main>
+                    <div className="mt-6 flex items-center justify-end text-xs font-semibold text-indigo-400 group-hover:underline">
+                      Access Application &rarr;
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
