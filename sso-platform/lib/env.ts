@@ -48,6 +48,10 @@ const envSchema = z.object({
   // CORS
   ALLOWED_ORIGINS: z.string().optional(),
 
+  // Redirect / Host controls
+  ALLOWED_RETURN_TO_HOSTS: z.string().optional(),
+  PUBLIC_BASE_URL: z.string().url().optional(),
+
   // Logging
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });

@@ -6,21 +6,11 @@ import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { logoutAction } from "./actions";
 import Link from "next/link";
-import { headers } from "next/headers";
-
-function getPublicBaseUrlFromHeaders(headerStore: Headers): string {
-  const host = headerStore.get("host") || "localhost:3000";
-  const proto = "http";
-  return `${proto}://${host}`;
-}
 
 export default async function HomePage() {
   const user = await getSessionUser();
   if (!user) {
-    const headerStore = await headers();
-    const baseUrl = getPublicBaseUrlFromHeaders(headerStore);
-    const returnTo = `${baseUrl}/home`;
-    redirect(`/?return_to=${encodeURIComponent(returnTo)}`);
+    redirect("/?return_to=%2Fhome");
   }
 
   // Fetch applications user has active roles in

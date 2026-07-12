@@ -22,8 +22,15 @@ function sanitizeReturnTo(rawReturnTo: string | null): string {
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return fallback;
 
     const hostname = parsed.hostname.toLowerCase();
-    const blockedHosts = new Set(["localhost", "127.0.0.1", "::1", "0.0.0.0", "bce0a9b3b4ea", "5a2a0587d098"]);
-    if (blockedHosts.has(hostname) || /^[a-f0-9]{12}$/i.test(hostname)) return fallback;
+
+    // If env allow-list is defined, only allow those hosts for absolute return_to URLs.
+    // Relative paths are still always allowed above.
+    const allowedHosts = (env.ALLOWED_RETURN_TO_HOSTS || "")
+      .split(",")
+      .map((h) => h.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (allowedHosts.length > 0 && !allowedHosts.includes(hostname)) return fallback;
 
     const path = `${parsed.pathname || "/home"}${parsed.search}${parsed.hash}`;
     if (!path.startsWith("/")) return fallback;
