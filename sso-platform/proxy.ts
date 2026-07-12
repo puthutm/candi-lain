@@ -22,8 +22,9 @@ export function proxy(request: NextRequest) {
     const sessionCookie = request.cookies.get("sso_session")?.value;
     if (!sessionCookie) {
       const loginUrl = new URL("/", request.url);
-      // Force relative return path to avoid leaking internal/container hostnames
-      loginUrl.searchParams.set("return_to", path);
+      // Preserve pathname + query so RSC requests don't lose context and cause redirect loops
+      const returnTo = `${path}${request.nextUrl.search || ""}`;
+      loginUrl.searchParams.set("return_to", returnTo);
       return NextResponse.redirect(loginUrl.toString());
     }
   }
