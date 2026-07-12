@@ -1,5 +1,5 @@
 "use server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { AuthenticationService } from "@/lib/services/auth";
 import { env } from "@/lib/env";
 
@@ -23,8 +23,6 @@ function sanitizeReturnTo(rawReturnTo: string | null): string {
 
     const hostname = parsed.hostname.toLowerCase();
 
-    // If env allow-list is defined, only allow those hosts for absolute return_to URLs.
-    // Relative paths are still always allowed above.
     const allowedHosts = (env.ALLOWED_RETURN_TO_HOSTS || "")
       .split(",")
       .map((h) => h.trim().toLowerCase())
@@ -42,7 +40,12 @@ function sanitizeReturnTo(rawReturnTo: string | null): string {
 
 type LoginActionState = {
   status?: "idle" | "error" | "success";
-  code?: "VALIDATION_ERROR" | "INVALID_CREDENTIALS" | "USER_INACTIVE" | "USER_LOCKED" | "AUTH_FAILED";
+  code?:
+    | "VALIDATION_ERROR"
+    | "INVALID_CREDENTIALS"
+    | "USER_INACTIVE"
+    | "USER_LOCKED"
+    | "AUTH_FAILED";
   message?: string;
   redirectTo?: string;
   fieldErrors?: {
@@ -70,7 +73,23 @@ type LegacyLoginActionState = {
   redirectTo?: string;
 } | null;
 
-export async function loginAction(_prevState: LegacyLoginActionState | LoginActionState, formData: FormData) {
+async function computeCookieSecureFromRequest(): Promise<boolean> {
+  const reqHeaders = await headers();
+  const xForwardedProto = (reqHeaders.get("x-forwarded-proto") || "").toLowerCase();
+  const referer = reqHeaders.get("referer") || "";
+  const origin = reqHeaders.get("origin") || "";
+
+  return (
+    xForwardedProto === "https" ||
+    referer.startsWith("https://") ||
+    origin.startsWith("https://")
+  );
+}
+
+export async function loginAction(
+  _prevState: any,
+  formData: FormData
+) {
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
   const returnTo = sanitizeReturnTo((formData.get("return_to") as string) || null);
@@ -89,19 +108,17 @@ export async function loginAction(_prevState: LegacyLoginActionState | LoginActi
 
   try {
     const result = await AuthenticationService.authenticate(username, password);
-    if (!result.success) {
-      return mapAuthErrorToState(result.error);
-    }
+    if (!result.success) return mapAuthErrorToState(result.error);
 
-    // Create session
     const session = await AuthenticationService.createSession(result.user.id);
 
-    // Set session cookie
+    const cookieSecure = await computeCookieSecureFromRequest();
+
     const cookieStore = await cookies();
     cookieStore.set("sso_session", session.id, {
       path: "/",
       httpOnly: true,
-      secure: env.SESSION_COOKIE_SECURE,
+      secure: cookieSecure,
       sameSite: "lax",
       maxAge: env.SESSION_MAX_AGE,
     });
