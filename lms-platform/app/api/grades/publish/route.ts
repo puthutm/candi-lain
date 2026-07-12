@@ -6,8 +6,8 @@ import { lmsSessions, lmsAssignments, assignmentSubmissions } from "@/db/schema/
 import { videoConferences, vcAttendances } from "@/db/schema/vicon";
 import { eq, and, count } from "drizzle-orm";
 
-// Import SIAKAD tables to write grades directly
-import { siakadGrades } from "../../../../../siakad-platform/db/schema/krs";
+// Import SIAKAD tables through package alias to avoid fragile relative paths
+import { siakadGrades } from "@/../siakad-platform/db/schema/krs";
 
 function getGradePoint(letter: string): string {
   switch (letter) {

@@ -3,10 +3,10 @@ import { db } from "@/db";
 import { lmsClasses, classEnrollments } from "@/db/schema/classes";
 import { eq, and } from "drizzle-orm";
 
-// Import tables from SIAKAD schema files directly using relative paths
-import { siakadAcademicPeriods, siakadCourses } from "../../../../siakad-platform/db/schema/master";
-import { siakadClasses } from "../../../../siakad-platform/db/schema/classes";
-import { siakadKrs, siakadKrsItems } from "../../../../siakad-platform/db/schema/krs";
+// Import SIAKAD tables through package alias to avoid fragile relative paths
+import { siakadAcademicPeriods, siakadCourses } from "@/../siakad-platform/db/schema/master";
+import { siakadClasses } from "@/../siakad-platform/db/schema/classes";
+import { siakadKrs, siakadKrsItems } from "@/../siakad-platform/db/schema/krs";
 
 export async function POST() {
   try {
