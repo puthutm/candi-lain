@@ -33,7 +33,13 @@ function sanitizeReturnTo(rawReturnTo: string | null): string {
   }
 }
 
-export async function loginAction(_prevState: any, formData: FormData) {
+type LoginActionState = {
+  error?: string;
+  success?: boolean;
+  redirectTo?: string;
+} | null;
+
+export async function loginAction(_prevState: LoginActionState, formData: FormData) {
   // Ensure database is seeded before attempting login
   await ensureDatabaseSeeded();
 
