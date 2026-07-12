@@ -7,7 +7,8 @@ import { loginAction } from "./actions";
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("return_to") || "/home";
+  const returnToRaw = searchParams.get("return_to");
+  const returnTo = returnToRaw && returnToRaw.startsWith("/") ? returnToRaw : "/home";
 
   const [state, formAction, isPending] = useActionState(loginAction, null);
 
