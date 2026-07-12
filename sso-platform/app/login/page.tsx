@@ -12,12 +12,18 @@ function LoginContent() {
   const [state, formAction, isPending] = useActionState(loginAction, null);
 
   useEffect(() => {
-    if (state?.success && state.redirectTo) {
-      if (state.redirectTo.startsWith("http://") || state.redirectTo.startsWith("https://")) {
-        window.location.href = state.redirectTo;
-      } else {
-        router.push(state.redirectTo);
-      }
+    const legacyState = state as { success?: boolean; redirectTo?: string } | null;
+    const nextState = state as { status?: "success" | "error" | "idle"; redirectTo?: string } | null;
+
+    const redirectTo = nextState?.redirectTo || legacyState?.redirectTo;
+    const isSuccess = Boolean(nextState?.status === "success" || legacyState?.success);
+
+    if (!isSuccess || !redirectTo) return;
+
+    if (redirectTo.startsWith("http://") || redirectTo.startsWith("https://")) {
+      window.location.href = redirectTo;
+    } else {
+      router.push(redirectTo);
     }
   }, [state, router]);
 
@@ -38,7 +44,7 @@ function LoginContent() {
           </p>
         </div>
 
-        <form action={formAction} className="space-y-6">
+        <form action={formAction} method="post" className="space-y-6">
           <input type="hidden" name="return_to" value={returnTo} />
 
           {/* Username Input */}
@@ -74,11 +80,19 @@ function LoginContent() {
           </div>
 
           {/* Error Message */}
-          {state?.error && (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-center text-xs font-medium text-red-400">
-              {state.error}
-            </div>
-          )}
+          {(() => {
+            const legacyState = state as { error?: string } | null;
+            const nextState = state as { status?: "error" | "success" | "idle"; message?: string } | null;
+            const errorMessage = legacyState?.error || (nextState?.status === "error" ? nextState.message : undefined);
+
+            if (!errorMessage) return null;
+
+            return (
+              <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-center text-xs font-medium text-red-400">
+                {errorMessage}
+              </div>
+            );
+          })()}
 
           {/* Submit Button */}
           <button
