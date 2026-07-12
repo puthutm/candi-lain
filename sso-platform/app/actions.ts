@@ -1,7 +1,6 @@
 "use server";
 import { cookies } from "next/headers";
 import { AuthenticationService } from "@/lib/services/auth";
-import { ensureDatabaseSeeded } from "@/lib/seed";
 import { env } from "@/lib/env";
 
 function sanitizeReturnTo(rawReturnTo: string | null): string {
@@ -65,9 +64,6 @@ type LegacyLoginActionState = {
 } | null;
 
 export async function loginAction(_prevState: LegacyLoginActionState | LoginActionState, formData: FormData) {
-  // Ensure database is seeded before attempting login
-  await ensureDatabaseSeeded();
-
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
   const returnTo = sanitizeReturnTo((formData.get("return_to") as string) || null);
