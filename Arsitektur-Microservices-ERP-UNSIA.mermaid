@@ -1,0 +1,80 @@
+flowchart TB
+
+    subgraph CLIENT["Lapisan Klien"]
+        direction LR
+        C1["Portal Publik PMB"]
+        C2["Dashboard Pendaftar"]
+        C3["Admin PMB"]
+        C4["LMS — Dosen"]
+        C5["LMS — Mahasiswa"]
+        C6["SIAKAD — Akademik"]
+    end
+
+    GW["API Gateway\n(routing + validasi token terpusat)"]
+
+    subgraph SSO_SVC["Service: SSO Platform"]
+        SSO["SSO Platform\nOAuth2 / OIDC + Dynamic Role"]
+        SSO_DB[("sso_db\nusers, applications,\napplication_roles")]
+        SSO --- SSO_DB
+    end
+
+    subgraph PMB_SVC["Service: SI-PMB"]
+        PMB["SI-PMB UNSIA\nPendaftaran, Verifikasi, Ujian CBT"]
+        PMB_DB[("pmb_db\napplicants, invoices,\nexam_results")]
+        PMB --- PMB_DB
+    end
+
+    subgraph LMS_SVC["Service: LMS ICEMS"]
+        LMS["LMS ICEMS\nKelas, Materi, Tugas, Nilai"]
+        LMS_DB[("lms_db\nclasses, sessions,\ngrades")]
+        LMS --- LMS_DB
+    end
+
+    subgraph SIAKAD_SVC["Service: SIAKAD"]
+        SIAKAD["SIAKAD UNSIA\nData Akademik Resmi"]
+        SIAKAD_DB[("siakad_db\nstudents, krs_items,\nacademic_periods")]
+        SIAKAD --- SIAKAD_DB
+    end
+
+    subgraph EXTERNAL["Provider Eksternal"]
+        direction LR
+        PAY["Payment Gateway\n(Midtrans/Xendit dll)"]
+        MSG["WhatsApp/Email API"]
+        VC["Zoom / Google Meet / Jitsi"]
+    end
+
+    C1 --> GW
+    C2 --> GW
+    C3 --> GW
+    C4 --> GW
+    C5 --> GW
+    C6 --> GW
+
+    GW --> SSO
+    GW --> PMB
+    GW --> LMS
+    GW --> SIAKAD
+
+    SSO -.->|"validasi JWT via JWKS"| PMB
+    SSO -.->|"validasi JWT via JWKS"| LMS
+    SSO -.->|"validasi JWT via JWKS"| SIAKAD
+
+    PMB ==>|"webhook: applicant.accepted_and_paid\n(snapshot data pendaftar)"| SIAKAD
+    SIAKAD ==>|"pull terjadwal + event: krs.approved,\nclass.dosen_changed"| LMS
+    LMS ==>|"webhook: grade.finalized"| SIAKAD
+
+    PMB -->|"create invoice, cek status"| PAY
+    PAY -.->|"webhook konfirmasi bayar"| PMB
+    PMB -->|"kirim notifikasi"| MSG
+    LMS -->|"kirim notifikasi"| MSG
+    LMS -->|"generate meeting link"| VC
+
+    classDef service fill:#eef2ff,stroke:#6366f1,stroke-width:1px;
+    classDef db fill:#f8fafc,stroke:#94a3b8,stroke-width:1px;
+    classDef ext fill:#fff7ed,stroke:#f59e0b,stroke-width:1px;
+    classDef gw fill:#ecfdf5,stroke:#10b981,stroke-width:1.5px;
+
+    class SSO,PMB,LMS,SIAKAD service;
+    class SSO_DB,PMB_DB,LMS_DB,SIAKAD_DB db;
+    class PAY,MSG,VC ext;
+    class GW gw;

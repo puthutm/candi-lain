@@ -1,0 +1,103 @@
+flowchart TD
+
+    Start([Mulai]) --> SA1
+
+    subgraph L1["🛡️ Super Admin"]
+        SA1[Buka Admin Console]
+        SA2[Tambah Aplikasi Baru: nama, redirect URI, scope, grant type]
+        SA3[Terima client_id & client_secret - ditampilkan sekali]
+        SA4{Perlu rotasi/nonaktifkan aplikasi?}
+        SA5[Rotasi client_secret / Set status inactive]
+    end
+
+    subgraph L2["👔 App Owner"]
+        AO1[Buat Role Dinamis untuk Aplikasi - role_key, nama, permission]
+        AO2[Pilih User]
+        AO3[Assign Role ke User untuk Aplikasi Tsb]
+        AO4{Perlu cabut role?}
+        AO5[Revoke user_application_roles]
+    end
+
+    subgraph L3["💻 Aplikasi Eksternal (Client)"]
+        CE1[User klik 'Login with SSO']
+        CE2["Redirect ke GET /oauth/authorize
+        (client_id, redirect_uri, scope, code_challenge, state)"]
+        CE3["Server App: POST /oauth/token
+        (code, code_verifier, client_id, client_secret)"]
+        CE4[Simpan sesi lokal + terapkan otorisasi berbasis klaim role]
+        CE5["Saat token expired: POST /oauth/token
+        (grant_type=refresh_token)"]
+    end
+
+    subgraph L4["🙋 End User"]
+        EU1[Input Username & Password]
+        EU2[Lihat Halaman Consent - nama app & scope diminta]
+        EU3[Setujui Consent]
+        EU4[Gunakan Aplikasi Eksternal]
+        EU5[Buka Halaman Profil SSO]
+        EU6[Lihat Daftar Aplikasi Diberi Izin]
+        EU7{Cabut akses aplikasi tertentu?}
+    end
+
+    subgraph L5["⚙️ SSO Platform (System)"]
+        SYS1[Generate client_id & hash client_secret]
+        SYS2[Simpan applications + application_scopes]
+        SYS3[Simpan application_roles]
+        SYS4[Simpan user_application_roles]
+        SYS5{User sudah punya sesi login aktif?}
+        SYS6[Validasi kredensial & buat sesi]
+        SYS7{Consent utk app+scope ini sudah pernah diberikan?}
+        SYS8[Simpan oauth_consents]
+        SYS9[Generate authorization_code + simpan code_challenge]
+        SYS10["Redirect ke redirect_uri
+        dengan code & state"]
+        SYS11["Validasi code, PKCE (code_verifier),
+        client_id/client_secret"]
+        SYS12[Ambil role user untuk aplikasi ini dari user_application_roles]
+        SYS13["Generate access_token, refresh_token, id_token
+        (klaim profil + role)"]
+        SYS14[Revoke consent & seluruh token terkait]
+        SYS15[(Catat ke audit_logs: aktor, waktu, detail)]
+    end
+
+    %% ---- Flow 1: Onboarding Aplikasi Klien ----
+    SA1 --> SA2 --> SYS1 --> SYS2 --> SA3
+    SA3 --> SA4
+    SA4 -- ya --> SA5 --> SYS15
+    SA4 -- tidak --> AO1
+    SYS2 -.log.-> SYS15
+
+    %% ---- Flow 2: Dynamic Role Management ----
+    AO1 --> SYS3 --> SYS15
+    SYS3 --> AO2 --> AO3 --> SYS4 --> SYS15
+    SYS4 --> AO4
+    AO4 -- ya --> AO5 --> SYS15
+    AO4 -- tidak --> CE1
+
+    %% ---- Flow 3: Login OAuth2 Authorization Code + PKCE ----
+    CE1 --> CE2 --> SYS5
+    SYS5 -- belum login --> EU1 --> SYS6 --> SYS7
+    SYS5 -- sudah login --> SYS7
+    SYS7 -- belum pernah --> EU2 --> EU3 --> SYS8 --> SYS9
+    SYS7 -- sudah pernah --> SYS9
+    SYS9 --> SYS10 --> CE3
+    CE3 --> SYS11
+    SYS11 --> SYS12 --> SYS13 --> CE4
+    SYS13 -.log.-> SYS15
+    CE4 --> EU4
+
+    %% ---- Flow 4: Refresh Token ----
+    EU4 -.saat sesi berjalan.-> CE5
+    CE5 --> SYS11
+
+    %% ---- Flow 5: Consent Management (Revoke) ----
+    EU4 --> EU5 --> EU6 --> EU7
+    EU7 -- ya --> SYS14 --> SYS15 --> End([Selesai])
+    EU7 -- tidak --> End
+
+    classDef decision fill:#FFF3CD,stroke:#B8860B,color:#000
+    classDef system fill:#DCEAF7,stroke:#2C6FAA,color:#000
+    classDef audit fill:#E8E8E8,stroke:#666,color:#000,stroke-dasharray: 3 3
+    class SA4,SYS5,SYS7,AO4,EU7 decision
+    class SYS1,SYS2,SYS3,SYS4,SYS6,SYS8,SYS9,SYS10,SYS11,SYS12,SYS13,SYS14 system
+    class SYS15 audit

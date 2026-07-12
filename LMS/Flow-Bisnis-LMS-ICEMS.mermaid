@@ -1,0 +1,105 @@
+flowchart TD
+
+    Start([Mulai]) --> S1
+
+    subgraph L1["🎓 SIAKAD (Sumber Data)"]
+        S1[Periode Akademik Aktif + Plotting Dosen + KRS Disetujui]
+    end
+
+    subgraph L2["⚙️ Sistem LMS (Sync)"]
+        Y1[Job Sync Berkala / Event Consumer]
+        Y2[Buat / Update lms_classes Otomatis]
+        Y3[Buat / Update class_enrollments dari KRS]
+        Y4{Materi Baru Diunggah?}
+        Y5[Set status: menunggu_prodi]
+        Y6{Prodi Setujui?}
+        Y7[Set status: menunggu_bpm]
+        Y8{BPM Setujui?}
+        Y9[Set status: terbit]
+        Y10[Kembalikan ke Dosen + catatan revisi]
+        Y11[Catat VC_Attendance saat join]
+        Y12[Hitung Nilai Akhir & Huruf]
+        Y13[Publish Event grade.finalized ke SIAKAD]
+    end
+
+    subgraph L3["👨‍🏫 Dosen"]
+        D1[Buka Kelas Akademik - Otomatis Muncul]
+        D2[Isi RPS & CPMK]
+        D3[Tambah Sesi / Duplikasi dari Periode Lalu]
+        D4[Unggah Materi / Buat Tugas / Kuis / Video Interaktif]
+        D5[Jadwalkan Live Conference]
+        D6[Buat Kelompok Diskusi/Tugas]
+        D7[Nilai Tugas + Anotasi Berkas + Feedback]
+        D8[Kunci & Publikasikan Nilai Akhir]
+        D9[Opsional: Buat Kelas Personal]
+    end
+
+    subgraph L4["🏛️ Prodi & BPM (Verifikator)"]
+        V1[Review Materi Tahap 1 - Prodi]
+        V2[Review Materi Tahap 2 - BPM]
+    end
+
+    subgraph L5["🙋 Mahasiswa"]
+        M1[Buka Kelas dari Daftar KRS]
+        M2[Akses Materi Terbit]
+        M3[Kerjakan Tugas - Auto-save Draft]
+        M4[Submit Tugas]
+        M5[Ikuti Kuis dalam Periode]
+        M6[Tonton Video Interaktif + Jawab Penanda Pertanyaan]
+        M7[Join Live Conference]
+        M8[Tonton Ulang Rekaman jika Terlewat]
+        M9[Diskusi di Linimasa Kelas]
+        M10[Lihat Nilai & Feedback]
+    end
+
+    %% ---- Sync ----
+    S1 --> Y1 --> Y2 --> Y3
+    Y3 --> D1
+
+    %% ---- Setup Kelas oleh Dosen ----
+    D1 --> D2 --> D3
+    D3 --> D4
+    D3 --> D5
+    D3 --> D6
+    D9 -.di luar sync, akses diatur manual.-> D9
+
+    %% ---- Verifikasi Materi ----
+    D4 --> Y4
+    Y4 -- ya, tipe materi --> Y5 --> V1
+    V1 --> Y6
+    Y6 -- ya --> Y7 --> V2
+    Y6 -- tidak --> Y10 -.revisi.-> D4
+    V2 --> Y8
+    Y8 -- ya --> Y9 --> M2
+    Y8 -- tidak --> Y10
+
+    %% ---- Live Conference & Presensi ----
+    D5 --> M7
+    M7 --> Y11
+    Y11 -.presensi otomatis.-> D7
+    M7 -.terlewat.-> M8
+
+    %% ---- Aktivitas Mahasiswa ----
+    Y3 --> M1
+    M1 --> M2
+    M1 --> M3 --> M4
+    M1 --> M5
+    M1 --> M6
+    M1 --> M9
+
+    %% ---- Penilaian ----
+    M4 --> D7
+    M5 --> D7
+    D7 --> D8 --> Y12 --> Y13
+    Y13 -.notifikasi.-> M10
+    D7 -.feedback tersedia.-> M10
+
+    M10 --> End([Selesai / Siklus Berulang per Sesi])
+
+    classDef decision fill:#FFF3CD,stroke:#B8860B,color:#000
+    classDef system fill:#DCEAF7,stroke:#2C6FAA,color:#000
+    classDef verif fill:#E3DCF7,stroke:#6A4C93,color:#000
+
+    class Y4,Y6,Y8 decision
+    class Y1,Y2,Y3,Y5,Y7,Y9,Y11,Y12,Y13 system
+    class V1,V2 verif

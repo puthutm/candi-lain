@@ -1,0 +1,257 @@
+erDiagram
+
+    %% ================= MASTER DATA =================
+    WAVES ||--o{ QUOTAS : "menentukan"
+    WAVES ||--o{ APPLICANTS : "diikuti_oleh"
+    ENTRY_PATHS ||--o{ APPLICANTS : "dipilih_oleh"
+    STUDY_PROGRAMS ||--o{ QUOTAS : "memiliki"
+    STUDY_PROGRAMS ||--o{ APPLICANTS : "dipilih_oleh"
+
+    WAVES {
+        uuid id PK
+        string name
+        string code
+        date start_date
+        date end_date
+        enum status "belum_dibuka|aktif|tertutup"
+        timestamp created_at
+    }
+
+    ENTRY_PATHS {
+        uuid id PK
+        string name "Reguler|Prestasi|Mitra|Beasiswa"
+        string code
+        decimal form_fee
+        boolean is_free
+        timestamp created_at
+    }
+
+    STUDY_PROGRAMS {
+        uuid id PK
+        string name
+        string code
+        string faculty
+        string degree_level
+    }
+
+    QUOTAS {
+        uuid id PK
+        uuid wave_id FK
+        uuid study_program_id FK
+        int quota_total
+        int quota_filled
+    }
+
+    %% ================= APPLICANT DOMAIN =================
+    APPLICANTS ||--o| APPLICANT_PROFILES : "melengkapi"
+    APPLICANTS ||--o{ APPLICANT_DOCUMENTS : "mengunggah"
+    APPLICANTS ||--o{ APPLICANT_STATUS_HISTORY : "memiliki_riwayat"
+    DOCUMENT_TYPES ||--o{ APPLICANT_DOCUMENTS : "mendefinisikan"
+
+    APPLICANTS {
+        uuid id PK
+        string registration_number UK
+        string full_name
+        string email UK
+        string phone
+        string password_hash
+        uuid wave_id FK
+        uuid entry_path_id FK
+        uuid study_program_id FK
+        enum current_stage "peminat|pendaftar|isi_biodata|unggah_berkas|siap_ujian|sedang_ujian|selesai_ujian|diterima|tidak_lulus"
+        enum payment_status "belum_bayar|lunas"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    APPLICANT_PROFILES {
+        uuid id PK
+        uuid applicant_id FK
+        string nik
+        string birth_place
+        date birth_date
+        enum gender
+        text address
+        string parent_name
+        string photo_url
+        timestamp updated_at
+    }
+
+    DOCUMENT_TYPES {
+        uuid id PK
+        string name "KTP|Ijazah/SKL|Rapor|Pas Foto|dst"
+        string code
+        boolean is_required
+        json applies_to_rule "kondisi jalur/prodi"
+    }
+
+    APPLICANT_DOCUMENTS {
+        uuid id PK
+        uuid applicant_id FK
+        uuid document_type_id FK
+        string file_url
+        enum status "belum_upload|menunggu_verifikasi|terverifikasi|perlu_revisi"
+        string revision_note
+        uuid verified_by_staff_id "ref SSO users.id"
+        timestamp verified_at
+        timestamp uploaded_at
+    }
+
+    APPLICANT_STATUS_HISTORY {
+        uuid id PK
+        uuid applicant_id FK
+        string from_stage
+        string to_stage
+        uuid changed_by_staff_id "ref SSO users.id, null jika sistem"
+        string note
+        timestamp changed_at
+    }
+
+    %% ================= PAYMENT DOMAIN =================
+    APPLICANTS ||--o{ INVOICES : "menerima_tagihan"
+    INVOICES ||--o{ PAYMENT_TRANSACTIONS : "dibayar_melalui"
+
+    INVOICES {
+        uuid id PK
+        uuid applicant_id FK
+        string invoice_number UK
+        enum invoice_type "formulir|daftar_ulang"
+        decimal amount
+        enum status "unpaid|paid|expired"
+        date due_date
+        timestamp created_at
+    }
+
+    PAYMENT_TRANSACTIONS {
+        uuid id PK
+        uuid invoice_id FK
+        enum method "virtual_account|qris|e_wallet|transfer_bank"
+        string provider_ref
+        decimal amount
+        enum status "pending|success|failed"
+        json webhook_payload
+        timestamp paid_at
+        timestamp created_at
+    }
+
+    %% ================= EXAM DOMAIN =================
+    EXAM_MODULES ||--o{ EXAM_QUESTIONS : "berisi"
+    EXAM_MODULES ||--o{ EXAM_SESSIONS : "dikerjakan_dalam"
+    EXAM_MODULES ||--o{ EXAM_RESULTS : "menghasilkan"
+    APPLICANTS ||--o{ EXAM_SESSIONS : "mengerjakan"
+    APPLICANTS ||--o{ EXAM_RESULTS : "memperoleh"
+    EXAM_SESSIONS ||--o{ EXAM_ANSWERS : "mencatat"
+    EXAM_QUESTIONS ||--o{ EXAM_ANSWERS : "dijawab_pada"
+
+    EXAM_MODULES {
+        uuid id PK
+        string name "TPA|Pengetahuan Umum|PKN|Bahasa Inggris|Buta Warna"
+        string code
+        int duration_minutes
+        enum type "teks|gambar"
+        int question_count
+        boolean is_active
+    }
+
+    EXAM_QUESTIONS {
+        uuid id PK
+        uuid exam_module_id FK
+        text question_text
+        enum question_type "pilihan_ganda|gambar"
+        json options
+        string correct_answer
+        string image_url
+    }
+
+    EXAM_SESSIONS {
+        uuid id PK
+        uuid applicant_id FK
+        uuid exam_module_id FK
+        enum status "belum_dikerjakan|draf|selesai_dikumpulkan"
+        timestamp started_at
+        timestamp submitted_at
+        int time_remaining_seconds
+    }
+
+    EXAM_ANSWERS {
+        uuid id PK
+        uuid exam_session_id FK
+        uuid exam_question_id FK
+        string answer_value
+        timestamp answered_at
+    }
+
+    EXAM_RESULTS {
+        uuid id PK
+        uuid applicant_id FK
+        uuid exam_module_id FK
+        decimal score
+        boolean passed
+        uuid graded_by_staff_id "ref SSO users.id"
+        timestamp graded_at
+    }
+
+    %% ================= COMMUNICATION DOMAIN =================
+    MESSAGE_TEMPLATES ||--o{ MESSAGE_LOGS : "dipakai_pada"
+    MESSAGE_TEMPLATES ||--o{ AUTOMATION_WORKFLOWS : "dipicu_oleh"
+    CAMPAIGNS ||--o{ MESSAGE_LOGS : "menghasilkan"
+    APPLICANTS ||--o{ MESSAGE_LOGS : "menerima"
+
+    MESSAGE_TEMPLATES {
+        uuid id PK
+        string name "Welcome Email|Payment Reminder|Acceptance Letter"
+        string trigger_event
+        enum channel "email|whatsapp"
+        string subject
+        text body
+        boolean is_active
+    }
+
+    CAMPAIGNS {
+        uuid id PK
+        string name
+        json segment_filter
+        enum channel "email|whatsapp"
+        timestamp scheduled_at
+        enum status "draft|terjadwal|terkirim"
+        int sent_count
+        int opened_count
+        int clicked_count
+    }
+
+    AUTOMATION_WORKFLOWS {
+        uuid id PK
+        string name
+        string trigger_event "form_submitted|3_hari_tanpa_bayar|payment_confirmed|dst"
+        int delay_minutes
+        uuid message_template_id FK
+        boolean is_active
+    }
+
+    MESSAGE_LOGS {
+        uuid id PK
+        uuid applicant_id FK
+        uuid message_template_id "FK nullable"
+        uuid campaign_id "FK nullable"
+        enum channel "email|whatsapp"
+        enum status "terkirim|gagal|dibuka|diklik"
+        timestamp sent_at
+    }
+
+    %% ================= REFERENSI KE SSO PLATFORM (EXTERNAL) =================
+    SSO_USERS ||--o{ APPLICANT_DOCUMENTS : "memverifikasi (verified_by_staff_id)"
+    SSO_USERS ||--o{ APPLICANT_STATUS_HISTORY : "mengubah_status (changed_by_staff_id)"
+    SSO_USERS ||--o{ EXAM_RESULTS : "menilai (graded_by_staff_id)"
+    SSO_APPLICATION_ROLES ||--o{ SSO_USERS : "diberikan_ke"
+
+    SSO_USERS {
+        uuid id PK "milik SSO Platform, bukan tabel lokal PMB"
+        string name
+        string email
+    }
+
+    SSO_APPLICATION_ROLES {
+        uuid id PK
+        string application_name "Admin PMB"
+        string role_name "super_admin_pmb|verifikator_berkas|staff_keuangan|staff_marketing"
+    }

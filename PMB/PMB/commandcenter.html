@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Nusantara - Fullscreen Real Map</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Libraries CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Inter"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; /* Mencegah scroll pada body karena peta fullscreen */
+            background-color: #e2e8f0;
+        }
+
+        /* Fullscreen Map Layer */
+        #map {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 10;
+        }
+
+        /* Strong Glassmorphism for readability over Real Map */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .glass-panel-solid {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Modern Pulse Marker (Blue) */
+        .radar-marker {
+            width: 16px; height: 16px;
+            background: #0ea5e9;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            position: relative;
+            cursor: pointer;
+        }
+        .radar-marker::after {
+            content: "";
+            position: absolute;
+            top: -12px; left: -12px; right: -12px; bottom: -12px;
+            border-radius: 50%;
+            border: 2px solid #0ea5e9;
+            animation: minimalPulse 2.5s ease-out infinite;
+        }
+        @keyframes minimalPulse {
+            0% { transform: scale(0.4); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .data-value { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Adjust leaflet controls positioning */
+        .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important; }
+        .leaflet-control-zoom a { background: rgba(255,255,255,0.9) !important; color: #0f172a !important; }
+    </style>
+</head>
+<body class="antialiased text-slate-800">
+
+    <!-- THE FULLSCREEN MAP -->
+    <div id="map"></div>
+
+    <!-- Floating Navbar (Top) -->
+    <nav class="glass-panel absolute top-4 left-4 right-4 z-[500] rounded-2xl px-4 sm:px-6">
+        <div class="flex items-center justify-between h-14 sm:h-16">
+            <div class="flex items-center gap-3">
+                <div class="bg-brand-500 text-white p-2 rounded-lg shadow-sm">
+                    <i class="fa-solid fa-earth-asia"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg sm:text-xl tracking-tight leading-none text-slate-800">Nusantara<span class="text-brand-500">Core</span></h1>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 font-mono tracking-wider uppercase mt-0.5">National Map Hub</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4 sm:gap-6">
+                <div class="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-600 bg-white/50 border border-slate-200 px-3 py-1.5 rounded-full shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>System Active</span>
+                    <span class="mx-2 text-slate-300">|</span>
+                    <span id="live-clock" class="text-slate-500">Syncing...</span>
+                </div>
+                <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-brand-50 border border-brand-200 flex items-center justify-center text-brand-600 font-bold text-xs sm:text-sm shadow-sm cursor-pointer hover:bg-brand-100 transition-colors">
+                    AD
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Floating Search Box (Top Left, below Nav) -->
+    <div class="absolute top-24 sm:top-28 left-4 sm:left-6 z-[400] w-64 sm:w-80 pointer-events-auto">
+        <div class="relative group shadow-lg rounded-xl">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                <i class="fa-solid fa-location-crosshairs text-brand-500 transition-colors"></i>
+            </div>
+            <input type="text" id="searchInput" class="glass-panel text-slate-800 font-medium text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent block w-full pl-11 p-3.5 transition-all placeholder-slate-500" placeholder="Cari desa / wilayah...">
+        </div>
+        <!-- Search Results Dropdown -->
+        <div id="searchResults" class="mt-2 glass-panel rounded-xl max-h-64 overflow-y-auto hidden shadow-xl border border-white">
+            <!-- Dynamic Search Results -->
+        </div>
+    </div>
+
+    <!-- Floating Counterbox Data HUD (Top Right, below Nav) -->
+    <div class="absolute top-24 sm:top-28 right-4 sm:right-6 z-[400] flex flex-col gap-3 pointer-events-none hidden md:flex">
+        
+        <!-- Box 1 -->
+        <div class="glass-panel p-4 rounded-xl flex items-center gap-4 shadow-lg border border-white/60 min-w-[220px]">
+            <div class="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center shadow-sm text-brand-500 text-lg">
+               <i class="fa-solid fa-satellite-dish"></i>
+            </div>
+            <div>
+               <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Titik Terpantau</p>
+               <p class="text-2xl data-value text-slate-800 font-bold leading-none" id="hud-nodes">0</p>
+            </div>
+        </div>
+
+        <!-- Box 2 -->
+        <div class="glass-panel p-4 rounded-xl flex items-center gap-4 shadow-lg border border-white/60 min-w-[220px]">
+            <div class="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center shadow-sm text-emerald-500 text-lg">
+               <i class="fa-solid fa-users-viewfinder"></i>
+            </div>
+            <div>
+               <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Populasi Sampel</p>
+               <p class="text-2xl data-value text-slate-800 font-bold leading-none"><span id="hud-pop">0</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom-Up Glass Overlay Panel for Village Details -->
+    <div id="village-overlay-container" class="absolute inset-0 z-[1000] pointer-events-none flex flex-col justify-end overflow-hidden">
+        
+        <!-- Dark Backdrop to focus attention on panel -->
+        <div id="overlay-backdrop" class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] opacity-0 transition-opacity duration-500 pointer-events-none" onclick="closeOverlay()"></div>
+        
+        <!-- Sliding Content Panel -->
+        <div id="overlay-panel" class="relative w-full h-[85vh] sm:h-[75vh] glass-panel-solid rounded-t-[2.5rem] transform translate-y-full transition-transform duration-500 ease-in-out pointer-events-auto flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.15)] mx-auto max-w-[1200px]">
+            
+            <!-- Drag Handle & Close Btn -->
+            <div class="w-full flex justify-center pt-5 pb-2 cursor-pointer" onclick="closeOverlay()">
+                <div class="w-16 h-1.5 bg-slate-300 rounded-full hover:bg-slate-400 transition-colors"></div>
+            </div>
+            <button onclick="closeOverlay()" class="absolute top-6 right-6 sm:right-8 text-slate-400 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 p-2.5 rounded-full transition-colors z-10 w-10 h-10 flex items-center justify-center shadow-sm">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Overlay Content Area -->
+            <div class="p-6 sm:p-8 md:p-10 overflow-y-auto flex-grow flex flex-col gap-8 pb-12">
+                
+                <!-- HEADER: Image, Titles, Weather -->
+                <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-start relative z-10">
+                    
+                    <!-- Clean Thumbnail -->
+                    <div class="w-full md:w-64 lg:w-72 h-48 md:h-56 rounded-2xl overflow-hidden relative shadow-md flex-shrink-0 bg-slate-100">
+                        <div id="detail-cover" class="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"></div>
+                        <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-3 py-1.5 text-slate-800 text-[10px] font-bold tracking-wider uppercase rounded-lg shadow-sm" id="detail-type">Tipe Desa</div>
+                    </div>
+                    
+                    <!-- Main Information -->
+                    <div class="flex-grow w-full flex flex-col justify-between h-full pt-1">
+                        <div class="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
+                            <div>
+                                <h3 class="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight mb-2" id="detail-name">Nama Desa</h3>
+                                <p class="text-slate-500 text-sm font-medium flex items-center gap-2 mb-4">
+                                    <i class="fa-solid fa-location-dot text-brand-500"></i> 
+                                    <span id="detail-province">Provinsi</span> 
+                                    <span class="text-slate-300">&bull;</span> 
+                                    <span id="detail-location">Kabupaten</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Weather Widget (Like the reference image) -->
+                            <div class="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+                                <div class="relative w-12 h-12 flex items-center justify-center">
+                                    <i class="fa-solid fa-sun text-yellow-400 text-4xl"></i>
+                                    <i class="fa-solid fa-cloud text-white text-2xl absolute -bottom-1 -right-2 drop-shadow-md"></i>
+                                </div>
+                                <div class="flex flex-col items-end">
+                                    <span class="text-4xl font-semibold text-slate-800 tracking-tighter leading-none" id="detail-temp">27&deg;</span>
+                                    <span class="text-[10px] text-slate-500 font-bold uppercase mt-1">Cerah Berawan</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Description Panel -->
+                        <div class="text-slate-600 text-sm leading-relaxed bg-brand-50/50 p-4 rounded-xl border border-brand-100 border-l-4 border-l-brand-400">
+                            <p id="detail-desc">Deskripsi wilayah...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Demografi -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5 border-b border-slate-100 pb-2"><i class="fa-solid fa-users text-slate-400 mr-2"></i> Demografi Wilayah</h4>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500 text-xs font-medium">Total Penduduk</span>
+                                <span class="font-bold text-slate-800 text-sm data-value" id="detail-pop">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500 text-xs font-medium">Kepala Keluarga</span>
+                                <span class="font-bold text-slate-800 text-sm data-value" id="detail-kk">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500 text-xs font-medium">Luas Wilayah</span>
+                                <span class="font-bold text-brand-600 text-sm data-value bg-brand-50 px-2 py-0.5 rounded" id="detail-area">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500 text-xs font-medium">Kepadatan</span>
+                                <span class="font-bold text-slate-700 text-sm data-value" id="detail-density">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sosio-Ekonomi -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5 border-b border-slate-100 pb-2"><i class="fa-solid fa-hand-holding-dollar text-slate-400 mr-2"></i> Sosio-Ekonomi</h4>
+                        <div class="space-y-4">
+                            <div class="flex flex-col">
+                                <span class="text-slate-500 text-[10px] font-bold uppercase mb-1">Status Ekonomi Mayoritas</span>
+                                <span class="font-semibold text-slate-800 text-sm" id="detail-economy">-</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-slate-500 text-[10px] font-bold uppercase mb-1">Karakter Sosial / Budaya</span>
+                                <span class="font-semibold text-slate-800 text-sm" id="detail-social">-</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 pt-2">
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                                    <div class="text-[10px] text-slate-500 uppercase font-bold mb-1">Tenaga Kerja</div>
+                                    <div class="text-emerald-600 font-bold data-value text-sm" id="detail-workforce">-</div>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                                    <div class="text-[10px] text-slate-500 uppercase font-bold mb-1">Pengangguran</div>
+                                    <div class="text-red-500 font-bold data-value text-sm" id="detail-unemployment">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Infrastruktur -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm md:col-span-2 lg:col-span-1">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5 border-b border-slate-100 pb-2"><i class="fa-solid fa-tower-cell text-slate-400 mr-2"></i> Infrastruktur Utama</h4>
+                        <div class="space-y-5">
+                            <div>
+                                <div class="flex justify-between text-[10px] uppercase font-bold mb-2">
+                                    <span class="text-slate-500">Akses Jalan Raya</span>
+                                    <span class="text-slate-800" id="detail-road-lbl">-</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                    <div class="h-full bg-slate-700 transition-all duration-1000 ease-out rounded-full" id="detail-road-bar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] uppercase font-bold mb-2">
+                                    <span class="text-slate-500">Kelistrikan (PLN/Lokal)</span>
+                                    <span class="text-yellow-600" id="detail-elec-lbl">-</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                    <div class="h-full bg-yellow-400 transition-all duration-1000 ease-out rounded-full" id="detail-elec-bar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] uppercase font-bold mb-2">
+                                    <span class="text-slate-500">Konektivitas Internet</span>
+                                    <span class="text-brand-500" id="detail-net-lbl">-</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                    <div class="h-full bg-brand-500 transition-all duration-1000 ease-out rounded-full" id="detail-net-bar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        // Data Mockups Nasional (Tetap sama, kaya akan informasi)
+        const indonesiaLocations = [
+            { id: 1, name: "Desa Penglipuran", coords: [-8.4230, 115.3582], type: "Desa Wisata Adat", location: "Bangli", province: "Bali", area: "1.12 km²", population: "1.038", kk: "240", density: "926 jiwa/km²", economy: "Menengah ke Atas (Pariwisata & UMKM)", social: "Sangat Solid (Terikat Hukum Adat)", workforce: "720 Jiwa", unemployment: "2.1%", road: { label: "Paving Ekologis", pct: 100 }, elec: { label: "PLN Premium", pct: 100 }, net: { label: "Fiber & 4G", pct: 95 }, desc: "Desa adat yang dinobatkan sebagai salah satu desa terbersih di dunia. Mempertahankan tata ruang tradisional dengan larangan kendaraan bermotor masuk ke area utama desa.", img: "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 2, name: "Desa Pujon Kidul", coords: [-7.8480, 112.4542], type: "Desa Wisata Mandiri", location: "Malang", province: "Jawa Timur", area: "3.45 km²", population: "4.200", kk: "1.100", density: "1.217 jiwa/km²", economy: "Berkembang (Agrowisata/BUMDes)", social: "Kolaboratif / Paguyuban Petani", workforce: "2.850 Jiwa", unemployment: "4.5%", road: { label: "Aspal Utama Baik", pct: 85 }, elec: { label: "PLN 24 Jam", pct: 95 }, net: { label: "4G Provider", pct: 80 }, desc: "Desa percontohan yang sukses mengubah lahan persawahan menjadi destinasi wisata (Cafe Sawah), meningkatkan perekonomian warga melalui BUMDes.", img: "https://images.unsplash.com/photo-1632766324883-9b8e84df9a2c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 3, name: "Kelurahan Gambir", coords: [-6.1750, 106.8275], type: "Pusat Pemerintahan", location: "Jakarta Pusat", province: "DKI Jakarta", area: "2.58 km²", population: "3.450", kk: "980", density: "1.337 jiwa/km²", economy: "Tinggi (Perkantoran, Pemerintahan)", social: "Urban / Individualis", workforce: "2.100 Jiwa", unemployment: "3.1%", road: { label: "Jalan Protokol", pct: 100 }, elec: { label: "Ring 1 Anti Padam", pct: 100 }, net: { label: "5G & Fiber", pct: 100 }, desc: "Kawasan strategis ring satu negara. Menjadi pusat pemerintahan eksekutif, lokasi Istana Negara, dan berdirinya ikon nasional Monumen Nasional (Monas).", img: "https://images.unsplash.com/photo-1555899434-94d1368aa7af?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 4, name: "Desa Tomok", coords: [-2.6333, 98.8333], type: "Desa Wisata Budaya", location: "Samosir", province: "Sumatera Utara", area: "8.2 km²", population: "2.800", kk: "700", density: "341 jiwa/km²", economy: "Menengah (Suvenir, Wisata, Tani)", social: "Kental Adat Batak Toba", workforce: "1.750 Jiwa", unemployment: "5.8%", road: { label: "Aspal Samosir", pct: 75 }, elec: { label: "PLN Pulau", pct: 85 }, net: { label: "4G Cukup", pct: 70 }, desc: "Gerbang utama wisatawan menuju Pulau Samosir di tengah Danau Toba. Terkenal dengan Makam Raja Sidabutar dan budaya boneka Sigale-gale.", img: "https://images.unsplash.com/photo-1549473889-14f52119eb45?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 5, name: "Desa Derawan", coords: [2.2882, 118.2435], type: "Desa Bahari", location: "Berau", province: "Kalimantan Timur", area: "0.45 km²", population: "1.850", kk: "420", density: "4.111 jiwa/km²", economy: "Menengah Ke Atas (Resor, Nelayan)", social: "Pesisir / Suku Bajau", workforce: "1.100 Jiwa", unemployment: "1.2%", road: { label: "Paving Blok", pct: 60 }, elec: { label: "PLTD", pct: 65 }, net: { label: "Sinyal 4G", pct: 55 }, desc: "Desa di pulau kecil yang menjadi surga penyelaman kelas dunia. Masyarakat hidup berdampingan dengan habitat penyu hijau dan resor air.", img: "https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 6, name: "Desa Buntoi", coords: [-2.9460, 114.2840], type: "Desa Restorasi Gambut", location: "Pulang Pisau", province: "Kalimantan Tengah", area: "45.5 km²", population: "1.100", kk: "310", density: "24 jiwa/km²", economy: "Rendah (Tani Karet, Anyaman)", social: "Tradisional Dayak Ngaju", workforce: "650 Jiwa", unemployment: "9.0%", road: { label: "Jalan Tanah", pct: 35 }, elec: { label: "Genset Komunal", pct: 40 }, net: { label: "Blankspot", pct: 20 }, desc: "Desa di kawasan rawa gambut. Menjadi lokasi program restorasi lahan basah global untuk mencegah Karhutla dengan memberdayakan Purun.", img: "https://images.unsplash.com/photo-1516584283401-4470bc905e94?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 7, name: "Desa Wae Rebo", coords: [-8.7667, 120.2833], type: "Desa Adat Pegunungan", location: "Manggarai", province: "Nusa Tenggara Timur", area: "2.5 km²", population: "1.200", kk: "185", density: "480 jiwa/km²", economy: "Menengah (Kopi Arabika, Wisata)", social: "Komunal Suku Manggarai", workforce: "750 Jiwa", unemployment: "1.5%", road: { label: "Jalur Pendakian", pct: 20 }, elec: { label: "Panel Surya", pct: 50 }, net: { label: "Satelit Bakti", pct: 30 }, desc: "Berada di atas awan (1.200 mdpl) dan hanya dapat dicapai dengan berjalan kaki menembus hutan. Terkenal berkat rumah adat Mbaru Niang.", img: "https://images.unsplash.com/photo-1606990479768-466a337ab2ac?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 8, name: "Desa Sawinggrai", coords: [-0.5360, 130.6050], type: "Desa Konservasi Ekologi", location: "Raja Ampat", province: "Papua Barat", area: "1.8 km²", population: "600", kk: "150", density: "333 jiwa/km²", economy: "Berkembang (Ekowisata, Nelayan)", social: "Gotong Royong Tinggi", workforce: "350 Jiwa", unemployment: "4.0%", road: { label: "Jembatan Kayu", pct: 45 }, elec: { label: "PLTS Surya", pct: 60 }, net: { label: "Satelit", pct: 35 }, desc: "Terletak di pinggir laut sebening kristal. Dikembangkan sebagai habitat konservasi dimana burung Cenderawasih dapat disaksikan langsung.", img: "https://images.unsplash.com/photo-1620316447814-36769eec58f5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 9, name: "Desa Darmawangsa", coords: [-6.2570, 106.8020], type: "Kawasan Pemukiman Elit", location: "Kebayoran Baru", province: "DKI Jakarta", area: "1.2 km²", population: "4.100", kk: "1.050", density: "3.416 jiwa/km²", economy: "Atas (Eksekutif, Bisnis)", social: "Urban Premium", workforce: "2.800 Jiwa", unemployment: "0.5%", road: { label: "Aspal Halus", pct: 100 }, elec: { label: "Bawah Tanah", pct: 100 }, net: { label: "Fiber Optik", pct: 100 }, desc: "Kawasan hunian eksklusif di Jakarta Selatan dengan tata kota terencana, banyak pepohonan rindang, dan fasilitas bertaraf internasional.", img: "https://images.unsplash.com/photo-1580139178788-b21a998bbbb8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 10, name: "Desa Lembang", coords: [-6.8149, 107.6186], type: "Desa Agraris Pegunungan", location: "Bandung Barat", province: "Jawa Barat", area: "12.8 km²", population: "15.400", kk: "3.200", density: "1.203 jiwa/km²", economy: "Menengah (Pertanian, Susu)", social: "Heterogen Pinggiran", workforce: "9.500 Jiwa", unemployment: "6.2%", road: { label: "Jalan Provinsi", pct: 90 }, elec: { label: "PLN Tersedia", pct: 98 }, net: { label: "Koneksi Cepat", pct: 88 }, desc: "Kawasan dataran tinggi penghasil sayuran, susu sapi perah, dan destinasi wisata alam yang sejuk.", img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 11, name: "Kampung Ulu Musi", coords: [-2.9909, 104.7565], type: "Pemukiman Bantaran Sungai", location: "Palembang", province: "Sumatera Selatan", area: "1.5 km²", population: "8.500", kk: "2.100", density: "5.666 jiwa/km²", economy: "Menengah Bawah (Perdagangan Air)", social: "Solidaritas Gang", workforce: "5.100 Jiwa", unemployment: "8.5%", road: { label: "Lorong Beton", pct: 85 }, elec: { label: "PLN Kota", pct: 95 }, net: { label: "Fiber Optik", pct: 90 }, desc: "Kawasan padat penduduk di tepian Sungai Musi, jalur transportasi perahu ketek masyarakat lokal dan perdagangan air.", img: "https://images.unsplash.com/photo-1605332766324-4ce1be125211?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 12, name: "Desa Tana Toa", coords: [-5.3210, 120.2190], type: "Kawasan Adat Tertutup", location: "Bulukumba", province: "Sulawesi Selatan", area: "15.0 km²", population: "4.500", kk: "1.050", density: "300 jiwa/km²", economy: "Swadaya (Subsisten)", social: "Tertutup (Suku Kajang)", workforce: "2.800 Jiwa", unemployment: "0%", road: { label: "Tanah Berbatu", pct: 15 }, elec: { label: "Dilarang Adat", pct: 0 }, net: { label: "Tidak Ada", pct: 5 }, desc: "Desa Suku Kajang Dalam yang menolak modernisasi, menolak listrik, dan kendaraan bermotor demi menjaga keseimbangan alam sesuai hukum tak tertulis 'Pasang'.", img: "https://images.unsplash.com/photo-1596773215233-68d0bbdfd256?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 13, name: "Desa Banda Neira", coords: [-4.5269, 129.8974], type: "Desa Kepulauan Sejarah", location: "Maluku Tengah", province: "Maluku", area: "3.1 km²", population: "2.600", kk: "620", density: "838 jiwa/km²", economy: "Menengah (Pariwisata, Perikanan)", social: "Masyarakat Pesisir Bersejarah", workforce: "1.600 Jiwa", unemployment: "5.0%", road: { label: "Jalan Aspal Kecil", pct: 80 }, elec: { label: "PLTD Aktif", pct: 85 }, net: { label: "Palapa Ring", pct: 75 }, desc: "Pusat perdagangan rempah dunia masa lampau. Memiliki peninggalan benteng kolonial dengan pemandangan Gunung Api Banda yang menakjubkan.", img: "https://images.unsplash.com/photo-1588693822180-87a2d4b9fc06?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 14, name: "Desa Ketambe", coords: [3.6833, 97.6500], type: "Desa Penyangga Hutan", location: "Aceh Tenggara", province: "Aceh", area: "4.5 km²", population: "1.400", kk: "350", density: "311 jiwa/km²", economy: "Ekowisata & Pertanian", social: "Agamis & Tradisional", workforce: "850 Jiwa", unemployment: "3.5%", road: { label: "Jalan Lintas Aspal", pct: 80 }, elec: { label: "PLN Tersedia", pct: 85 }, net: { label: "Sinyal Terbatas", pct: 40 }, desc: "Desa yang berbatasan langsung dengan Taman Nasional Gunung Leuser, pintu gerbang utama untuk melihat Orangutan Sumatera di habitat aslinya.", img: "https://images.unsplash.com/photo-1590118316315-9988a85f81e3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 15, name: "Desa Sade", coords: [-8.8389, 116.2922], type: "Desa Adat Sasak", location: "Lombok Tengah", province: "Nusa Tenggara Barat", area: "0.8 km²", population: "700", kk: "150", density: "875 jiwa/km²", economy: "Pariwisata & Tenun Ikat", social: "Suku Sasak Konservatif", workforce: "450 Jiwa", unemployment: "2.0%", road: { label: "Akses Utama Baik", pct: 90 }, elec: { label: "PLN Masuk", pct: 95 }, net: { label: "Sinyal 4G", pct: 85 }, desc: "Desa tradisional yang mempertahankan arsitektur rumah lumbung dan adat istiadat Sasak, terkenal dengan tradisi mengepel lantai menggunakan kotoran sapi.", img: "https://images.unsplash.com/photo-1589254395893-60b73c4179bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 16, name: "Desa Wakatobi", coords: [-5.3167, 123.5833], type: "Desa Pesisir Konservasi", location: "Wakatobi", province: "Sulawesi Tenggara", area: "2.1 km²", population: "3.100", kk: "780", density: "1.476 jiwa/km²", economy: "Nelayan & Pariwisata Laut", social: "Masyarakat Bahari", workforce: "1.900 Jiwa", unemployment: "4.2%", road: { label: "Jalan Lingkar Pulau", pct: 70 }, elec: { label: "PLTD", pct: 80 }, net: { label: "Internet Satelit", pct: 60 }, desc: "Berada di pusat segitiga terumbu karang dunia, desa ini sangat bergantung pada kelestarian laut untuk keberlangsungan pariwisata bawah laut kelas dunia.", img: "https://images.unsplash.com/photo-1574691456106-932d207c42df?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" },
+            { id: 17, name: "Desa Wamena", coords: [-4.0970, 138.9480], type: "Desa Lembah Pegunungan", location: "Jayawijaya", province: "Papua Pegunungan", area: "10.5 km²", population: "4.800", kk: "1.100", density: "457 jiwa/km²", economy: "Pertanian & Perdagangan", social: "Suku Dani & Pendatang", workforce: "2.600 Jiwa", unemployment: "6.5%", road: { label: "Jalan Lembah", pct: 50 }, elec: { label: "PLN Kota", pct: 70 }, net: { label: "VSAT", pct: 45 }, desc: "Terletak di Lembah Baliem yang dikelilingi pegunungan tinggi, menjadi pusat peradaban Suku Dani dan titik temu budaya tradisional dengan modernisasi.", img: "https://images.unsplash.com/photo-1628157731777-a8775fde7bb4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" }
+        ];
+
+        // Format angka
+        const formatNumber = (numStr) => parseFloat(numStr.replace(/\./g, '')).toLocaleString('id-ID');
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-clock').textContent = now.toLocaleTimeString('id-ID', { hour12: false }) + " WIB";
+        }
+        setInterval(updateClock, 1000);
+
+        let map;
+        const markers = [];
+
+        function initMap() {
+            // Fullscreen map configuration
+            map = L.map('map', { 
+                zoomControl: false,
+                minZoom: 4,
+                maxZoom: 18,
+                zoomSnap: 0.5
+            }).setView([-2.5489, 118.0149], 5.5);
+            
+            // Pindahkan kontrol zoom agar tidak tertutup overlay
+            L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+            // REAL MAP LAYER: Menggunakan OpenStreetMap untuk tampilan jalan & geografi asli yang bersih
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            const dotIcon = L.divIcon({
+                className: 'custom-div-icon bg-transparent border-0',
+                html: "<div class='radar-marker'></div>",
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            });
+
+            let totalPop = 0;
+
+            indonesiaLocations.forEach(loc => {
+                totalPop += parseInt(loc.population.replace(/\./g, ''));
+
+                const marker = L.marker(loc.coords, {icon: dotIcon, title: loc.name}).addTo(map);
+                markers.push({ data: loc, marker: marker });
+                
+                // Minimalist Tooltip
+                marker.bindTooltip(`
+                    <div class="font-sans px-2 py-1 bg-white border border-slate-200 rounded text-slate-800 shadow-sm">
+                        <strong class="text-sm block mb-0.5 tracking-tight">${loc.name}</strong>
+                        <span class="text-[10px] text-slate-500 font-medium">${loc.province}</span>
+                    </div>
+                `, { direction: 'top', offset: [0, -12], className: 'border-0 bg-transparent shadow-none' });
+                
+                // On Marker Click => Fly to Map & Open Panel
+                marker.on('click', () => {
+                    // Flyto dengan offset agar titik marker tidak tertutup panel saat di-zoom
+                    // Panel tingginya ~75vh, jadi kita geser titik pandang sedikit ke atas
+                    const offsetLat = loc.coords[0] - 0.02; // Adjust for bottom panel
+                    map.flyTo([offsetLat, loc.coords[1]], 14, { animate: true, duration: 1.5 });
+                    showDetailPanel(loc);
+                });
+            });
+
+            document.getElementById('hud-nodes').textContent = indonesiaLocations.length;
+            
+            // Pop Counter Anim
+            let currentPop = 0;
+            const popInterval = setInterval(() => {
+                currentPop += 2000;
+                if(currentPop >= totalPop) {
+                    currentPop = totalPop;
+                    clearInterval(popInterval);
+                }
+                document.getElementById('hud-pop').textContent = currentPop.toLocaleString('id-ID');
+            }, 30);
+
+            // Perbaiki ukuran jika window resize
+            window.addEventListener('resize', () => {
+                map.invalidateSize();
+            });
+        }
+
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            searchResults.innerHTML = '';
+            
+            if(query.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+
+            const filtered = indonesiaLocations.filter(loc => 
+                loc.name.toLowerCase().includes(query) || 
+                loc.location.toLowerCase().includes(query) || 
+                loc.province.toLowerCase().includes(query)
+            );
+
+            if(filtered.length > 0) {
+                searchResults.classList.remove('hidden');
+                filtered.forEach(loc => {
+                    const div = document.createElement('div');
+                    div.className = "px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 flex flex-col transition-colors";
+                    div.innerHTML = `
+                        <span class="text-slate-800 font-semibold text-sm">${loc.name}</span>
+                        <span class="text-slate-500 text-xs font-mono mt-0.5">${loc.location}, ${loc.province}</span>
+                    `;
+                    div.onclick = () => {
+                        const offsetLat = loc.coords[0] - 0.02;
+                        map.flyTo([offsetLat, loc.coords[1]], 14, { animate: true, duration: 1.5 });
+                        showDetailPanel(loc);
+                        searchResults.classList.add('hidden');
+                        searchInput.value = loc.name;
+                    };
+                    searchResults.appendChild(div);
+                });
+            } else {
+                searchResults.classList.remove('hidden');
+                searchResults.innerHTML = '<div class="p-4 text-xs text-slate-500 text-center font-medium">Data tidak ditemukan.</div>';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.add('hidden');
+            }
+        });
+
+        function showDetailPanel(data) {
+            const container = document.getElementById('village-overlay-container');
+            const backdrop = document.getElementById('overlay-backdrop');
+            const panel = document.getElementById('overlay-panel');
+
+            // Make interactive
+            container.classList.remove('pointer-events-none');
+            backdrop.classList.remove('pointer-events-none');
+            
+            // Fade in backdrop
+            backdrop.classList.remove('opacity-0');
+            backdrop.classList.add('opacity-100');
+
+            // Slide up panel
+            panel.classList.remove('translate-y-full');
+            panel.classList.add('translate-y-0');
+            
+            // Inject Data
+            document.getElementById('detail-cover').style.backgroundImage = `url('${data.img}')`;
+            document.getElementById('detail-type').textContent = data.type;
+            document.getElementById('detail-name').textContent = data.name;
+            document.getElementById('detail-province').textContent = data.province;
+            document.getElementById('detail-location').textContent = data.location;
+            document.getElementById('detail-desc').textContent = data.desc;
+            
+            // Random Temperature Simulation for Widget
+            const randomTemp = Math.floor(Math.random() * 8) + 24;
+            document.getElementById('detail-temp').innerHTML = `${randomTemp}&deg;`;
+            
+            // Inject Grid Data
+            document.getElementById('detail-pop').textContent = data.population + " Jiwa";
+            document.getElementById('detail-kk').textContent = data.kk + " KK";
+            document.getElementById('detail-area').textContent = data.area;
+            document.getElementById('detail-density').textContent = data.density;
+            document.getElementById('detail-economy').textContent = data.economy;
+            document.getElementById('detail-social').textContent = data.social;
+            document.getElementById('detail-workforce').textContent = data.workforce;
+            document.getElementById('detail-unemployment').textContent = data.unemployment;
+            
+            // Animated Progress Bars
+            const setBar = (prefix, obj) => {
+                document.getElementById(`detail-${prefix}-lbl`).textContent = `${obj.pct}% - ${obj.label}`;
+                const bar = document.getElementById(`detail-${prefix}-bar`);
+                bar.style.width = '0%';
+                setTimeout(() => bar.style.width = `${obj.pct}%`, 400);
+            };
+
+            setBar('road', data.road);
+            setBar('elec', data.elec);
+            setBar('net', data.net);
+        }
+
+        function closeOverlay() {
+            const container = document.getElementById('village-overlay-container');
+            const backdrop = document.getElementById('overlay-backdrop');
+            const panel = document.getElementById('overlay-panel');
+
+            // Fade out backdrop
+            backdrop.classList.remove('opacity-100');
+            backdrop.classList.add('opacity-0');
+
+            // Slide down panel
+            panel.classList.remove('translate-y-0');
+            panel.classList.add('translate-y-full');
+
+            // Remove interaction after animation
+            setTimeout(() => {
+                container.classList.add('pointer-events-none');
+                backdrop.classList.add('pointer-events-none');
+            }, 500);
+            
+            // Reset Map View slightly out
+            map.setZoom(5.5, {animate: true});
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initMap(); 
+            updateClock();
+        });
+    </script>
+</body>
+</html>

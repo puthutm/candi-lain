@@ -1,0 +1,169 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: erp-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sso_platform
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sso_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: erp-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  sso-platform:
+    build:
+      context: ./sso-platform
+      dockerfile: Dockerfile
+    container_name: erp-sso-platform
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./sso-platform/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/sso_platform
+      - REDIS_URL=redis://redis:6379
+
+  reference-data:
+    build:
+      context: ./reference-data
+      dockerfile: Dockerfile
+    container_name: erp-reference-data
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./reference-data/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/reference_data
+      - REDIS_URL=redis://redis:6379
+
+  pmb-platform:
+    build:
+      context: ./pmb-platform
+      dockerfile: Dockerfile
+    container_name: erp-pmb-platform
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./pmb-platform/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/pmb_platform
+      - REDIS_URL=redis://redis:6379
+
+  siakad-platform:
+    build:
+      context: ./siakad-platform
+      dockerfile: Dockerfile
+    container_name: erp-siakad-platform
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./siakad-platform/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/siakad_platform
+      - REDIS_URL=redis://redis:6379
+
+  lms-platform:
+    build:
+      context: ./lms-platform
+      dockerfile: Dockerfile
+    container_name: erp-lms-platform
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./lms-platform/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/lms_platform
+      - REDIS_URL=redis://redis:6379
+
+  keuangan-platform:
+    build:
+      context: ./keuangan-platform
+      dockerfile: Dockerfile
+    container_name: erp-keuangan-platform
+    restart: unless-stopped
+    ports:
+      - "3005:3005"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./keuangan-platform/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/keuangan_platform
+      - REDIS_URL=redis://redis:6379
+
+  hris-platform:
+    build:
+      context: ./hris-platform
+      dockerfile: Dockerfile
+    container_name: erp-hris-platform
+    restart: unless-stopped
+    ports:
+      - "3006:3006"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./hris-platform/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/hris_platform
+      - REDIS_URL=redis://redis:6379
+
+volumes:
+  postgres_data:

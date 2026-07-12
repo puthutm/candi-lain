@@ -1,0 +1,304 @@
+import React, { useState } from 'react';
+import { 
+  ChevronRight,
+  Book,
+  Calendar,
+  Clock,
+  FileText,
+  BookOpen,
+  HelpCircle,
+  PlayCircle,
+  CheckCircle,
+  Layout,
+  Layers,
+  MoreVertical,
+  Plus,
+  Settings,
+  Bell,
+  Lock
+} from 'lucide-react';
+
+const App = () => {
+  const [toast, setToast] = useState({ show: false, message: '' });
+
+  const showToast = (message) => {
+    setToast({ show: true, message });
+    setTimeout(() => {
+      setToast((prev) => ({ ...prev, show: false }));
+    }, 3000);
+  };
+
+  // Mock data dengan penambahan status untuk simulasi Aktif vs Inactive
+  const sessions = [
+    { id: 1, title: 'Manajemen Sistem Informasi', status: 'In Progress', date: 'Monday, 20 October 2026', resources: 2, assignments: 1, quiz: 1, record: 1, isActive: true },
+    { id: 2, title: 'Evolusi Teknologi Informasi dan Komunikasi', status: 'Active', date: 'Monday, 27 October 2026', resources: 1, assignments: 0, quiz: 0, record: 0, isActive: true },
+    { id: 3, title: '', status: 'Class Not Started', date: 'Monday, 3 November 2026', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 4, title: '', status: 'Class Not Started', date: 'Monday, 10 November 2026', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 5, title: '', status: 'Class Not Started', date: 'Monday, 17 November 2026', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 6, title: '', status: 'Class Not Started', date: 'Monday, 24 November 2026', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 7, title: '', status: 'Class Not Started', date: 'Monday, 1 December 2026', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 8, title: '', status: 'Class Not Started', date: 'Wednesday, 2 December 2026', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 9, title: '', status: 'Class Not Started', date: 'Monday, 14 December 2026', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 10, title: '', status: 'Class Not Started', date: 'Monday, 21 December 2026', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 11, title: '', status: 'Class Not Started', date: 'Monday, 28 December 2026', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 12, title: '', status: 'Class Not Started', date: 'Monday, 4 January 2027', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 13, title: '', status: 'Class Not Started', date: 'Monday, 11 January 2027', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 14, title: '', status: 'Class Not Started', date: 'Monday, 18 January 2027', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 15, title: '', status: 'Class Not Started', date: 'Monday, 25 January 2027', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false },
+    { id: 16, title: '', status: 'Class Not Started', date: 'Wednesday, 27 January 2027', resources: 0, assignments: 0, quiz: 0, record: 0, isActive: false }
+  ];
+
+  return (
+    <div className="bg-[#F9FBFC] text-slate-900 min-h-screen font-sans relative">
+      
+      {/* HEADER NAV */}
+      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm">
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+          <div className="w-8 h-8 bg-[#004996] rounded flex items-center justify-center text-white font-bold text-xs mr-2 shadow-sm">U</div>
+          <span className="hover:text-blue-600 cursor-pointer transition-colors">Courses Offered</span>
+          <ChevronRight size={14} className="text-slate-300" />
+          <span className="text-slate-900 font-bold">SI-001</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <button className="text-slate-400 hover:text-blue-600 transition-colors relative hidden sm:block">
+            <Bell size={20} />
+            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 border border-white rounded-full"></span>
+          </button>
+          <div className="text-right ml-2">
+            <p className="text-xs font-bold text-slate-800">Noviandri S.Kom...</p>
+            <p className="text-[10px] text-blue-600 uppercase tracking-tighter font-extrabold">dosen</p>
+          </div>
+          <div className="w-9 h-9 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
+            <img src={`https://ui-avatars.com/api/?name=Noviandri+S&background=1e293b&color=fff`} alt="Teacher" />
+          </div>
+        </div>
+      </header>
+
+      {/* MAIN CONTENT AREA */}
+      <main className="p-6 lg:p-12 max-w-6xl mx-auto">
+        
+        {/* COURSE INFO HEADER CARD */}
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center shadow-sm mb-10 relative overflow-hidden group hover:border-blue-200 transition-colors duration-400">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl opacity-60 -translate-y-1/2 translate-x-1/4"></div>
+
+          <div className="space-y-4 relative z-10 w-full md:w-auto">
+            <div className="flex items-center gap-4">
+                <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Sistem Operasi</h1>
+                <button 
+                  onClick={() => showToast('Membuka pengaturan mata kuliah')}
+                  className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition-colors"
+                >
+                    <Settings size={18} />
+                </button>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-4 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <span className="bg-[#00A99D] text-white px-3 py-1.5 rounded-lg shadow-sm">SI-001</span>
+              <span className="flex items-center gap-1.5"><Book size={14} className="text-slate-400"/> 3 sks</span>
+              <span className="flex items-center gap-1.5"><Calendar size={14} className="text-slate-400"/> Genap Tahun ajaran 2026</span>
+              <span className="flex items-center gap-1.5"><Clock size={14} className="text-slate-400"/> Friday, 04:00 - 05:00</span>
+            </div>
+            
+            <div className="flex items-center gap-4 mt-4 pt-5 border-t border-slate-100">
+              <img src="https://ui-avatars.com/api/?name=Noviandri+S&background=1e293b&color=fff" className="w-11 h-11 rounded-full shadow-sm" alt="Dosen"/>
+              <div>
+                <p className="text-[13px] font-extrabold text-slate-800">Noviandri S.Kom, MMSI, S.Kom., MMSI</p>
+                <p className="text-[10px] text-slate-400 font-semibold tracking-widest mt-0.5">NIDN : 2110102006</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-8 md:mt-0 flex shrink-0 relative z-10 mx-auto md:mx-0">
+            <div className="relative w-28 h-28 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90 absolute top-0 left-0" viewBox="0 0 36 36">
+                <path strokeDasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f1f5f9" strokeWidth="3" />
+                <path strokeDasharray="4, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#facc15" strokeWidth="3.5" className="animate-pulse" strokeLinecap="round" />
+              </svg>
+              <div className="flex flex-col items-center justify-center bg-white rounded-full w-20 h-20 shadow-sm border border-slate-50 z-10 group-hover:scale-105 transition-transform duration-400">
+                <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Progress</span>
+                <span className="text-xl font-black text-slate-800 -mt-1">4%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* LEARNING SESSIONS LIST */}
+        <div className="section-frame">
+          <div className="section-header-solid flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-blue-600 rounded-full"></div>
+                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Learning Sessions</h3>
+            </div>
+            <button 
+                onClick={() => showToast('Membuka form penambahan sesi')}
+                className="flex items-center gap-2 bg-[#004996] text-white px-5 py-2.5 rounded-xl text-[10px] font-extrabold tracking-widest uppercase transition-all shadow-md hover:bg-blue-800 active:scale-95"
+            >
+                <Plus size={14} /> Tambah Sesi
+            </button>
+          </div>
+          
+          <div className="bg-slate-50/40 p-5 md:p-8 space-y-5">
+            {sessions.map((session) => (
+              <div 
+                key={session.id}
+                onClick={() => session.isActive ? showToast(`Membuka Pengelolaan Session ${session.id}`) : showToast('Sesi belum aktif')}
+                className={`item-card border border-slate-200 rounded-2xl p-5 md:p-7 group flex flex-col md:flex-row md:items-stretch justify-between gap-6 shadow-sm relative overflow-hidden transition-all duration-400 ${
+                  session.isActive 
+                  ? 'bg-white border-l-[3px] border-l-blue-600 hover:shadow-xl hover:translate-x-1' 
+                  : 'bg-slate-100/50 grayscale opacity-60 border-dashed cursor-not-allowed'
+                }`}
+              >
+                
+                <div className="flex items-start gap-4 md:gap-6 flex-grow w-full z-10">
+                  {/* Icon Indikator Baris */}
+                  <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center shrink-0 transition-all duration-400 shadow-sm ${
+                    session.isActive 
+                    ? 'bg-blue-50 border-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white' 
+                    : 'bg-slate-200 border-slate-300 text-slate-400'
+                  }`}>
+                    {session.isActive ? (
+                        <Layers size={24} className="group-hover:rotate-12 transition-transform" />
+                    ) : (
+                        <Lock size={20} />
+                    )}
+                  </div>
+
+                  {/* Konten Kiri */}
+                  <div className="space-y-3 flex-grow min-w-0">
+                    <div className="flex flex-wrap items-center gap-3 pr-8 md:pr-0">
+                      {session.title ? (
+                        <h4 className={`text-[15px] font-extrabold truncate ${session.isActive ? 'text-slate-800' : 'text-slate-500'}`}>
+                            {session.title}
+                        </h4>
+                      ) : (
+                        <h4 className="text-[14px] font-bold text-slate-400 italic truncate">
+                            Topik belum ditentukan
+                        </h4>
+                      )}
+                      
+                      <span className={`text-[9px] font-black border px-2.5 py-1 rounded-full uppercase tracking-widest whitespace-nowrap shadow-sm ${
+                        session.isActive 
+                        ? 'bg-blue-50 text-blue-600 border-blue-100' 
+                        : 'bg-slate-200 text-slate-500 border-slate-300'
+                      }`}>
+                        {session.status}
+                      </span>
+                    </div>
+                    
+                    <div>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-extrabold tracking-wide ${
+                        session.isActive 
+                        ? 'bg-slate-100 text-slate-600 group-hover:bg-blue-50 group-hover:text-blue-700' 
+                        : 'bg-slate-200 text-slate-400'
+                      }`}>
+                        <Layout size={12} className="opacity-70" /> 
+                        Session {session.id}
+                      </span>
+                    </div>
+
+                    {/* Metrics Footer (Only visible when active/has data) */}
+                    <div className={`flex flex-wrap items-center gap-5 text-[10px] font-bold pt-2 ${session.isActive ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <span className={`flex items-center gap-1.5 ${session.resources > 0 ? 'text-blue-600' : 'opacity-60'}`}>
+                        <FileText size={14} /> {session.resources} Resources
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${session.assignments > 0 ? 'text-blue-600' : 'opacity-60'}`}>
+                        <BookOpen size={14} /> {session.assignments} Assignments
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${session.quiz > 0 ? 'text-blue-600' : 'opacity-60'}`}>
+                        <HelpCircle size={14} /> {session.quiz} Quiz
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${session.record > 0 ? 'text-blue-600' : 'opacity-60'}`}>
+                        <PlayCircle size={14} /> {session.record} Record
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Content */}
+                <div className="flex flex-col items-start md:items-end justify-between mt-4 md:mt-0 shrink-0 ml-18 md:ml-0 z-10 relative">
+                  
+                  <div className="flex items-center gap-3 w-full justify-between md:justify-end">
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-colors ${
+                        session.isActive ? 'bg-slate-50 text-slate-600' : 'bg-slate-200 text-slate-400'
+                    }`}>
+                        <Calendar size={14} className="opacity-70" />
+                        {session.date}
+                    </div>
+                    {session.isActive && (
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                showToast(`Opsi Sesi ${session.id}`);
+                            }}
+                            className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-800 rounded-xl transition-colors"
+                        >
+                            <MoreVertical size={18} />
+                        </button>
+                    )}
+                  </div>
+                  
+                  {/* Tombol Aksi Solid */}
+                  <button 
+                    disabled={!session.isActive}
+                    onClick={(e) => {
+                      e.stopPropagation(); 
+                      showToast(`Membuka Pengelolaan Session ${session.id}`);
+                    }}
+                    className={`mt-4 md:mt-auto px-6 py-3 rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center gap-2 ${
+                      session.isActive 
+                      ? 'bg-[#004996] text-white hover:bg-blue-800 hover:shadow-lg' 
+                      : 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+                    }`}
+                  >
+                    Kelola Sesi <ChevronRight size={14} />
+                  </button>
+                </div>
+
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </main>
+
+      {/* TOAST SYSTEM */}
+      <div className={`fixed bottom-10 right-10 z-[100] transform transition-all duration-500 ${toast.show ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>
+        <div className="bg-slate-900 text-white px-7 py-4 rounded-2xl shadow-2xl flex items-center gap-4">
+          <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold">
+            <CheckCircle size={20} />
+          </div>
+          <p className="text-sm font-semibold tracking-wide">{toast.message}</p>
+        </div>
+      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+        body, .font-sans {
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .section-frame {
+            border: 1px solid #e2e8f0;
+            border-radius: 2rem;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.01);
+            margin-bottom: 4rem;
+        }
+        .section-header-solid {
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.25rem 2rem;
+        }
+      `}} />
+    </div>
+  );
+};
+
+export default App;

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LMS Dashboard — Modul Pembelajaran</title>
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --pmb-primary: #0f487b;
+    --pmb-primary-dark: #08294d;
+    --pmb-accent: #ecc94b;
+  }
+  html, body {
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .font-display { font-family: "Outfit", "Plus Jakarta Sans", sans-serif; letter-spacing: -0.01em; }
+
+  /* Scrollbars */
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,.35); border-radius: 999px; }
+
+  ::selection { background: #ecc94b; color: #0f487b; }
+
+  .pmb-grid-pattern {
+    background-image:
+      linear-gradient(rgba(236,201,75,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(236,201,75,.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  
+  .gradient-blue { background: linear-gradient(135deg, #0f487b 0%, #0a3460 55%, #08294d 100%); }
+  .gradient-btn { background: linear-gradient(135deg, #0f487b 0%, #08294d 100%); }
+  .gradient-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-up { animation: fadeUp .35s ease both; }
+  
+  @keyframes pop { 0% { transform: scale(.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .pop { animation: pop .3s cubic-bezier(.4,0,.2,1) both; }
+
+  .hide { display: none !important; }
+  
+  .pulse-live {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    animation: pulse-red 2s infinite;
+  }
+  @keyframes pulse-red {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  }
+</style>
+</head>
+
+<body class="min-h-screen flex flex-col md:flex-row">
+
+  <!-- SIDEBAR -->
+  <aside class="w-full md:w-64 lg:w-72 relative md:sticky top-0 md:h-screen flex flex-col text-white overflow-hidden gradient-blue shrink-0 z-20">
+    <div class="absolute inset-0 pmb-grid-pattern opacity-50 pointer-events-none"></div>
+    <div class="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-yellow-400/10 blur-3xl pointer-events-none"></div>
+
+    <div class="relative flex flex-col h-full p-5 sm:p-6 overflow-y-auto">
+      <!-- Brand -->
+      <div class="flex items-center gap-3 mb-10">
+        <div class="w-10 h-10 rounded-xl bg-[#ecc94b] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(236,201,75,0.3)]">
+          <i data-lucide="book-open" class="w-5 h-5 text-[#0f487b]" stroke-width="2.5"></i>
+        </div>
+        <div class="leading-tight min-w-0">
+          <div class="text-[10px] uppercase tracking-[0.18em] text-slate-200/80">LMS Dosen</div>
+          <div class="font-display font-bold text-sm truncate">Cyber University</div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="space-y-1">
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-white/10 transition-colors text-sm font-medium">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Beranda
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-white/10 transition-colors text-sm font-medium">
+          <i data-lucide="clock" class="w-4 h-4"></i> Timeline & Berita
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/10 text-white font-semibold transition-colors text-sm">
+          <i data-lucide="monitor-play" class="w-4 h-4 text-[#ecc94b]"></i> Kelas Akademik
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-white/10 transition-colors text-sm font-medium">
+          <i data-lucide="message-square" class="w-4 h-4"></i> Obrolan
+        </a>
+      </nav>
+
+      <div class="mt-auto pt-6 flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+        <div class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden shrink-0">
+          <img src="https://ui-avatars.com/api/?name=Noviansti+S&background=ecc94b&color=0f487b" alt="User" class="w-full h-full object-cover"/>
+        </div>
+        <div class="min-w-0">
+          <div class="text-xs font-semibold text-white truncate">Noviansti, S.Kom., M.MSI</div>
+          <div class="text-[10px] text-slate-400">Dosen Pengampu</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 bg-[#f8fafc] relative w-full h-screen overflow-y-auto custom-scrollbar">
+    
+    <!-- Header -->
+    <header class="sticky top-0 z-10 backdrop-blur-md bg-[#f8fafc]/90 border-b border-slate-200/70 px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2 text-sm text-slate-500 font-medium">
+        <a href="#" class="hover:text-[#0f487b] transition-colors"><i data-lucide="arrow-left" class="w-4 h-4"></i></a>
+        <span class="text-slate-300">/</span>
+        <a href="#" class="hover:text-[#0f487b] transition-colors">Kelas Akademik</a>
+        <span class="text-slate-300">/</span>
+        <span class="text-slate-800 font-semibold">Knowledge Management (SI603)</span>
+      </div>
+      <button class="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+        <i data-lucide="bell" class="w-4 h-4"></i>
+      </button>
+    </header>
+
+    <div class="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+      
+      <!-- Course Banner -->
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="px-2.5 py-1 rounded-md bg-blue-50 text-[#0f487b] text-[10px] font-bold uppercase tracking-wider">Semester Ganjil 2025/2026</span>
+            <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider">3 SKS</span>
+          </div>
+          <h1 class="font-display text-2xl md:text-3xl font-bold text-slate-900">Knowledge Management</h1>
+          <p class="text-slate-500 text-sm mt-1">Kode: SI603 • Peserta: 32 Mahasiswa</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-colors inline-flex items-center gap-2">
+            <i data-lucide="users" class="w-4 h-4"></i> Data Peserta
+          </button>
+          <button class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition-colors inline-flex items-center gap-2">
+            <i data-lucide="settings" class="w-4 h-4"></i> Pengaturan
+          </button>
+        </div>
+      </div>
+
+      <!-- Content Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Navigation Tabs (Vertical) -->
+        <div class="lg:col-span-3">
+          <div class="bg-white rounded-2xl border border-slate-200 p-2 sticky top-24">
+            <nav class="space-y-1">
+              <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
+                Informasi Kelas
+              </a>
+              <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
+                Diskusi / Forum
+              </a>
+              <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl bg-blue-50 text-[#0f487b] font-semibold text-sm transition-colors border border-blue-100/50">
+                Sesi Pembelajaran
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </a>
+              <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
+                Tugas Terstruktur
+              </a>
+              <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
+                Ujian CBT
+              </a>
+              <a href="#" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
+                Laporan & Nilai
+              </a>
+            </nav>
+          </div>
+        </div>
+
+        <!-- Right Column: Sesi Content -->
+        <div class="lg:col-span-9 space-y-6">
+          
+          <!-- Sesi 1 (Hari ini) -->
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <!-- Header Sesi -->
+            <div class="p-6 md:p-8 border-b border-slate-100 relative">
+              <div class="absolute top-0 left-0 w-1.5 h-full bg-[#ecc94b]"></div>
+              
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <h2 class="font-display text-xl font-bold text-slate-900">Sesi 1: Pengantar Knowledge Management</h2>
+                    <span id="badge-status" class="px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <i data-lucide="clock" class="w-3 h-3"></i> Menunggu dimulai
+                    </span>
+                  </div>
+                  <p class="text-slate-500 text-sm">
+                    Tujuan Pembelajaran: Memahami konsep dasar, definisi, dan urgensi manajemen pengetahuan dalam organisasi modern.
+                  </p>
+                  <div class="mt-4 flex items-center gap-4 text-xs font-medium text-slate-500">
+                    <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i> Selasa, 10:00 - 12:30 WIB</span>
+                    <span class="flex items-center gap-1.5"><i data-lucide="monitor" class="w-4 h-4 text-slate-400"></i> Online (Sinkronus)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SMART ALERT: No Material Warning -->
+              <div id="alert-no-material" class="mt-6 flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 fade-up">
+                <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                  <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-amber-800">Sesi di hari ini belum memiliki bahan ajar</h4>
+                  <p class="text-xs text-amber-700 mt-0.5">Silakan unggah materi atau salin dari periode lalu sebelum kelas dimulai.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Bar -->
+            <div class="bg-slate-50/50 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-100">
+              <button class="text-sm font-semibold text-slate-600 hover:text-[#0f487b] flex items-center gap-2 transition-colors">
+                <i data-lucide="copy" class="w-4 h-4"></i> Duplikasi Periode Lalu
+              </button>
+              <div class="flex items-center gap-3 w-full sm:w-auto">
+                <button onclick="openModal('uploadModal')" class="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-white border border-slate-200 text-[#0f487b] font-semibold text-sm hover:bg-slate-50 transition-all shadow-sm flex items-center justify-center gap-2">
+                  <i data-lucide="plus" class="w-4 h-4"></i> Tambah Bahan Ajar
+                </button>
+                <button id="btn-start-vicon" onclick="openModal('viconModal')" class="flex-1 sm:flex-none px-4 py-2 rounded-xl text-white font-semibold text-sm gradient-green hover:brightness-110 transition-all shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2">
+                  <i data-lucide="video" class="w-4 h-4"></i> Mulai Sesi
+                </button>
+              </div>
+            </div>
+
+            <!-- Material Container -->
+            <div class="p-6 md:p-8 bg-slate-50/30">
+              <h3 class="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wider">Bahan Pembelajaran</h3>
+              
+              <!-- Empty State -->
+              <div id="material-empty" class="text-center py-10">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <i data-lucide="folder-open" class="w-6 h-6 text-slate-400"></i>
+                </div>
+                <p class="text-slate-500 text-sm">Belum ada bahan ajar diunggah untuk sesi ini.</p>
+              </div>
+
+              <!-- List Material (Diisi via JS) -->
+              <div id="material-list" class="space-y-3 hide">
+                <!-- Item will be appended here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Sesi 2 (Mendatang - Disabled look) -->
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 opacity-60">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="font-display text-lg font-bold text-slate-900">Sesi 2: Model & Framework KM</h2>
+                <div class="mt-2 flex items-center gap-4 text-xs font-medium text-slate-500">
+                  <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4"></i> Selasa Depan, 10:00 WIB</span>
+                </div>
+              </div>
+              <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400"></i>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL: Tambah Bahan Ajar -->
+<div id="uploadModal" class="hide fixed inset-0 z-50 bg-[#08294d]/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden pop">
+    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+      <h3 class="font-display text-xl font-bold text-slate-900">Tambah Bahan Ajar</h3>
+      <button onclick="closeModal('uploadModal')" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+    <div class="p-6 space-y-5">
+      <div>
+        <label class="text-sm font-semibold text-slate-700 mb-2 block">Jenis Bahan Ajar</label>
+        <div class="grid grid-cols-3 gap-3">
+          <button type="button" class="type-btn active border-2 border-[#0f487b] bg-blue-50 text-[#0f487b] rounded-xl py-3 px-2 flex flex-col items-center gap-2 font-medium text-xs transition-colors">
+            <i data-lucide="file-text" class="w-5 h-5"></i> Dokumen/Materi
+          </button>
+          <button type="button" class="type-btn border border-slate-200 text-slate-500 hover:bg-slate-50 rounded-xl py-3 px-2 flex flex-col items-center gap-2 font-medium text-xs transition-colors">
+            <i data-lucide="clipboard-list" class="w-5 h-5"></i> Tugas Mandiri
+          </button>
+          <button type="button" class="type-btn border border-slate-200 text-slate-500 hover:bg-slate-50 rounded-xl py-3 px-2 flex flex-col items-center gap-2 font-medium text-xs transition-colors">
+            <i data-lucide="video" class="w-5 h-5"></i> Video Embed
+          </button>
+        </div>
+      </div>
+      <div>
+        <label class="text-sm font-semibold text-slate-700 mb-2 block">Judul Materi</label>
+        <input id="input-title" type="text" placeholder="Mis: Slide Presentasi Bab 1" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#0f487b] focus:ring-2 focus:ring-yellow-400/40" />
+      </div>
+      <div>
+        <label class="text-sm font-semibold text-slate-700 mb-2 block">Unggah File (Max 50MB)</label>
+        <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
+          <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+          <p class="text-sm font-medium text-slate-700">Klik atau seret file ke sini</p>
+          <p class="text-xs text-slate-500 mt-1">Mendukung PDF, PPTX, DOCX</p>
+        </div>
+      </div>
+    </div>
+    <div class="p-6 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50/50">
+      <button onclick="closeModal('uploadModal')" class="px-5 py-2.5 rounded-xl font-semibold text-slate-600 hover:bg-slate-200 transition-all text-sm">Batal</button>
+      <button onclick="submitMaterial()" class="px-5 py-2.5 rounded-xl font-semibold text-white gradient-btn hover:brightness-110 transition-all text-sm shadow-md">Simpan & Publikasi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Simulasi Video Conference -->
+<div id="viconModal" class="hide fixed inset-0 z-50 bg-[#08294d]/90 backdrop-blur-md flex items-center justify-center p-4">
+  <div class="w-full max-w-3xl bg-slate-900 rounded-3xl shadow-2xl overflow-hidden pop border border-white/10 flex flex-col h-[80vh] md:h-[600px]">
+    <!-- Vicon Header -->
+    <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-black/40">
+      <div class="flex items-center gap-3">
+        <div class="w-3 h-3 rounded-full bg-red-500 pulse-live"></div>
+        <h3 class="font-display font-semibold text-white">Live: Pengantar KM (SI603)</h3>
+      </div>
+      <div class="text-xs font-mono text-slate-400" id="vicon-timer">00:00:00</div>
+    </div>
+    
+    <!-- Vicon Body (Simulasi Kamera) -->
+    <div class="flex-1 p-6 flex items-center justify-center relative bg-slate-800">
+      <div class="text-center">
+        <div class="w-24 h-24 rounded-full bg-slate-700 mx-auto mb-4 flex items-center justify-center border-4 border-slate-600">
+          <i data-lucide="user" class="w-10 h-10 text-slate-400"></i>
+        </div>
+        <p class="text-white font-medium">Noviansti, S.Kom., M.MSI</p>
+        <p class="text-slate-400 text-sm mt-1">Mengaktifkan kamera & mikrofon...</p>
+      </div>
+      <!-- Simulate student tiles -->
+      <div class="absolute bottom-4 right-4 flex gap-2">
+        <div class="w-24 h-16 bg-slate-700 rounded-lg border border-slate-600 flex items-center justify-center"><span class="text-xs text-slate-400">Mhs 1</span></div>
+        <div class="w-24 h-16 bg-slate-700 rounded-lg border border-slate-600 flex items-center justify-center"><span class="text-xs text-slate-400">Mhs 2</span></div>
+      </div>
+    </div>
+
+    <!-- Vicon Controls -->
+    <div class="p-4 bg-black/60 flex items-center justify-center gap-4">
+      <button class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white hover:bg-slate-600 transition-colors">
+        <i data-lucide="mic" class="w-5 h-5"></i>
+      </button>
+      <button class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white hover:bg-slate-600 transition-colors">
+        <i data-lucide="video" class="w-5 h-5"></i>
+      </button>
+      <button class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white hover:bg-slate-600 transition-colors">
+        <i data-lucide="monitor-up" class="w-5 h-5"></i>
+      </button>
+      <div class="w-px h-8 bg-white/20 mx-2"></div>
+      <button onclick="endVicon()" class="px-6 h-12 rounded-full bg-red-500 flex items-center justify-center text-white hover:bg-red-600 font-semibold text-sm transition-colors shadow-lg shadow-red-500/20">
+        Akhiri Kelas
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast" class="hide fixed top-5 right-5 z-[60] bg-white border border-slate-200 rounded-xl shadow-xl px-4 py-3 flex items-center gap-3 fade-up">
+  <i id="toast-icon" data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500"></i>
+  <span id="toast-text" class="text-sm font-medium text-slate-800"></span>
+</div>
+
+<script>
+  // Inisialisasi Icons
+  lucide.createIcons();
+
+  let viconTimerInterval;
+  let viconSeconds = 0;
+
+  // Type Button Logic in Upload Modal
+  document.querySelectorAll('.type-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.type-btn').forEach(b => {
+        b.classList.remove('active', 'border-2', 'border-[#0f487b]', 'bg-blue-50', 'text-[#0f487b]');
+        b.classList.add('border', 'border-slate-200', 'text-slate-500');
+      });
+      const target = e.currentTarget;
+      target.classList.remove('border', 'border-slate-200', 'text-slate-500');
+      target.classList.add('active', 'border-2', 'border-[#0f487b]', 'bg-blue-50', 'text-[#0f487b]');
+    });
+  });
+
+  // Open / Close Modals
+  function openModal(id) {
+    const modal = document.getElementById(id);
+    modal.classList.remove('hide');
+    modal.style.display = 'flex';
+    
+    if (id === 'viconModal') {
+      startViconTimer();
+      updateSessionStatusToLive();
+    }
+  }
+
+  function closeModal(id) {
+    const modal = document.getElementById(id);
+    modal.classList.add('hide');
+    modal.style.display = 'none';
+  }
+
+  // Tambah Bahan Ajar Logic
+  function submitMaterial() {
+    const titleInput = document.getElementById('input-title').value || 'Materi PDF Tanpa Judul';
+    
+    // Remove empty state & alert
+    document.getElementById('material-empty').classList.add('hide');
+    const alertBox = document.getElementById('alert-no-material');
+    if(alertBox) alertBox.classList.add('hide');
+    
+    const list = document.getElementById('material-list');
+    list.classList.remove('hide');
+
+    // Create New Item Card
+    const newItem = document.createElement('div');
+    newItem.className = 'flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-sm fade-up';
+    newItem.innerHTML = `
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+          <i data-lucide="file-text" class="w-5 h-5 text-red-500"></i>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-slate-900">${titleInput}</h4>
+          <p class="text-xs text-slate-500 mt-0.5">PDF Document • 2.4 MB • Dipublikasikan barusan</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+      </div>
+    `;
+    
+    list.appendChild(newItem);
+    lucide.createIcons(); // refresh icons
+    
+    closeModal('uploadModal');
+    document.getElementById('input-title').value = ''; // reset
+    showToast('Bahan ajar berhasil ditambahkan & terpublikasi.');
+  }
+
+  // Video Conference Logic
+  function startViconTimer() {
+    viconSeconds = 0;
+    const timerEl = document.getElementById('vicon-timer');
+    viconTimerInterval = setInterval(() => {
+      viconSeconds++;
+      const hrs = Math.floor(viconSeconds / 3600).toString().padStart(2, '0');
+      const mins = Math.floor((viconSeconds % 3600) / 60).toString().padStart(2, '0');
+      const secs = (viconSeconds % 60).toString().padStart(2, '0');
+      timerEl.textContent = `${hrs}:${mins}:${secs}`;
+    }, 1000);
+  }
+
+  function updateSessionStatusToLive() {
+    const badge = document.getElementById('badge-status');
+    badge.className = 'px-2.5 py-1 rounded-md bg-red-100 text-red-700 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 pulse-live';
+    badge.innerHTML = '<div class="w-2 h-2 rounded-full bg-red-600"></div> Sedang Berlangsung (Live)';
+    
+    const btnStart = document.getElementById('btn-start-vicon');
+    btnStart.innerHTML = '<i data-lucide="video" class="w-4 h-4"></i> Kembali ke Ruang Live';
+    btnStart.classList.replace('gradient-green', 'bg-red-500');
+    lucide.createIcons();
+  }
+
+  function endVicon() {
+    clearInterval(viconTimerInterval);
+    closeModal('viconModal');
+    
+    // Update UI status to Finished
+    const badge = document.getElementById('badge-status');
+    badge.className = 'px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5';
+    badge.innerHTML = '<i data-lucide="check-circle-2" class="w-3 h-3"></i> Sesi Selesai';
+    
+    const btnStart = document.getElementById('btn-start-vicon');
+    btnStart.classList.add('hide'); // Sembunyikan tombol mulai setelah selesai
+
+    lucide.createIcons();
+    showToast('Kelas tatap muka virtual telah diakhiri.');
+  }
+
+  // Toast System
+  let toastTimer;
+  function showToast(text) {
+    const t = document.getElementById("toast");
+    document.getElementById("toast-text").textContent = text;
+    t.classList.remove("hide");
+    t.style.display = "flex";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.style.display = "none"; t.classList.add("hide"); }, 3000);
+  }
+</script>
+
+</body>
+</html>

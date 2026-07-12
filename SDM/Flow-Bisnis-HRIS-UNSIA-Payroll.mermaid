@@ -1,0 +1,28 @@
+flowchart TD
+
+    subgraph ALUR_B["Alur B — Run Payroll Bulanan (5 Tahap)"]
+        direction TB
+        B1["1. Persiapan Data Master\nvalidasi karyawan eligible,\nkomponen gaji, parameter pajak"] --> B2["2. Validasi Absensi & BKD\ntarik data dari SIAKAD"]
+        B2 --> B3{"Ada anomali\ndata?"}
+        B3 -- "Ya" --> B4["Koreksi manual\noleh Admin Payroll"]
+        B4 --> B3
+        B3 -- "Tidak" --> B5["3. Kalkulasi Gross & Net\nhitung PPh21 + BPJS"]
+        B5 --> B6{"Ada item\nbutuh review?"}
+        B6 -- "Ya" --> B7["Review manual\n(mis. tunjangan kehadiran)"]
+        B7 --> B6
+        B6 -- "Tidak" --> B8["4. Persetujuan\napproval berjenjang"]
+        B8 --> B9{"Disetujui?"}
+        B9 -- "Ditolak" --> B5
+        B9 -- "Ya" --> B10["5. Disburse & Slip"]
+        B10 --> B11["Kirim webhook\npayroll.disbursement_ready\nke Sistem Keuangan"]
+        B10 --> B12["Terbitkan & distribusi\nslip gaji ke pegawai"]
+    end
+
+    classDef proc fill:#eef2ff,stroke:#6366f1,stroke-width:0.5px;
+    classDef decision fill:#fff7ed,stroke:#f59e0b,stroke-width:0.5px;
+    classDef ext fill:#fef2f2,stroke:#ef4444,stroke-width:0.5px;
+    classDef done fill:#ecfdf5,stroke:#10b981,stroke-width:0.5px;
+
+    class B1,B2,B4,B5,B7,B8,B10,B12 proc;
+    class B3,B6,B9 decision;
+    class B11 ext;

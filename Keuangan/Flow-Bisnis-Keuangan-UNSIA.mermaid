@@ -1,0 +1,113 @@
+flowchart TD
+
+    Start([Mulai Periode Akademik]) --> Y1
+
+    subgraph L1["🎓 SIAKAD"]
+        SI1[Data Mahasiswa Aktif per Prodi/Periode]
+        SI2[Terima Status Clearance]
+        SI3{Status = Tertahan?}
+        SI4[Blokir Akses UTS/UAS]
+        SI5[Izinkan Akses Ujian]
+    end
+
+    subgraph L2["⚙️ Sistem Keuangan"]
+        Y1[Pull Data Mahasiswa Aktif dari SIAKAD]
+        Y2[Generate Tagihan SPP/UKT Massal]
+        Y3{Penerima Beasiswa?}
+        Y4[Tambah Komponen Potongan]
+        Y5[Terima Webhook Payment Gateway]
+        Y6[Auto-Rekonsiliasi + Auto-Jurnal]
+        Y7{Lewat Jatuh Tempo Tanpa Lunas?}
+        Y8[Set Clearance = Tertahan]
+        Y9[Publish Event finance.clearance_changed]
+        Y10[Set Clearance = Aktif]
+        Y11[Pipeline Payroll: Validasi → Pajak → Approval → Disburse]
+        Y12[Auto-Jurnal Payroll]
+        Y13[Approval PO Berjenjang sesuai Threshold]
+        Y14[Auto-Jurnal PO/Honor]
+        Y15[Susun Laporan Keuangan Periodik]
+    end
+
+    subgraph L3["🙋 Mahasiswa (SKEUM)"]
+        M1[Lihat Tagihan Aktif]
+        M2[Checkout & Pilih Saluran Bayar]
+        M3[Selesaikan Pembayaran]
+        M4{Mau Ajukan Keringanan?}
+        M5[Pilih Skema Cicilan + Unggah Dokumen]
+        M6[Lihat Status Clearance & Riwayat]
+    end
+
+    subgraph L4["💼 Staf Keuangan"]
+        F1[Verifikasi Pembayaran Non-PG / Manual]
+        F2[Proses Approval Pengajuan Keringanan]
+        F3[Kelola PO & Honor Eksternal]
+        F4[Terima Data Payroll dari HRIS]
+        F5[Terima Antrean Komisi dari CRM]
+        F6[Klik Disburse]
+    end
+
+    subgraph L5["📚 LMS"]
+        LM1[Terima Status Clearance]
+        LM2{Status = LMS Suspend?}
+        LM3[Blokir Akses Submit Tugas/Ujian LMS]
+        LM4[Akses Normal]
+    end
+
+    subgraph L6["🏦 Eksternal"]
+        E1[Payment Gateway - Midtrans]
+        E2[HRIS - Modul SDM]
+        E3[CRM - Modul Referral]
+        E4[DJP / BPJS]
+    end
+
+    %% ---- Generate Tagihan ----
+    Start --> Y1 --> SI1 --> Y2
+    Y2 --> Y3
+    Y3 -- ya --> Y4 --> M1
+    Y3 -- tidak --> M1
+
+    %% ---- Pembayaran ----
+    M1 --> M2 --> M3 --> E1
+    E1 --> Y5 --> Y6
+    Y6 --> M6
+    Y6 -.jika manual/DIPA.-> F1
+
+    %% ---- Keringanan ----
+    M1 --> M4
+    M4 -- ya --> M5 --> F2
+    F2 -.disetujui.-> Y6
+
+    %% ---- Clearance ----
+    Y2 --> Y7
+    Y7 -- ya --> Y8 --> Y9
+    Y7 -- tidak --> Y10
+    Y6 -.pembayaran melunasi tunggakan.-> Y10
+    Y9 --> SI2 --> SI3
+    SI3 -- ya --> SI4
+    SI3 -- tidak --> SI5
+    Y9 --> LM1 --> LM2
+    LM2 -- ya --> LM3
+    LM2 -- tidak --> LM4
+
+    %% ---- Payroll ----
+    E2 --> F4 --> Y11 --> Y12 --> Y15
+
+    %% ---- PO & Honor ----
+    F3 --> Y13 --> Y14 --> Y15
+
+    %% ---- Komisi CRM ----
+    E3 --> F5 --> F6 -.status Paid kembali ke CRM.-> E3
+
+    %% ---- Pajak ----
+    Y12 -.data pajak.-> E4
+    Y14 -.data pajak.-> E4
+
+    Y15 --> End([Laporan ke Yayasan/Audit])
+
+    classDef decision fill:#FFF3CD,stroke:#B8860B,color:#000
+    classDef system fill:#DCEAF7,stroke:#2C6FAA,color:#000
+    classDef external fill:#E8E8E8,stroke:#666,color:#000
+
+    class Y3,Y7,SI3,LM2,M4 decision
+    class Y1,Y2,Y4,Y5,Y6,Y9,Y10,Y11,Y12,Y13,Y14,Y15 system
+    class E1,E2,E3,E4 external

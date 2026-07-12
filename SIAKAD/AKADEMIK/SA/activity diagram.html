@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Diagram - Sistem KRS (Final Fix)</title>
+    <style>
+        :root {
+            --lane-bg-1: #f8fafc;
+            --lane-bg-2: #ffffff;
+            --system-bg: #f0f9ff;
+            --primary-color: #2563eb;
+            --error-color: #dc2626;
+            --success-color: #16a34a;
+            --warning-color: #ea580c;
+            --text-color: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+
+        body {
+            background-color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            z-index: 50;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; margin: 0; }
+        .subtitle { font-size: 0.875rem; color: #64748b; margin-top: 4px;}
+
+        /* Main Container */
+        #diagram-wrapper {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            background: #cbd5e1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            cursor: grab;
+        }
+
+        #diagram-wrapper:active { cursor: grabbing; }
+
+        /* Scalable Container */
+        #scalable-container {
+            transform-origin: top center;
+            transition: transform 0.2s ease-out;
+            padding: 50px;
+            min-width: min-content;
+        }
+
+        #diagram-canvas {
+            display: grid;
+            /* 5 Kolom Lebar @ 320px */
+            grid-template-columns: repeat(5, 320px);
+            min-height: 2200px;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative;
+            margin: auto;
+        }
+
+        /* Swimlanes */
+        .swimlane {
+            border-right: 1px solid #cbd5e1;
+            position: relative;
+            padding-top: 60px;
+        }
+        .swimlane:last-child { border-right: none; }
+        .swimlane:nth-child(odd) { background-color: var(--lane-bg-1); }
+        .swimlane:nth-child(even) { background-color: var(--lane-bg-2); }
+        #lane-sistem { background-color: var(--system-bg); border-left: 2px solid #bae6fd; border-right: 2px solid #bae6fd; }
+
+        .lane-header {
+            position: absolute;
+            top: 0; left: 0; width: 100%; padding: 1rem;
+            text-align: center; font-weight: 800; color: var(--text-color);
+            background: #eff6ff; border-bottom: 2px solid #3b82f6;
+            z-index: 5; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;
+        }
+
+        /* Nodes */
+        .node {
+            width: 240px; padding: 15px;
+            background: white; border: 2px solid #3b82f6; border-radius: 8px;
+            text-align: center; font-size: 0.9rem; font-weight: 600; color: var(--text-color);
+            position: absolute; z-index: 20;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .node:hover { transform: scale(1.02); background: #eff6ff; }
+
+        /* Decision Node: Diamond */
+        /* Ukuran visual 120x120 */
+        .node.decision {
+            width: 120px; height: 120px;
+            transform: rotate(45deg);
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 12px; background: #fff7ed; border-color: #f97316; border-width: 3px;
+            padding: 0; z-index: 20;
+        }
+        /* Un-rotate text inside */
+        .node.decision span {
+            transform: rotate(-45deg);
+            font-size: 0.85rem; font-weight: 800; color: #c2410c;
+            line-height: 1.2; text-align: center; width: 140px; /* Lebar teks lebih besar agar muat */
+            display: block;
+        }
+
+        .node.system-action {
+            background-color: #e0f2fe; border-color: #0ea5e9; border-style: dashed;
+        }
+
+        .start-node {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: #22c55e; border: 2px solid #15803d;
+            position: absolute; z-index: 20;
+        }
+        .end-node {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: #ef4444; border: 4px solid #fecaca;
+            position: absolute; z-index: 20;
+        }
+
+        /* SVG Overlay */
+        #svg-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10;
+        }
+
+        /* Label Styles */
+        .label-text {
+            font-size: 11px; font-weight: 800; font-family: 'Segoe UI', sans-serif;
+            text-anchor: middle; dominant-baseline: middle;
+        }
+        .label-bg {
+            fill: white; stroke: #e2e8f0; stroke-width: 1; rx: 4; fill-opacity: 1;
+        }
+
+        /* Zoom Controls */
+        #zoom-controls {
+            position: fixed; bottom: 30px; right: 30px;
+            display: flex; flex-direction: column; gap: 10px;
+            z-index: 100; background: white; padding: 10px;
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .zoom-btn {
+            width: 40px; height: 40px; border: 1px solid #cbd5e1;
+            background: white; border-radius: 6px; font-size: 1.2rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            color: #475569; transition: all 0.2s;
+        }
+        .zoom-btn:hover {
+            background: #eff6ff; color: var(--primary-color); border-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>Activity Diagram: Proses KRS</h1>
+        <div class="subtitle">Konektor terkunci pada sudut (vertex) decision node.</div>
+    </div>
+</header>
+
+<div id="diagram-wrapper">
+    <div id="scalable-container">
+        <div id="diagram-canvas">
+            
+            <!-- Lanes Headers -->
+            <div class="swimlane" id="lane-biro"><div class="lane-header">Biro Akademik</div></div>
+            <div class="swimlane" id="lane-kaprodi"><div class="lane-header">Kaprodi</div></div>
+            <div class="swimlane" id="lane-sistem"><div class="lane-header">SISTEM</div></div>
+            <div class="swimlane" id="lane-mhs"><div class="lane-header">Mahasiswa</div></div>
+            <div class="swimlane" id="lane-dosen"><div class="lane-header">Dosen PA</div></div>
+
+            <svg id="svg-overlay"></svg>
+
+            <!-- NODES 
+                 Lane Centers (Width 320): 160, 480, 800, 1120, 1440
+            -->
+
+            <!-- Start -->
+            <div class="start-node" style="top: 80px; left: 140px;"></div>
+
+            <!-- Setup -->
+            <div class="node" id="act-1" style="top: 150px; left: 40px;">Setup Periode &<br>Kurikulum</div>
+            <div class="node system-action" id="sys-1" style="top: 150px; left: 680px;">Simpan Data<br>Periode</div>
+
+            <!-- Planning -->
+            <div class="node" id="act-2" style="top: 280px; left: 360px;">Penentuan MK<br>(Offering)</div>
+
+            <!-- Plotting & Cek Bentrok -->
+            <div class="node" id="act-3" style="top: 450px; left: 360px;">Plotting Dosen<br>& Jadwal</div>
+            <!-- Decision di tengah -->
+            <div class="node decision" id="dec-1" style="top: 435px; left: 740px;"><span>Cek<br>Bentrok?</span></div>
+
+            <!-- KRS & Validasi Syarat -->
+            <div class="node" id="act-4" style="top: 650px; left: 1000px;">Isi KRS<br>Online</div>
+            <div class="node decision" id="dec-2" style="top: 635px; left: 740px;"><span>Validasi<br>Syarat?</span></div>
+
+            <!-- Monitoring Process -->
+            <div class="node" id="act-5" style="top: 880px; left: 360px;">Monitoring<br>Kelas</div>
+            
+            <!-- Decision Perlu Edit -->
+            <div class="node decision" id="dec-3" style="top: 1060px; left: 420px;"><span>Perlu<br>Edit?</span></div>
+            
+            <!-- Update Loop -->
+            <div class="node" id="act-6" style="top: 1250px; left: 360px;">Update Kuota /<br>Override</div>
+            <div class="node system-action" id="sys-2" style="top: 1250px; left: 680px;">Update Data<br>Kelas</div>
+            
+            <!-- Evaluation -->
+            <div class="node" id="act-7" style="top: 1450px; left: 360px;">Evaluasi<br>Kelas</div>
+
+            <!-- Validasi Process -->
+            <div class="node" id="act-8" style="top: 1600px; left: 1000px;">Ajukan<br>Validasi</div>
+            <div class="node" id="act-9" style="top: 1600px; left: 1320px;">Validasi<br>PA</div>
+            
+            <div class="node system-action" id="sys-3" style="top: 1750px; left: 680px;">Generate<br>KSM</div>
+            <div class="node" id="act-10" style="top: 1900px; left: 40px;">Terbitkan<br>KSM</div>
+
+            <!-- End -->
+            <div class="end-node" style="top: 2050px; left: 140px;"></div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Zoom Controls -->
+<div id="zoom-controls">
+    <button class="zoom-btn" onclick="zoom(0.1)">+</button>
+    <button class="zoom-btn" onclick="zoom(-0.1)">-</button>
+    <button class="zoom-btn" onclick="resetZoom()">R</button>
+</div>
+
+<script>
+    let currentScale = 1;
+    const container = document.getElementById('scalable-container');
+
+    function zoom(delta) {
+        currentScale += delta;
+        if (currentScale < 0.3) currentScale = 0.3;
+        if (currentScale > 2.0) currentScale = 2.0;
+        container.style.transform = `scale(${currentScale})`;
+    }
+
+    function resetZoom() {
+        currentScale = 1;
+        container.style.transform = `scale(${currentScale})`;
+    }
+
+    // Explicit Connection Routing
+    const connections = [
+        { from: 'start-node', startFace: 'bottom', to: 'act-1', endFace: 'top', color: 'black' },
+        { from: 'act-1', startFace: 'right', to: 'sys-1', endFace: 'left', color: 'black' },
+        { from: 'sys-1', startFace: 'bottom', to: 'act-2', endFace: 'right', color: 'black', type: 'Z' }, 
+        { from: 'act-2', startFace: 'bottom', to: 'act-3', endFace: 'top', color: 'black' },
+        
+        // --- BENTROK CHECK ---
+        // Plotting (Left) -> Decision 1 (Right)
+        // Masuk lewat titik KIRI Decision
+        { from: 'act-3', startFace: 'right', to: 'dec-1', endFace: 'left', color: 'black' }, 
+        
+        // BENTROK = YA (Revisi)
+        // Keluar dari ATAS decision -> Loop balik ke ATAS Plotting
+        { from: 'dec-1', startFace: 'top', to: 'act-3', endFace: 'top', label: 'YA (Bentrok)', color: 'red', type: 'loop-top' },
+        
+        // BENTROK = TIDAK (Aman)
+        // Keluar dari KANAN Decision -> Lanjut ke KIRI Isi KRS
+        { from: 'dec-1', startFace: 'right', to: 'act-4', endFace: 'left', label: 'TIDAK (Aman)', color: 'green', type: 'Z-down' },
+
+        // --- ISI KRS ---
+        // Isi KRS (Right) -> Validasi (Left)
+        // Masuk lewat titik KANAN Decision
+        { from: 'act-4', startFace: 'left', to: 'dec-2', endFace: 'right', color: 'black' }, 
+
+        // VALIDASI GAGAL
+        // Keluar dari ATAS decision -> Loop balik ke ATAS Isi KRS
+        { from: 'dec-2', startFace: 'top', to: 'act-4', endFace: 'top', label: 'GAGAL', color: 'red', type: 'loop-top-right' },
+        
+        // VALIDASI SUKSES
+        // Keluar dari BAWAH decision -> Turun dan Kiri ke Monitoring
+        // Catatan: Monitoring ada di Lane 2 (Kaprodi), Dec 2 di Lane 3 (Sistem)
+        { from: 'dec-2', startFace: 'bottom', to: 'act-5', endFace: 'right', label: 'VALID', color: 'green', type: 'step-down-left' },
+
+        // --- MONITORING ---
+        { from: 'act-5', startFace: 'bottom', to: 'dec-3', endFace: 'top', color: 'black' }, 
+
+        // --- PERLU EDIT? ---
+        // YA (Edit) - Keluar BAWAH -> Turun ke Act 6
+        { from: 'dec-3', startFace: 'bottom', to: 'act-6', endFace: 'top', label: 'YA', color: 'orange' },
+        
+        // TIDAK (Selesai) - Keluar KANAN -> Bypass ke Evaluasi
+        { from: 'dec-3', startFace: 'right', to: 'act-7', endFace: 'right', label: 'TIDAK (Selesai)', color: 'black', type: 'bypass-right' },
+
+        // --- UPDATE LOOP ---
+        { from: 'act-6', startFace: 'right', to: 'sys-2', endFace: 'left', color: 'black' },
+        // Loop balik ke Monitoring
+        { from: 'sys-2', startFace: 'right', to: 'act-5', endFace: 'right', label: 'Updated', color: 'black', type: 'loop-right-up' },
+
+        // --- FINAL ---
+        { from: 'act-7', startFace: 'bottom', to: 'act-8', endFace: 'left', color: 'black', type: 'Z-down' },
+        { from: 'act-8', startFace: 'right', to: 'act-9', endFace: 'left', color: 'black' },
+        { from: 'act-9', startFace: 'bottom', to: 'sys-3', endFace: 'right', color: 'black', type: 'Z-down' },
+        { from: 'sys-3', startFace: 'bottom', to: 'act-10', endFace: 'right', color: 'black', type: 'Z-down' },
+        { from: 'act-10', startFace: 'bottom', to: 'end-node', endFace: 'top', color: 'black' }
+    ];
+
+    function getAnchor(el, side) {
+        const rect = el.getBoundingClientRect();
+        const containerRect = document.getElementById('diagram-canvas').getBoundingClientRect();
+        const relLeft = rect.left - containerRect.left;
+        const relTop = rect.top - containerRect.top;
+        
+        // Standard Nodes
+        if (!el.classList.contains('decision')) {
+            if (side === 'top') return { x: relLeft + rect.width / 2, y: relTop };
+            if (side === 'bottom') return { x: relLeft + rect.width / 2, y: relTop + rect.height };
+            if (side === 'left') return { x: relLeft, y: relTop + rect.height / 2 };
+            if (side === 'right') return { x: relLeft + rect.width, y: relTop + rect.height / 2 };
+        } 
+        // Decision Diamonds (Vertex Anchoring)
+        else {
+            // Visual bounding box for rotated square includes extra space.
+            // Center is safer.
+            const cx = relLeft + rect.width / 2;
+            const cy = relTop + rect.height / 2;
+            
+            // Karena rotasi 45deg, titik "Atas" visual adalah tengah atas bounding box.
+            if (side === 'top') return { x: cx, y: relTop };
+            if (side === 'bottom') return { x: cx, y: relTop + rect.height };
+            if (side === 'left') return { x: relLeft, y: cy };
+            if (side === 'right') return { x: relLeft + rect.width, y: cy };
+        }
+        return { x: relLeft + rect.width / 2, y: relTop + rect.height / 2 };
+    }
+
+    function drawArrows() {
+        const svg = document.getElementById('svg-overlay');
+        const container = document.getElementById('diagram-canvas');
+        if(!svg || !container) return;
+        
+        svg.innerHTML = `
+            <defs>
+                <marker id="arrow-black" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#1e293b" /></marker>
+                <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#dc2626" /></marker>
+                <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#16a34a" /></marker>
+                <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#ea580c" /></marker>
+            </defs>
+        `;
+
+        connections.forEach(conn => {
+            const fromEl = (conn.from === 'start-node') ? document.querySelector('.start-node') : 
+                           (conn.from === 'end-node') ? document.querySelector('.end-node') : document.getElementById(conn.from);
+            const toEl = (conn.to === 'start-node') ? document.querySelector('.start-node') :
+                         (conn.to === 'end-node') ? document.querySelector('.end-node') : document.getElementById(conn.to);
+
+            if (!fromEl || !toEl) return;
+
+            const start = getAnchor(fromEl, conn.startFace);
+            const end = getAnchor(toEl, conn.endFace);
+
+            let path = "";
+            let labelX = 0, labelY = 0;
+
+            // --- STRICT PATH ROUTING ---
+            
+            if (conn.type === 'loop-top') {
+                const apex = start.y - 60;
+                path = `M ${start.x} ${start.y} L ${start.x} ${apex} L ${end.x} ${apex} L ${end.x} ${end.y}`;
+                labelX = (start.x + end.x) / 2; labelY = apex;
+            }
+            else if (conn.type === 'loop-top-right') {
+                const apex = start.y - 60;
+                path = `M ${start.x} ${start.y} L ${start.x} ${apex} L ${end.x} ${apex} L ${end.x} ${end.y}`;
+                labelX = (start.x + end.x) / 2; labelY = apex;
+            }
+            else if (conn.type === 'Z-down') {
+                // Vertical half -> Horizontal -> Vertical
+                const midY = (start.y + end.y) / 2;
+                path = `M ${start.x} ${start.y} L ${start.x} ${midY} L ${end.x} ${midY} L ${end.x} ${end.y}`;
+                labelX = (start.x + end.x) / 2; labelY = midY;
+            }
+            else if (conn.type === 'Z') {
+                const midY = (start.y + end.y) / 2;
+                path = `M ${start.x} ${start.y} L ${start.x} ${midY} L ${end.x} ${midY} L ${end.x} ${end.y}`;
+            }
+            else if (conn.type === 'bypass-right') {
+                const midX = start.x + 60;
+                path = `M ${start.x} ${start.y} L ${midX} ${start.y} L ${midX} ${end.y} L ${end.x} ${end.y}`;
+                labelX = midX + 5; labelY = (start.y + end.y) / 2;
+            }
+            else if (conn.type === 'loop-right-up') {
+                const midX = start.x + 40;
+                path = `M ${start.x} ${start.y} L ${midX} ${start.y} L ${midX} ${end.y} L ${end.x} ${end.y}`;
+                labelX = midX; labelY = (start.y + end.y) / 2;
+            }
+            else if (conn.type === 'step-down-left') {
+                // Turun ke bawah, lalu belok kiri, lalu masuk kanan
+                // Start (Bottom Dec 2) -> End (Right Act 5)
+                const turnY = start.y + 40;
+                path = `M ${start.x} ${start.y} L ${start.x} ${turnY} L ${end.x + 20} ${turnY} L ${end.x + 20} ${end.y} L ${end.x} ${end.y}`;
+                labelX = (start.x + end.x) / 2; labelY = turnY;
+            }
+            else {
+                // Simple L or Straight
+                if (Math.abs(start.x - end.x) < 2) { 
+                    path = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+                } else if (Math.abs(start.y - end.y) < 2) { 
+                    path = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+                } else {
+                    // Default elbow
+                    if (conn.startFace === 'bottom' || conn.startFace === 'top') {
+                        path = `M ${start.x} ${start.y} L ${start.x} ${end.y} L ${end.x} ${end.y}`;
+                    } else {
+                        path = `M ${start.x} ${start.y} L ${end.x} ${start.y} L ${end.x} ${end.y}`;
+                    }
+                }
+            }
+
+            // Colors
+            let strokeColor = "#1e293b";
+            let marker = "url(#arrow-black)";
+            if (conn.color === 'red') { strokeColor = "#dc2626"; marker = "url(#arrow-red)"; }
+            if (conn.color === 'green') { strokeColor = "#16a34a"; marker = "url(#arrow-green)"; }
+            if (conn.color === 'orange') { strokeColor = "#ea580c"; marker = "url(#arrow-orange)"; }
+
+            const pEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            pEl.setAttribute("d", path);
+            pEl.setAttribute("stroke", strokeColor);
+            pEl.setAttribute("stroke-width", "2.5");
+            pEl.setAttribute("fill", "none");
+            pEl.setAttribute("marker-end", marker);
+            pEl.setAttribute("stroke-linejoin", "round");
+            svg.appendChild(pEl);
+
+            if (conn.label) {
+                const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                const textWidth = conn.label.length * 7 + 20;
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                
+                // Centering bg
+                rect.setAttribute("x", labelX - textWidth/2);
+                rect.setAttribute("y", labelY - 12);
+                rect.setAttribute("width", textWidth);
+                rect.setAttribute("height", 24);
+                rect.setAttribute("class", "label-bg"); // Solid white
+                
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", labelX);
+                text.setAttribute("y", labelY + 1);
+                text.setAttribute("class", "label-text");
+                text.setAttribute("fill", strokeColor);
+                text.textContent = conn.label;
+
+                group.appendChild(rect);
+                group.appendChild(text);
+                svg.appendChild(group);
+            }
+        });
+    }
+
+    // Redraw on zoom/load
+    window.addEventListener('load', drawArrows);
+    new ResizeObserver(drawArrows).observe(container);
+</script>
+
+</body>
+</html>

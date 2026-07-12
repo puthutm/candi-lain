@@ -1,0 +1,27 @@
+flowchart TD
+
+    subgraph ALUR_A["Alur A — Siklus Hidup Pegawai"]
+        direction TB
+        A1["Pegawai baru diinput\n(status Onboarding)"] --> A2{"Kelengkapan\ndata 100%?"}
+        A2 -- "Belum" --> A3["Lengkapi checklist\n(biodata, kontrak, rekening)"]
+        A3 --> A2
+        A2 -- "Ya" --> A4["Status: Aktif\n(masuk direktori)"]
+        A4 --> A5["Berjalan rutin:\npresensi, cuti, SKP/BKD"]
+        A5 --> A6{"Ada perubahan\njabatan/unit?"}
+        A6 -- "Ya" --> A7["Proses Mutasi/Promosi\n(lihat detail bawah)"]
+        A7 --> A5
+        A6 -- "Tidak" --> A5
+        A5 --> A8{"Pensiun /\nberhenti?"}
+        A8 -- "Ya" --> A9["Status: Non-Aktif/Pensiun\n(offboarding)"]
+        A8 -- "Tidak" --> A5
+    end
+
+    classDef start fill:#f1efe8,stroke:#5f5e5a,stroke-width:0.5px;
+    classDef proc fill:#eef2ff,stroke:#6366f1,stroke-width:0.5px;
+    classDef decision fill:#fff7ed,stroke:#f59e0b,stroke-width:0.5px;
+    classDef done fill:#ecfdf5,stroke:#10b981,stroke-width:0.5px;
+
+    class A1 start;
+    class A3,A4,A5,A7 proc;
+    class A2,A6,A8 decision;
+    class A9 done;

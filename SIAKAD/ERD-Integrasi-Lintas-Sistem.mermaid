@@ -1,0 +1,131 @@
+erDiagram
+
+    %% ══════════════════════════════════════════════════════════════
+    %% ERD INTEGRASI LINTAS SISTEM — ERP UNSIA
+    %% Satu PostgreSQL (single source of truth), tiga domain aplikasi:
+    %% SSO Platform · SI-PMB · SIAKAD
+    %% Hanya entitas & kolom yang relevan untuk relasi lintas sistem.
+    %% ══════════════════════════════════════════════════════════════
+
+    %% ---------------- DOMAIN: SSO PLATFORM (identity backbone) ----------------
+    SSO_USERS {
+        uuid id PK
+        string name
+        string email UK
+        string password_hash
+    }
+
+    SSO_APPLICATIONS {
+        uuid id PK
+        string name "Admin PMB | SIAKAD Admin | dst"
+        string client_id UK
+    }
+
+    SSO_APPLICATION_ROLES {
+        uuid id PK
+        uuid application_id FK
+        string role_key "super_admin_pmb | admin_baak | kaprodi | dosen | dst"
+    }
+
+    SSO_USER_APPLICATION_ROLES {
+        uuid id PK
+        uuid user_id FK
+        uuid application_id FK
+        uuid role_id FK
+    }
+
+    SSO_REF_CATEGORIES {
+        uuid id PK
+        string code UK "JABATAN | UNIT_KERJA | JENIS_DOKUMEN | dst"
+        string name
+    }
+
+    SSO_REF_ITEMS {
+        uuid id PK
+        uuid category_id FK
+        string name
+        uuid parent_id FK "hierarki"
+    }
+
+    SSO_ORGANIZATIONS {
+        uuid id PK
+        string name
+        uuid parent_id FK
+    }
+
+    SSO_APPLICATIONS ||--o{ SSO_APPLICATION_ROLES : "mendefinisikan role dinamis"
+    SSO_USERS ||--o{ SSO_USER_APPLICATION_ROLES : "punya role di aplikasi"
+    SSO_APPLICATIONS ||--o{ SSO_USER_APPLICATION_ROLES : "diberikan_untuk"
+    SSO_APPLICATION_ROLES ||--o{ SSO_USER_APPLICATION_ROLES : "menjadi"
+    SSO_REF_CATEGORIES ||--o{ SSO_REF_ITEMS : "berisi"
+
+    %% ---------------- DOMAIN: SI-PMB ----------------
+    PMB_APPLICANTS {
+        uuid id PK
+        string registration_number UK
+        string full_name
+        string email
+        enum current_stage
+    }
+
+    PMB_APPLICANT_DOCUMENTS {
+        uuid id PK
+        uuid applicant_id FK
+        uuid verified_by_user_id FK "→ SSO_USERS, BUKAN string ref lagi"
+        enum status
+    }
+
+    PMB_APPLICANT_STATUS_HISTORY {
+        uuid id PK
+        uuid applicant_id FK
+        uuid changed_by_user_id FK "→ SSO_USERS, nullable jika sistem"
+    }
+
+    PMB_EXAM_RESULTS {
+        uuid id PK
+        uuid applicant_id FK
+        uuid graded_by_user_id FK "→ SSO_USERS"
+        decimal score
+        boolean passed
+    }
+
+    PMB_APPLICANTS ||--o{ PMB_APPLICANT_DOCUMENTS : "mengunggah"
+    PMB_APPLICANTS ||--o{ PMB_APPLICANT_STATUS_HISTORY : "punya_riwayat"
+    PMB_APPLICANTS ||--o{ PMB_EXAM_RESULTS : "memperoleh"
+    SSO_USERS ||--o{ PMB_APPLICANT_DOCUMENTS : "memverifikasi"
+    SSO_USERS ||--o{ PMB_APPLICANT_STATUS_HISTORY : "mengubah_status"
+    SSO_USERS ||--o{ PMB_EXAM_RESULTS : "menilai"
+
+    %% ---------------- DOMAIN: SIAKAD ----------------
+    SIAKAD_STUDENTS {
+        uuid id PK
+        uuid applicant_id FK "→ PMB_APPLICANTS, BUKAN string ref lagi"
+        uuid user_id FK "→ SSO_USERS, login mahasiswa"
+        string nim UK
+        string full_name
+        enum academic_status
+    }
+
+    SIAKAD_LECTURERS {
+        uuid id PK
+        uuid user_id FK "→ SSO_USERS, login dosen"
+        string nidn UK
+        string full_name
+    }
+
+    SIAKAD_KRS_APPROVALS {
+        uuid id PK
+        uuid krs_id FK
+        uuid dosen_pa_lecturer_id FK
+        enum action
+    }
+
+    SIAKAD_STUDENTS ||--o{ SIAKAD_KRS_APPROVALS : "diproses_untuk (via krs)"
+    SIAKAD_LECTURERS ||--o{ SIAKAD_KRS_APPROVALS : "menyetujui"
+    PMB_APPLICANTS ||--o| SIAKAD_STUDENTS : "menjadi (setelah Diterima + Daftar Ulang)"
+    SSO_USERS ||--o| SIAKAD_STUDENTS : "login_sebagai"
+    SSO_USERS ||--o| SIAKAD_LECTURERS : "login_sebagai"
+
+    %% ---------------- MASTER DATA BERSAMA (usulan konsolidasi) ----------------
+    SSO_REF_ITEMS ||--o{ PMB_APPLICANT_DOCUMENTS : "jenis dokumen (opsional, gantikan document_types lokal PMB)"
+    SSO_ORGANIZATIONS ||--o{ SIAKAD_STUDENTS : "unit kerja/prodi (opsional, gantikan study_programs lokal jika prodi = organizations)"

@@ -1,0 +1,65 @@
+flowchart TD
+
+    subgraph SVC1["🔐 SSO Service"]
+        direction TB
+        SSO_DB[(sso_db<br/>users, applications,<br/>roles, oauth tokens)]
+        SSO_API["/oauth/authorize<br/>/oauth/token<br/>/oauth/userinfo<br/>/oauth/introspect"]
+    end
+
+    subgraph SVC2["📝 PMB Service"]
+        direction TB
+        PMB_DB[(pmb_db<br/>applicants, documents,<br/>invoices, exam_results)]
+        PMB_API["/api/applicants<br/>/api/applicants/:id<br/>(REST, private DB)"]
+        PMB_EVT["Event Publisher"]
+    end
+
+    subgraph SVC3["🎓 SIAKAD Service"]
+        direction TB
+        SIAKAD_DB[(siakad_db<br/>students, lecturers, krs,<br/>classes, grades)]
+        SIAKAD_API["/api/students<br/>/api/krs<br/>(REST, private DB)"]
+        SIAKAD_EVT["Event Consumer"]
+        SIAKAD_CACHE[("users_cache<br/>(local, read-only copy<br/>id, name, email, role)")]
+    end
+
+    subgraph GW["🚪 API Gateway / BFF (opsional)"]
+        GATEWAY["Routing + rate limit +<br/>validasi JWT terpusat"]
+    end
+
+    subgraph BUS["📬 Event Bus / Webhook"]
+        QUEUE["applicant.accepted_and_paid<br/>(async, at-least-once, idempotent)"]
+    end
+
+    Client["🖥️ Browser / Mobile Client"] --> GATEWAY
+    GATEWAY --> SSO_API
+    GATEWAY --> PMB_API
+    GATEWAY --> SIAKAD_API
+
+    %% ---- Auth: semua service percaya token dari SSO ----
+    PMB_API -. "validasi JWT via<br/>/oauth/introspect atau JWKS" .-> SSO_API
+    SIAKAD_API -. "validasi JWT via<br/>/oauth/introspect atau JWKS" .-> SSO_API
+
+    %% ---- Sinkron identitas: cache lokal, bukan FK ----
+    SSO_API -. "webhook: user.updated<br/>(nama/email berubah)" .-> SIAKAD_CACHE
+    SIAKAD_API --> SIAKAD_CACHE
+
+    %% ---- Integrasi PMB -> SIAKAD: event-driven, BUKAN query lintas DB ----
+    PMB_DB --> PMB_EVT
+    PMB_EVT -- "publish event\n(snapshot lengkap applicant)" --> QUEUE
+    QUEUE -- "consume + idempotency key" --> SIAKAD_EVT
+    SIAKAD_EVT -- "buat record students\n(copy data, simpan pmb_applicant_id\nsbg NILAI referensi, bukan FK)" --> SIAKAD_DB
+
+    %% ---- Fallback sinkron: REST call langsung jika perlu data real-time ----
+    SIAKAD_API -. "REST call (jarang, ada timeout/circuit breaker)\nGET /api/applicants/:id" .-> PMB_API
+
+    SSO_DB --- SSO_API
+    PMB_DB --- PMB_API
+
+    classDef svc fill:#DCEAF7,stroke:#2C6FAA,color:#000
+    classDef db fill:#E8E8E8,stroke:#666,color:#000
+    classDef evt fill:#FFF3CD,stroke:#B8860B,color:#000
+    classDef gw fill:#E3DCF7,stroke:#6A4C93,color:#000
+
+    class SSO_API,PMB_API,SIAKAD_API svc
+    class SSO_DB,PMB_DB,SIAKAD_DB,SIAKAD_CACHE db
+    class PMB_EVT,SIAKAD_EVT,QUEUE evt
+    class GATEWAY gw

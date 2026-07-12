@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin PMB - Universitas Siber Asia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Urbanist:wght@700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Urbanist', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            500: '#00719f',
+                            600: '#0f487b',
+                            700: '#0a345c',
+                            accent: '#FED524',
+                            dark: '#1e293b'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(15, 72, 123, 0.08)',
+                        'card': '0 10px 40px -10px rgba(0,0,0,0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f4f7f9; -webkit-font-smoothing: antialiased; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .fade-in { animation: fadeIn 0.35s ease-out forwards; opacity: 0; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes pop { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-pop { animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* Drawer */
+        .drawer-overlay { transition: opacity 0.3s ease; }
+        .drawer-panel { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        /* Hairline accent bar */
+        .accent-bar {
+            background: linear-gradient(90deg, #0f487b 0%, #00719f 50%, #0f487b 100%);
+        }
+
+        /* Status pills */
+        .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+        .pill-emerald { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+        .pill-amber { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .pill-rose { background: #ffe4e6; color: #9f1239; border: 1px solid #fda4af; }
+        .pill-slate { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .pill-brand { background: #d9e2ec; color: #0f487b; border: 1px solid #94a3b8; }
+
+        /* Funnel stage card hover */
+        .funnel-card { transition: all 0.2s ease; }
+        .funnel-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -8px rgba(15, 72, 123, 0.15); }
+
+        /* Live ping dot */
+        @keyframes live-ping {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .live-dot { animation: live-ping 2s infinite; }
+
+        /* Custom radio for verifikasi */
+        .verif-radio { display: none; }
+        .verif-radio + label {
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .verif-radio:checked + label.verif-valid {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+        .verif-radio:checked + label.verif-invalid {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+
+        /* Chart bars */
+        .chart-bar {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-origin: bottom;
+        }
+        .chart-bar:hover {
+            opacity: 0.85;
+        }
+
+        /* Drawer tabs */
+        .tab-btn { transition: all 0.15s ease; border-bottom: 2px solid transparent; }
+        .tab-btn.active { border-bottom-color: #0f487b; color: #0f487b; }
+
+        /* Verifikasi card selected */
+        .queue-card.active {
+            background: #f0f4f8;
+            border-color: #0f487b;
+        }
+
+        /* Issuance-style modal */
+        .modal-card {
+            opacity: 0;
+            transform: translateY(16px) scale(0.98);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .modal-card.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    </style>
+</head>
+<body class="text-slate-800 selection:bg-brand-accent/30 selection:text-brand-600 flex h-screen overflow-hidden">
+
+    <!-- ============================================================ -->
+    <!-- LOADING OVERLAY                                              -->
+    <!-- ============================================================ -->
+    <div id="loading-overlay" class="fixed inset-0 z-[200] bg-brand-700/95 backdrop-blur-md hidden flex-col items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-2xl w-[90%] max-w-md transform scale-95 opacity-0 transition-all duration-500 text-center" id="loading-box">
+            <div class="w-16 h-16 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-5 animate-pulse shadow-inner">
+                <i id="loading-icon" class="ph-fill ph-spinner-gap text-3xl"></i>
+            </div>
+            <h3 id="loading-title" class="font-display text-xl font-bold text-slate-800 mb-1">Memproses</h3>
+            <p id="loading-desc" class="text-sm text-slate-500 mb-7">Sedang menyiapkan data...</p>
+
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div id="loading-bar" class="h-full bg-gradient-to-r from-brand-600 to-brand-500 w-0 transition-all duration-500 ease-out rounded-full"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- VERIFIKASI SUCCESS MODAL                                     -->
+    <!-- ============================================================ -->
+    <div id="verif-success-modal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-brand-700/85 backdrop-blur-md opacity-0 transition-opacity duration-400 p-4">
+        <div id="verif-success-card" class="modal-card relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div class="h-[3px] accent-bar"></div>
+            <div class="px-7 pt-7 pb-6 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500 flex items-center justify-center text-white text-3xl shadow-lg shadow-emerald-500/30 animate-pop border-4 border-white">
+                    <i class="ph-bold ph-check"></i>
+                </div>
+                <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">Berkas Disetujui</p>
+                <h2 class="font-display text-xl font-bold text-slate-800 mb-2">Pendaftar Diverifikasi</h2>
+                <p class="text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
+                    <b class="text-slate-800" id="verif-success-name">Budi Santoso</b> berhasil diverifikasi. Akses Ujian CBT telah dibuka dan email konfirmasi telah dikirim.
+                </p>
+            </div>
+            <div class="px-7 pb-6">
+                <button onclick="closeVerifSuccess()" class="w-full py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition-colors text-sm">Lanjut Verifikasi Berikutnya</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PENDAFTAR DETAIL DRAWER                                      -->
+    <!-- ============================================================ -->
+    <div id="drawer-overlay" class="fixed inset-0 bg-slate-900/50 z-[90] hidden opacity-0 drawer-overlay" onclick="closeDrawer()"></div>
+    <aside id="drawer-panel" class="fixed top-0 right-0 h-full w-full sm:w-[560px] bg-white z-[91] shadow-2xl hidden transform translate-x-full drawer-panel">
+        <div class="h-full flex flex-col">
+            <div class="h-[3px] accent-bar"></div>
+
+            <!-- Drawer Header -->
+            <div class="px-6 pt-5 pb-4 border-b border-slate-100 flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <img id="drawer-avatar" src="" class="w-12 h-12 rounded-full shrink-0 border-2 border-slate-100">
+                    <div class="min-w-0">
+                        <h3 id="drawer-name" class="font-bold text-slate-800 text-base truncate">—</h3>
+                        <p id="drawer-id" class="text-xs font-mono font-bold text-brand-600">—</p>
+                    </div>
+                </div>
+                <button onclick="closeDrawer()" class="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Drawer Tabs -->
+            <div class="px-6 border-b border-slate-100 flex items-center gap-1 overflow-x-auto no-scrollbar shrink-0">
+                <button onclick="switchDrawerTab('akademik')" data-tab="akademik" class="tab-btn active px-3 py-3 text-xs font-bold text-slate-500 hover:text-slate-700 whitespace-nowrap">Akademik</button>
+                <button onclick="switchDrawerTab('personal')" data-tab="personal" class="tab-btn px-3 py-3 text-xs font-bold text-slate-500 hover:text-slate-700 whitespace-nowrap">Personal</button>
+                <button onclick="switchDrawerTab('pembayaran')" data-tab="pembayaran" class="tab-btn px-3 py-3 text-xs font-bold text-slate-500 hover:text-slate-700 whitespace-nowrap">Pembayaran</button>
+                <button onclick="switchDrawerTab('dokumen')" data-tab="dokumen" class="tab-btn px-3 py-3 text-xs font-bold text-slate-500 hover:text-slate-700 whitespace-nowrap">Dokumen</button>
+                <button onclick="switchDrawerTab('komunikasi')" data-tab="komunikasi" class="tab-btn px-3 py-3 text-xs font-bold text-slate-500 hover:text-slate-700 whitespace-nowrap">Komunikasi</button>
+                <button onclick="switchDrawerTab('timeline')" data-tab="timeline" class="tab-btn px-3 py-3 text-xs font-bold text-slate-500 hover:text-slate-700 whitespace-nowrap">Timeline</button>
+            </div>
+
+            <!-- Drawer Content -->
+            <div id="drawer-content" class="flex-1 overflow-y-auto custom-scroll p-6 bg-slate-50/50">
+                <!-- Filled dynamically -->
+            </div>
+
+            <!-- Drawer Footer -->
+            <div class="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between gap-3 shrink-0">
+                <button class="flex-1 py-2.5 px-4 border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 text-sm flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-chat-circle-dots"></i> Hubungi
+                </button>
+                <button class="flex-1 py-2.5 px-4 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 text-sm flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-check"></i> Setujui
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ============================================================ -->
+    <!-- SIDEBAR                                                      -->
+    <!-- ============================================================ -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+    <aside id="sidebar" class="w-72 bg-gradient-to-b from-brand-600 to-brand-500 flex-col flex z-40 shadow-xl shrink-0 h-full fixed lg:static inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+
+        <div class="h-20 flex items-center px-6 border-b border-white/10 shrink-0">
+            <img src="https://unsia.ac.id/wp-content/uploads/2022/11/LOGO-UNSIA-1.png" alt="Logo UNSIA" class="h-8 object-contain brightness-0 invert">
+            <span class="ml-3 px-2 py-0.5 bg-brand-accent text-brand-700 text-[9px] font-black uppercase tracking-wider rounded">ADMIN</span>
+        </div>
+
+        <!-- Admin Profile -->
+        <div class="px-6 py-4 border-b border-white/10 shrink-0">
+            <div class="flex items-center gap-3">
+                <img src="https://ui-avatars.com/api/?name=Aris+Wijaya&background=FED524&color=0f487b&rounded=true&bold=true" alt="Admin" class="w-10 h-10 rounded-full border-2 border-white/20 shadow-md">
+                <div class="overflow-hidden flex-1">
+                    <h3 class="font-bold text-white truncate text-sm">Aris Wijaya</h3>
+                    <p class="text-[10px] text-brand-accent font-bold tracking-wider uppercase">Super Admin BPPTI</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto no-scrollbar py-4 px-3 space-y-0.5" id="sidebar-nav">
+            <p class="px-3 text-[9px] font-bold text-white/50 uppercase tracking-widest mb-2 mt-2">Operasional</p>
+
+            <button onclick="switchPanel('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white font-bold bg-white/15 transition-all text-left border border-white/20">
+                <i class="ph-fill ph-squares-four text-lg text-brand-accent"></i>
+                <span class="text-sm">Beranda</span>
+            </button>
+            <button onclick="switchPanel('monitoring')" id="nav-monitoring" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-funnel-simple text-lg"></i>
+                <span class="text-sm">Monitoring PMB</span>
+            </button>
+            <button onclick="switchPanel('pendaftar')" id="nav-pendaftar" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-users-three text-lg"></i>
+                <span class="text-sm">Data Pendaftar</span>
+                <span class="ml-auto bg-white/10 text-brand-accent text-[10px] font-bold px-1.5 py-0.5 rounded font-mono">3.150</span>
+            </button>
+            <button onclick="switchPanel('verifikasi')" id="nav-verifikasi" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-shield-check text-lg"></i>
+                <span class="text-sm">Verifikasi Berkas</span>
+                <span id="badge-verif" class="ml-auto bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">12</span>
+            </button>
+            <button onclick="switchPanel('pembayaran')" id="nav-pembayaran" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-wallet text-lg"></i>
+                <span class="text-sm">Pembayaran</span>
+                <span class="ml-auto bg-amber-400 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded">8</span>
+            </button>
+            <button onclick="switchPanel('komunikasi')" id="nav-komunikasi" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-paper-plane-tilt text-lg"></i>
+                <span class="text-sm">Komunikasi</span>
+            </button>
+
+            <p class="px-3 text-[9px] font-bold text-white/50 uppercase tracking-widest mb-2 mt-5 pt-3 border-t border-white/10">Konfigurasi</p>
+
+            <button onclick="switchPanel('gelombang')" id="nav-gelombang" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-calendar-dots text-lg"></i>
+                <span class="text-sm">Gelombang & Kuota</span>
+            </button>
+            <button onclick="switchPanel('pengaturan')" id="nav-pengaturan" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-gear-six text-lg"></i>
+                <span class="text-sm">Pengaturan</span>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-white/10 shrink-0">
+            <button class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-rose-500/10 text-rose-300 font-bold rounded-lg hover:bg-rose-500 hover:text-white transition-colors text-sm border border-rose-500/20">
+                <i class="ph-bold ph-sign-out"></i> Keluar
+            </button>
+        </div>
+    </aside>
+
+    <!-- ============================================================ -->
+    <!-- MAIN                                                         -->
+    <!-- ============================================================ -->
+    <main class="flex-1 flex flex-col min-w-0 bg-[#f8fafc] relative w-full h-full">
+
+        <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 lg:px-8 z-10 sticky top-0 shrink-0 w-full">
+            <div class="flex items-center gap-3 lg:gap-5 flex-1 min-w-0">
+                <button onclick="toggleSidebar()" class="text-slate-500 hover:text-brand-600 transition-colors p-2 -ml-2 rounded-lg lg:hidden">
+                    <i class="ph-bold ph-list text-2xl"></i>
+                </button>
+
+                <div class="hidden md:flex flex-col">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Admin Panel</p>
+                    <h1 id="header-title" class="text-base font-bold text-slate-800">Beranda Analitik</h1>
+                </div>
+
+                <!-- Global Search -->
+                <div class="relative ml-auto md:ml-8 max-w-md flex-1 hidden sm:block">
+                    <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base"></i>
+                    <input type="text" placeholder="Cari pendaftar, NIM, email..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-brand-600 text-sm font-medium transition-colors">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 sm:gap-5">
+                <button class="relative text-slate-400 hover:text-brand-600 transition-colors p-2">
+                    <i class="ph-fill ph-bell-ringing text-2xl"></i>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 border-2 border-white rounded-full"></span>
+                </button>
+                <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+                <div class="flex items-center gap-3">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-xs font-bold text-slate-800">Aris Wijaya</p>
+                        <p class="text-[10px] text-slate-500">Super Admin</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Aris+Wijaya&background=f0f4f8&color=0f487b&rounded=true&bold=true" class="w-9 h-9 rounded-full border border-slate-200">
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto custom-scroll p-5 sm:p-7 lg:p-8 w-full" id="main-scroll">
+
+            <!-- ============================================================ -->
+            <!-- PANEL: BERANDA (DASHBOARD)                                   -->
+            <!-- ============================================================ -->
+            <div id="panel-dashboard" class="fade-in space-y-7">
+                <!-- Greeting -->
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1" id="today-label">Senin, 19 Mei 2026</p>
+                        <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Selamat siang, Aris 👋</h2>
+                        <p class="text-sm text-slate-500 mt-1">Berikut ringkasan pendaftaran hari ini · Gelombang 1 TA 2026/2027</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 text-sm flex items-center gap-2">
+                            <i class="ph-bold ph-download-simple"></i> Ekspor
+                        </button>
+                        <button class="px-4 py-2.5 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 text-sm flex items-center gap-2 shadow-md shadow-brand-600/20">
+                            <i class="ph-bold ph-plus"></i> <span class="hidden sm:inline">Pendaftar Manual</span><span class="sm:hidden">Tambah</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Total Pendaftar -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-soft relative overflow-hidden group">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
+                                <i class="ph-fill ph-users-three text-lg"></i>
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                                <i class="ph-bold ph-trend-up"></i> 12%
+                            </span>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Pendaftar</p>
+                        <p class="font-display font-black text-2xl text-slate-800 mb-1">3.150</p>
+                        <p class="text-[10px] text-slate-500 font-medium">+342 minggu ini</p>
+                    </div>
+
+                    <!-- Perlu Verifikasi -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-soft relative overflow-hidden cursor-pointer hover:shadow-card transition-shadow" onclick="switchPanel('verifikasi')">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                                <i class="ph-fill ph-shield-warning text-lg"></i>
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                                <i class="ph-fill ph-warning-circle"></i> Aksi
+                            </span>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Perlu Verifikasi</p>
+                        <p class="font-display font-black text-2xl text-slate-800 mb-1">12</p>
+                        <p class="text-[10px] text-slate-500 font-medium">Antrean dokumen</p>
+                    </div>
+
+                    <!-- Lulus Seleksi -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-soft relative overflow-hidden">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                <i class="ph-fill ph-graduation-cap text-lg"></i>
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                                <i class="ph-bold ph-trend-up"></i> 8%
+                            </span>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Lulus Seleksi</p>
+                        <p class="font-display font-black text-2xl text-slate-800 mb-1">890</p>
+                        <p class="text-[10px] text-slate-500 font-medium">Konversi 28,2%</p>
+                    </div>
+
+                    <!-- Pendapatan -->
+                    <div class="bg-brand-600 rounded-2xl p-5 border border-brand-700 shadow-soft relative overflow-hidden text-white">
+                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-accent/10 rounded-full blur-2xl"></div>
+                        <div class="flex items-start justify-between mb-3 relative z-10">
+                            <div class="w-10 h-10 rounded-xl bg-white/10 text-brand-accent flex items-center justify-center border border-white/20">
+                                <i class="ph-fill ph-wallet text-lg"></i>
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-brand-accent bg-white/10 px-1.5 py-0.5 rounded border border-brand-accent/30">
+                                <i class="ph-bold ph-trend-up"></i> 15%
+                            </span>
+                        </div>
+                        <p class="text-[10px] font-bold text-brand-100 uppercase tracking-widest mb-1 relative z-10">Pendapatan Formulir</p>
+                        <p class="font-mono font-extrabold text-2xl text-brand-accent mb-1 relative z-10">Rp 125 Jt</p>
+                        <p class="text-[10px] text-brand-100/70 font-medium relative z-10">Target 80% tercapai</p>
+                    </div>
+                </div>
+
+                <!-- Charts row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <!-- Weekly trend chart -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-100 shadow-soft">
+                        <div class="flex items-start justify-between mb-6">
+                            <div>
+                                <h3 class="font-bold text-slate-800">Tren Pendaftaran Mingguan</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">7 hari terakhir</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600">
+                                    <span class="w-2 h-2 rounded-full bg-brand-600"></span> Pendaftar
+                                </span>
+                                <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 ml-2">
+                                    <span class="w-2 h-2 rounded-full bg-brand-accent"></span> Bayar
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- SVG chart -->
+                        <div class="relative h-56">
+                            <svg viewBox="0 0 700 220" class="w-full h-full" preserveAspectRatio="none">
+                                <!-- Grid lines -->
+                                <line x1="0" y1="40" x2="700" y2="40" stroke="#f1f5f9" stroke-width="1"/>
+                                <line x1="0" y1="100" x2="700" y2="100" stroke="#f1f5f9" stroke-width="1"/>
+                                <line x1="0" y1="160" x2="700" y2="160" stroke="#f1f5f9" stroke-width="1"/>
+
+                                <!-- Bars: pendaftar (navy) -->
+                                <g class="chart-bar"><rect x="20" y="80" width="32" height="100" rx="6" fill="#0f487b"/></g>
+                                <g class="chart-bar"><rect x="120" y="50" width="32" height="130" rx="6" fill="#0f487b"/></g>
+                                <g class="chart-bar"><rect x="220" y="70" width="32" height="110" rx="6" fill="#0f487b"/></g>
+                                <g class="chart-bar"><rect x="320" y="30" width="32" height="150" rx="6" fill="#0f487b"/></g>
+                                <g class="chart-bar"><rect x="420" y="55" width="32" height="125" rx="6" fill="#0f487b"/></g>
+                                <g class="chart-bar"><rect x="520" y="20" width="32" height="160" rx="6" fill="#0f487b"/></g>
+                                <g class="chart-bar"><rect x="620" y="45" width="32" height="135" rx="6" fill="#0f487b"/></g>
+
+                                <!-- Bars: bayar (yellow) -->
+                                <g class="chart-bar"><rect x="56" y="110" width="32" height="70" rx="6" fill="#FED524"/></g>
+                                <g class="chart-bar"><rect x="156" y="85" width="32" height="95" rx="6" fill="#FED524"/></g>
+                                <g class="chart-bar"><rect x="256" y="100" width="32" height="80" rx="6" fill="#FED524"/></g>
+                                <g class="chart-bar"><rect x="356" y="60" width="32" height="120" rx="6" fill="#FED524"/></g>
+                                <g class="chart-bar"><rect x="456" y="90" width="32" height="90" rx="6" fill="#FED524"/></g>
+                                <g class="chart-bar"><rect x="556" y="50" width="32" height="130" rx="6" fill="#FED524"/></g>
+                                <g class="chart-bar"><rect x="656" y="80" width="32" height="100" rx="6" fill="#FED524"/></g>
+                            </svg>
+                            <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-2 px-2">
+                                <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Programs -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-soft">
+                        <div class="flex items-start justify-between mb-5">
+                            <div>
+                                <h3 class="font-bold text-slate-800">Top Program Studi</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">Gelombang ini</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1.5">
+                                    <span class="font-bold text-slate-700">S1 Informatika</span>
+                                    <span class="font-mono font-bold text-slate-800">85</span>
+                                </div>
+                                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-brand-600 rounded-full" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1.5">
+                                    <span class="font-bold text-slate-700">S1 Sistem Informasi</span>
+                                    <span class="font-mono font-bold text-slate-800">62</span>
+                                </div>
+                                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-brand-500 rounded-full" style="width: 62%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1.5">
+                                    <span class="font-bold text-slate-700">S1 Manajemen</span>
+                                    <span class="font-mono font-bold text-slate-800">48</span>
+                                </div>
+                                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-indigo-500 rounded-full" style="width: 48%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1.5">
+                                    <span class="font-bold text-slate-700">S1 Akuntansi</span>
+                                    <span class="font-mono font-bold text-slate-800">35</span>
+                                </div>
+                                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-cyan-500 rounded-full" style="width: 35%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1.5">
+                                    <span class="font-bold text-slate-700">S1 Ilmu Komunikasi</span>
+                                    <span class="font-mono font-bold text-slate-800">15</span>
+                                </div>
+                                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-amber-500 rounded-full" style="width: 15%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity & Actions row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <!-- Recent Activity -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-100 shadow-soft">
+                        <div class="flex items-center justify-between mb-5">
+                            <div>
+                                <h3 class="font-bold text-slate-800">Aktivitas Terbaru</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">Real-time stream</p>
+                            </div>
+                            <button class="text-xs font-bold text-brand-600 hover:text-brand-700">Lihat Semua →</button>
+                        </div>
+
+                        <ul class="space-y-3.5">
+                            <li class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <i class="ph-fill ph-check-circle text-lg"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-slate-700 leading-snug"><b class="font-bold">Citra Lestari</b> menyelesaikan pembayaran formulir <b class="font-mono text-brand-600">#PMB202600124</b></p>
+                                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">5 menit yang lalu · QRIS</p>
+                                </div>
+                                <span class="pill pill-emerald shrink-0">Lunas</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                    <i class="ph-fill ph-user-plus text-lg"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-slate-700 leading-snug"><b class="font-bold">Pendaftar baru</b> bergabung — Rendi Pratama mendaftar S1 Informatika</p>
+                                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">12 menit yang lalu · Jalur Reguler</p>
+                                </div>
+                                <span class="pill pill-brand shrink-0">Baru</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                    <i class="ph-fill ph-file-arrow-up text-lg"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-slate-700 leading-snug"><b class="font-bold">Dewi Anggraini</b> mengunggah ulang KTP setelah revisi</p>
+                                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">25 menit yang lalu · Perlu review</p>
+                                </div>
+                                <span class="pill pill-amber shrink-0">Review</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+                                    <i class="ph-fill ph-shield-check text-lg"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-slate-700 leading-snug"><b class="font-bold">Anda</b> menyetujui berkas <b>Budi Santoso</b> — NIM telah diterbitkan</p>
+                                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">1 jam yang lalu · NIM: 26090182</p>
+                                </div>
+                                <span class="pill pill-emerald shrink-0">Verifikasi</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                                    <i class="ph-fill ph-x-circle text-lg"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-slate-700 leading-snug"><b class="font-bold">Sistem</b> mengirim notifikasi pembayaran <b>jatuh tempo</b> ke 8 pendaftar</p>
+                                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">2 jam yang lalu · Otomatis</p>
+                                </div>
+                                <span class="pill pill-rose shrink-0">Reminder</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Tugas Penting -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-soft flex flex-col">
+                        <div class="mb-5">
+                            <h3 class="font-bold text-slate-800">Tugas Hari Ini</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">3 perlu perhatian</p>
+                        </div>
+
+                        <div class="space-y-3 flex-1">
+                            <button onclick="switchPanel('verifikasi')" class="w-full text-left p-3.5 rounded-xl bg-amber-50 border border-amber-200 hover:border-amber-400 transition-colors group">
+                                <div class="flex items-start justify-between gap-2 mb-1">
+                                    <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Verifikasi</span>
+                                    <i class="ph-bold ph-arrow-right text-amber-600 group-hover:translate-x-1 transition-transform"></i>
+                                </div>
+                                <p class="text-sm font-bold text-slate-800">12 berkas pendaftar menunggu review</p>
+                            </button>
+                            <button onclick="switchPanel('pembayaran')" class="w-full text-left p-3.5 rounded-xl bg-rose-50 border border-rose-200 hover:border-rose-400 transition-colors group">
+                                <div class="flex items-start justify-between gap-2 mb-1">
+                                    <span class="text-xs font-bold text-rose-700 uppercase tracking-wider">Jatuh Tempo</span>
+                                    <i class="ph-bold ph-arrow-right text-rose-600 group-hover:translate-x-1 transition-transform"></i>
+                                </div>
+                                <p class="text-sm font-bold text-slate-800">8 pembayaran formulir overdue</p>
+                            </button>
+                            <button onclick="switchPanel('komunikasi')" class="w-full text-left p-3.5 rounded-xl bg-brand-50 border border-brand-100 hover:border-brand-300 transition-colors group">
+                                <div class="flex items-start justify-between gap-2 mb-1">
+                                    <span class="text-xs font-bold text-brand-700 uppercase tracking-wider">Kampanye</span>
+                                    <i class="ph-bold ph-arrow-right text-brand-600 group-hover:translate-x-1 transition-transform"></i>
+                                </div>
+                                <p class="text-sm font-bold text-slate-800">Email gelombang siap dikirim</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- PANEL: MONITORING PMB (FUNNEL)                              -->
+            <!-- ============================================================ -->
+            <div id="panel-monitoring" class="hidden fade-in space-y-7">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Monitoring</p>
+                        <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Funnel Konversi PMB</h2>
+                        <p class="text-sm text-slate-500 mt-1">Pergerakan calon mahasiswa per tahapan · Gelombang 1 TA 2026/2027</p>
+                    </div>
+                    <select class="px-4 py-2.5 border border-slate-200 bg-white rounded-xl text-sm font-bold text-slate-700">
+                        <option>Gelombang 1 Ganjil 2026</option>
+                        <option>Gelombang 2 Ganjil 2026</option>
+                        <option>Semua Gelombang</option>
+                    </select>
+                </div>
+
+                <!-- Funnel Stages Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <!-- Stage 1: Peminat -->
+                    <div class="funnel-card bg-white rounded-2xl p-5 border border-slate-100 shadow-soft relative overflow-hidden">
+                        <span class="absolute top-3 right-3 text-[9px] font-bold text-slate-400 font-mono">01</span>
+                        <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-3">
+                            <i class="ph-fill ph-eye text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Peminat (Leads)</p>
+                        <p class="font-mono font-extrabold text-2xl text-slate-800">5.420</p>
+                        <p class="text-[10px] text-slate-500 mt-1.5 font-medium">Pengunjung halaman PMB</p>
+                    </div>
+
+                    <!-- Stage 2: Pendaftar -->
+                    <div class="funnel-card bg-white rounded-2xl p-5 border border-slate-100 shadow-soft relative overflow-hidden">
+                        <span class="absolute top-3 right-3 text-[9px] font-bold text-slate-400 font-mono">02</span>
+                        <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-3">
+                            <i class="ph-fill ph-user-plus text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pendaftar</p>
+                        <p class="font-mono font-extrabold text-2xl text-slate-800">3.150</p>
+                        <div class="flex items-center gap-1.5 mt-1.5">
+                            <span class="text-[10px] font-bold text-emerald-600">58%</span>
+                            <span class="text-[10px] text-slate-400 font-medium">konversi</span>
+                        </div>
+                    </div>
+
+                    <!-- Stage 3: Mengisi Biodata -->
+                    <div class="funnel-card bg-white rounded-2xl p-5 border border-slate-100 shadow-soft relative overflow-hidden">
+                        <span class="absolute top-3 right-3 text-[9px] font-bold text-slate-400 font-mono">03</span>
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                            <i class="ph-fill ph-identification-card text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Isi Biodata</p>
+                        <p class="font-mono font-extrabold text-2xl text-slate-800">2.840</p>
+                        <div class="flex items-center gap-1.5 mt-1.5">
+                            <span class="text-[10px] font-bold text-emerald-600">90%</span>
+                            <span class="text-[10px] text-slate-400 font-medium">konversi</span>
+                        </div>
+                    </div>
+
+                    <!-- Stage 4: Berkas -->
+                    <div class="funnel-card bg-white rounded-2xl p-5 border border-slate-100 shadow-soft relative overflow-hidden">
+                        <span class="absolute top-3 right-3 text-[9px] font-bold text-slate-400 font-mono">04</span>
+                        <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-3">
+                            <i class="ph-fill ph-folder-simple-plus text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Unggah Berkas</p>
+                        <p class="font-mono font-extrabold text-2xl text-slate-800">2.510</p>
+                        <div class="flex items-center gap-1.5 mt-1.5">
+                            <span class="text-[10px] font-bold text-rose-600">-330</span>
+                            <span class="text-[10px] text-slate-400 font-medium">drop-off</span>
+                        </div>
+                    </div>
+
+                    <!-- Stage 5: Siap Ujian -->
+                    <div class="funnel-card bg-white rounded-2xl p-5 border border-slate-100 shadow-soft relative overflow-hidden">
+                        <span class="absolute top-3 right-3 text-[9px] font-bold text-slate-400 font-mono">05</span>
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                            <i class="ph-fill ph-exam text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Siap Ujian (CBT)</p>
+                        <p class="font-mono font-extrabold text-2xl text-slate-800">2.300</p>
+                        <div class="flex items-center gap-1.5 mt-1.5">
+                            <span class="text-[10px] font-bold text-emerald-600">92%</span>
+                            <span class="text-[10px] text-slate-400 font-medium">konversi</span>
+                        </div>
+                    </div>
+
+                    <!-- Stage 6: Sedang Ujian (LIVE) -->
+                    <div class="funnel-card bg-rose-50 rounded-2xl p-5 border-2 border-rose-300 shadow-soft relative overflow-hidden">
+                        <div class="absolute top-3 right-3 flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 live-dot"></span>
+                            <span class="text-[9px] font-bold text-rose-600 uppercase tracking-wider">Live</span>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-white text-rose-600 flex items-center justify-center mb-3 border border-rose-200">
+                            <i class="ph-fill ph-monitor-play text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-rose-600 uppercase tracking-widest mb-1">Sedang Ujian</p>
+                        <p class="font-mono font-extrabold text-2xl text-rose-700">120</p>
+                        <p class="text-[10px] text-rose-600/80 mt-1.5 font-medium">Sesi 14:00 - 16:00 WIB</p>
+                    </div>
+
+                    <!-- Stage 7: Selesai Ujian -->
+                    <div class="funnel-card bg-white rounded-2xl p-5 border border-slate-100 shadow-soft relative overflow-hidden">
+                        <span class="absolute top-3 right-3 text-[9px] font-bold text-slate-400 font-mono">07</span>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                            <i class="ph-fill ph-check-square text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Selesai Ujian</p>
+                        <p class="font-mono font-extrabold text-2xl text-slate-800">1.850</p>
+                        <p class="text-[10px] text-slate-500 mt-1.5 font-medium">Skor sedang dinilai</p>
+                    </div>
+
+                    <!-- Stage 8: Diterima -->
+                    <div class="funnel-card bg-brand-600 rounded-2xl p-5 border border-brand-700 shadow-soft text-white relative overflow-hidden">
+                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-accent/10 rounded-full blur-2xl"></div>
+                        <span class="absolute top-3 right-3 text-[9px] font-bold text-brand-accent font-mono">08</span>
+                        <div class="w-10 h-10 rounded-xl bg-white/10 text-brand-accent flex items-center justify-center mb-3 border border-white/20 relative z-10">
+                            <i class="ph-fill ph-trophy text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-brand-accent uppercase tracking-widest mb-1 relative z-10">Diterima</p>
+                        <p class="font-mono font-extrabold text-2xl text-brand-accent relative z-10">890</p>
+                        <div class="flex items-center gap-1.5 mt-1.5 relative z-10">
+                            <span class="text-[10px] font-bold text-brand-accent">16,4%</span>
+                            <span class="text-[10px] text-brand-100 font-medium">overall</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Funnel insight -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-soft">
+                    <h3 class="font-bold text-slate-800 mb-5">Analisis Funnel</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div class="p-4 bg-rose-50 border border-rose-100 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="ph-fill ph-warning-circle text-rose-600 text-lg"></i>
+                                <p class="text-xs font-bold text-rose-700 uppercase tracking-wider">Drop-off Tertinggi</p>
+                            </div>
+                            <p class="text-sm font-bold text-slate-800 mb-1">Stage 4 → 5 (Berkas → Ujian)</p>
+                            <p class="text-xs text-slate-600">330 pendaftar tidak melanjutkan ke ujian setelah upload berkas.</p>
+                        </div>
+                        <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="ph-fill ph-trend-up text-emerald-600 text-lg"></i>
+                                <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Konversi Terbaik</p>
+                            </div>
+                            <p class="text-sm font-bold text-slate-800 mb-1">Stage 2 → 3 (Daftar → Biodata)</p>
+                            <p class="text-xs text-slate-600">90% pendaftar berhasil melengkapi biodata mereka.</p>
+                        </div>
+                        <div class="p-4 bg-brand-50 border border-brand-100 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="ph-fill ph-target text-brand-600 text-lg"></i>
+                                <p class="text-xs font-bold text-brand-700 uppercase tracking-wider">Konversi Akhir</p>
+                            </div>
+                            <p class="text-sm font-bold text-slate-800 mb-1">16,4% dari Peminat</p>
+                            <p class="text-xs text-slate-600">5.420 leads → 890 diterima sebagai mahasiswa baru.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- PANEL: DATA PENDAFTAR                                        -->
+            <!-- ============================================================ -->
+            <div id="panel-pendaftar" class="hidden fade-in space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Data</p>
+                        <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Data Pendaftar</h2>
+                        <p class="text-sm text-slate-500 mt-1">3.150 pendaftar terdaftar · Klik baris untuk detail lengkap</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 text-sm flex items-center gap-2">
+                            <i class="ph-bold ph-export"></i> Ekspor
+                        </button>
+                        <button class="px-4 py-2.5 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 text-sm flex items-center gap-2 shadow-md shadow-brand-600/20">
+                            <i class="ph-bold ph-plus"></i> <span class="hidden sm:inline">Tambah</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-soft">
+                    <div class="flex flex-col lg:flex-row gap-3">
+                        <div class="relative flex-1">
+                            <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input id="search-pendaftar" oninput="filterPendaftar()" type="text" placeholder="Cari nama, email, no formulir..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-brand-600 text-sm">
+                        </div>
+                        <select id="filter-prodi" onchange="filterPendaftar()" class="px-4 py-2.5 border border-slate-200 bg-white rounded-xl text-sm font-medium text-slate-700 cursor-pointer">
+                            <option value="">Semua Prodi</option>
+                            <option value="S1 Informatika">S1 Informatika</option>
+                            <option value="S1 Sistem Informasi">S1 Sistem Informasi</option>
+                            <option value="S1 Manajemen">S1 Manajemen</option>
+                            <option value="S1 Akuntansi">S1 Akuntansi</option>
+                            <option value="S1 Ilmu Komunikasi">S1 Ilmu Komunikasi</option>
+                        </select>
+                        <select id="filter-status" onchange="filterPendaftar()" class="px-4 py-2.5 border border-slate-200 bg-white rounded-xl text-sm font-medium text-slate-700 cursor-pointer">
+                            <option value="">Semua Status</option>
+                            <option value="bayar">Menunggu Bayar</option>
+                            <option value="verifikasi">Verifikasi Berkas</option>
+                            <option value="lulus">Lulus Seleksi</option>
+                            <option value="tolak">Revisi Berkas</option>
+                        </select>
+                        <button onclick="resetFilter()" class="px-4 py-2.5 border border-slate-200 bg-white text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm flex items-center gap-2">
+                            <i class="ph-bold ph-arrow-counter-clockwise"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-100 bg-slate-50">
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">No. Pendaftaran</th>
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nama / Kontak</th>
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Program Studi</th>
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Jalur</th>
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Bayar</th>
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendaftar-tbody">
+                                <!-- Filled by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="px-5 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+                        <p class="text-xs text-slate-500 font-medium">Menampilkan <b id="row-count">1-8</b> dari 3.150 data</p>
+                        <div class="flex items-center gap-1">
+                            <button class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-brand-600 flex items-center justify-center text-sm" disabled>
+                                <i class="ph-bold ph-caret-left"></i>
+                            </button>
+                            <button class="w-8 h-8 rounded-lg bg-brand-600 text-white text-xs font-bold">1</button>
+                            <button class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold">2</button>
+                            <button class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold">3</button>
+                            <span class="px-1 text-slate-400 text-xs">...</span>
+                            <button class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold">394</button>
+                            <button class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-700 hover:text-brand-600 flex items-center justify-center text-sm">
+                                <i class="ph-bold ph-caret-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- PANEL: VERIFIKASI BERKAS                                     -->
+            <!-- ============================================================ -->
+            <div id="panel-verifikasi" class="hidden fade-in">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Workspace</p>
+                        <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Verifikasi Berkas</h2>
+                        <p class="text-sm text-slate-500 mt-1">Tinjau & setujui dokumen pendaftar · <b class="text-brand-600">12 menunggu review</b></p>
+                    </div>
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-bold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        SLA: 2 jam · Avg 38 menit
+                    </span>
+                </div>
+
+                <!-- Split View -->
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-soft overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
+
+                    <!-- Queue (Left) -->
+                    <div class="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-slate-100 bg-slate-50/50 flex flex-col">
+                        <div class="px-5 py-4 border-b border-slate-100 bg-white flex items-center justify-between">
+                            <h3 class="font-bold text-slate-800 text-sm">Antrean (12)</h3>
+                            <button class="text-xs text-slate-500 hover:text-brand-600 flex items-center gap-1 font-bold">
+                                <i class="ph-bold ph-funnel"></i> Filter
+                            </button>
+                        </div>
+                        <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2" id="verif-queue">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Workspace (Right) -->
+                    <div class="lg:col-span-8 flex flex-col">
+                        <!-- Selected pendaftar header -->
+                        <div id="verif-header" class="px-6 py-5 border-b border-slate-100 flex items-start justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <img id="verif-avatar" src="https://ui-avatars.com/api/?name=Budi+Santoso&background=f0f4f8&color=0f487b&rounded=true&bold=true" class="w-12 h-12 rounded-full border border-slate-200">
+                                <div>
+                                    <h3 id="verif-name" class="font-bold text-slate-800">Budi Santoso</h3>
+                                    <div class="flex flex-wrap items-center gap-2 mt-0.5">
+                                        <span id="verif-id" class="text-xs font-mono font-bold text-brand-600">#PMB202600124</span>
+                                        <span class="text-slate-300">·</span>
+                                        <span id="verif-prodi" class="text-xs text-slate-500 font-medium">S1 Informatika</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="pill pill-amber shrink-0">Menunggu Review</span>
+                        </div>
+
+                        <!-- Document checklist + preview -->
+                        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-0">
+                            <!-- Checklist -->
+                            <div class="p-6 border-b md:border-b-0 md:border-r border-slate-100 space-y-3">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Checklist Dokumen</p>
+
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                                    <div class="flex items-center justify-between mb-2.5">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-brand-600">
+                                                <i class="ph-fill ph-identification-card"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-bold text-slate-800">KTP</p>
+                                                <p class="text-[10px] text-slate-500">ktp-budi.pdf · 1.2 MB</p>
+                                            </div>
+                                        </div>
+                                        <button onclick="previewDoc('ktp')" class="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1">
+                                            <i class="ph-bold ph-eye"></i> Lihat
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="radio" name="verif-ktp" id="ktp-valid" class="verif-radio" checked>
+                                        <label for="ktp-valid" class="verif-valid text-center py-2 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:border-emerald-400">Valid</label>
+                                        <input type="radio" name="verif-ktp" id="ktp-invalid" class="verif-radio">
+                                        <label for="ktp-invalid" class="verif-invalid text-center py-2 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:border-rose-400">Tidak Valid</label>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                                    <div class="flex items-center justify-between mb-2.5">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-brand-600">
+                                                <i class="ph-fill ph-scroll"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-bold text-slate-800">Ijazah SMA</p>
+                                                <p class="text-[10px] text-slate-500">ijazah-budi.pdf · 2.4 MB</p>
+                                            </div>
+                                        </div>
+                                        <button onclick="previewDoc('ijazah')" class="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1">
+                                            <i class="ph-bold ph-eye"></i> Lihat
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="radio" name="verif-ijazah" id="ijazah-valid" class="verif-radio" checked>
+                                        <label for="ijazah-valid" class="verif-valid text-center py-2 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:border-emerald-400">Valid</label>
+                                        <input type="radio" name="verif-ijazah" id="ijazah-invalid" class="verif-radio">
+                                        <label for="ijazah-invalid" class="verif-invalid text-center py-2 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:border-rose-400">Tidak Valid</label>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                                    <div class="flex items-center justify-between mb-2.5">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-brand-600">
+                                                <i class="ph-fill ph-image-square"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-bold text-slate-800">Pas Foto</p>
+                                                <p class="text-[10px] text-slate-500">foto-budi.jpg · 480 KB</p>
+                                            </div>
+                                        </div>
+                                        <button onclick="previewDoc('foto')" class="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1">
+                                            <i class="ph-bold ph-eye"></i> Lihat
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="radio" name="verif-foto" id="foto-valid" class="verif-radio" checked>
+                                        <label for="foto-valid" class="verif-valid text-center py-2 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:border-emerald-400">Valid</label>
+                                        <input type="radio" name="verif-foto" id="foto-invalid" class="verif-radio">
+                                        <label for="foto-invalid" class="verif-invalid text-center py-2 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:border-rose-400">Tidak Valid</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preview area -->
+                            <div class="p-6 bg-slate-50/50 flex flex-col">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3" id="preview-label">Pratinjau Dokumen — KTP</p>
+                                <div id="preview-area" class="flex-1 bg-slate-200 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center p-6 min-h-[300px]">
+                                    <div class="text-center">
+                                        <div class="w-14 h-14 bg-white rounded-xl border border-slate-200 flex items-center justify-center mx-auto mb-3">
+                                            <i class="ph-fill ph-identification-card text-2xl text-brand-600"></i>
+                                        </div>
+                                        <p class="text-sm font-bold text-slate-600">KTP — Budi Santoso</p>
+                                        <p class="text-xs text-slate-500 mt-1">NIK: 3271xxxx · DKI Jakarta</p>
+                                        <p class="text-[10px] text-slate-400 mt-3 font-medium">Pratinjau dokumen simulasi</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action bar -->
+                        <div class="px-6 py-4 border-t border-slate-100 bg-white flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                            <button class="px-5 py-3 border border-rose-200 text-rose-600 font-bold rounded-xl hover:bg-rose-50 text-sm flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-paper-plane-tilt"></i> Minta Revisi
+                            </button>
+                            <button onclick="approveVerif()" class="px-5 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-600/20 text-sm flex items-center justify-center gap-2 active:scale-[0.98]">
+                                <i class="ph-bold ph-check-circle text-lg"></i> Setujui Berkas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- PANEL: PEMBAYARAN                                            -->
+            <!-- ============================================================ -->
+            <div id="panel-pembayaran" class="hidden fade-in space-y-6">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Keuangan</p>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Pembayaran Formulir</h2>
+                    <p class="text-sm text-slate-500 mt-1">Monitoring tagihan & rekonsiliasi pembayaran pendaftar</p>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-soft">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                            <i class="ph-fill ph-wallet text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pendapatan Total</p>
+                        <p class="font-mono font-extrabold text-xl text-slate-800">Rp 125.000.000</p>
+                        <p class="text-[10px] text-emerald-600 mt-1.5 font-bold">↑ 15% dari bulan lalu</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-soft">
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                            <i class="ph-fill ph-hourglass text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Tertunda</p>
+                        <p class="font-mono font-extrabold text-xl text-slate-800">Rp 8.750.000</p>
+                        <p class="text-[10px] text-amber-600 mt-1.5 font-bold">35 pendaftar</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-soft">
+                        <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
+                            <i class="ph-fill ph-warning-circle text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Jatuh Tempo</p>
+                        <p class="font-mono font-extrabold text-xl text-slate-800">Rp 2.250.000</p>
+                        <p class="text-[10px] text-rose-600 mt-1.5 font-bold">8 pendaftar overdue</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-soft">
+                        <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-3">
+                            <i class="ph-fill ph-percent text-lg"></i>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Conversion Rate</p>
+                        <p class="font-mono font-extrabold text-xl text-slate-800">78,5%</p>
+                        <p class="text-[10px] text-slate-500 mt-1.5 font-bold">Target: 85%</p>
+                    </div>
+                </div>
+
+                <!-- Payment List -->
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h3 class="font-bold text-slate-800">Transaksi Terbaru</h3>
+                        <div class="flex items-center gap-2">
+                            <button class="px-3 py-2 text-xs font-bold text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50">Kirim Reminder</button>
+                            <button class="px-3 py-2 text-xs font-bold text-brand-600 border border-brand-200 bg-brand-50 rounded-lg hover:bg-brand-100">Rekonsiliasi</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-100 bg-slate-50">
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Invoice</th>
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pendaftar</th>
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Jumlah</th>
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Metode</th>
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                                    <th class="text-left px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tanggal</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-5 py-3 font-mono font-bold text-brand-600 text-xs">INV-2026-001245</td>
+                                    <td class="px-5 py-3 font-medium text-slate-700">Budi Santoso</td>
+                                    <td class="px-5 py-3 font-mono font-bold text-slate-800">Rp 250.000</td>
+                                    <td class="px-5 py-3 text-slate-600 text-xs">BCA VA</td>
+                                    <td class="px-5 py-3"><span class="pill pill-emerald">Lunas</span></td>
+                                    <td class="px-5 py-3 text-xs text-slate-500 font-medium">10 Jun 2026</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-5 py-3 font-mono font-bold text-brand-600 text-xs">INV-2026-001246</td>
+                                    <td class="px-5 py-3 font-medium text-slate-700">Citra Lestari</td>
+                                    <td class="px-5 py-3 font-mono font-bold text-slate-800">Rp 250.000</td>
+                                    <td class="px-5 py-3 text-slate-600 text-xs">QRIS</td>
+                                    <td class="px-5 py-3"><span class="pill pill-emerald">Lunas</span></td>
+                                    <td class="px-5 py-3 text-xs text-slate-500 font-medium">11 Jun 2026</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-5 py-3 font-mono font-bold text-brand-600 text-xs">INV-2026-001247</td>
+                                    <td class="px-5 py-3 font-medium text-slate-700">Dewi Anggraini</td>
+                                    <td class="px-5 py-3 font-mono font-bold text-slate-800">Rp 150.000</td>
+                                    <td class="px-5 py-3 text-slate-600 text-xs">Mandiri VA</td>
+                                    <td class="px-5 py-3"><span class="pill pill-amber">Pending</span></td>
+                                    <td class="px-5 py-3 text-xs text-slate-500 font-medium">11 Jun 2026</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-5 py-3 font-mono font-bold text-brand-600 text-xs">INV-2026-001248</td>
+                                    <td class="px-5 py-3 font-medium text-slate-700">Eka Pradana</td>
+                                    <td class="px-5 py-3 font-mono font-bold text-slate-800">Rp 250.000</td>
+                                    <td class="px-5 py-3 text-slate-600 text-xs">BNI VA</td>
+                                    <td class="px-5 py-3"><span class="pill pill-rose">Overdue 3 hari</span></td>
+                                    <td class="px-5 py-3 text-xs text-slate-500 font-medium">07 Jun 2026</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-5 py-3 font-mono font-bold text-brand-600 text-xs">INV-2026-001249</td>
+                                    <td class="px-5 py-3 font-medium text-slate-700">Fajar Maulana</td>
+                                    <td class="px-5 py-3 font-mono font-bold text-emerald-600">Gratis</td>
+                                    <td class="px-5 py-3 text-slate-600 text-xs">Beasiswa</td>
+                                    <td class="px-5 py-3"><span class="pill pill-emerald">Lunas</span></td>
+                                    <td class="px-5 py-3 text-xs text-slate-500 font-medium">12 Jun 2026</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-5 py-3 font-mono font-bold text-brand-600 text-xs">INV-2026-001250</td>
+                                    <td class="px-5 py-3 font-medium text-slate-700">Gita Rahmawati</td>
+                                    <td class="px-5 py-3 font-mono font-bold text-slate-800">Rp 200.000</td>
+                                    <td class="px-5 py-3 text-slate-600 text-xs">QRIS</td>
+                                    <td class="px-5 py-3"><span class="pill pill-emerald">Lunas</span></td>
+                                    <td class="px-5 py-3 text-xs text-slate-500 font-medium">14 Jun 2026</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="px-5 py-3 font-mono font-bold text-brand-600 text-xs">INV-2026-001251</td>
+                                    <td class="px-5 py-3 font-medium text-slate-700">Hari Subandi</td>
+                                    <td class="px-5 py-3 font-mono font-bold text-slate-800">Rp 250.000</td>
+                                    <td class="px-5 py-3 text-slate-600 text-xs">BCA VA</td>
+                                    <td class="px-5 py-3"><span class="pill pill-amber">Pending</span></td>
+                                    <td class="px-5 py-3 text-xs text-slate-500 font-medium">15 Jun 2026</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- PANEL: KOMUNIKASI                                            -->
+            <!-- ============================================================ -->
+            <div id="panel-komunikasi" class="hidden fade-in space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Engagement</p>
+                        <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Komunikasi & Kampanye</h2>
+                        <p class="text-sm text-slate-500 mt-1">Kelola template, otomasi, dan kampanye email/WhatsApp</p>
+                    </div>
+                    <button class="px-4 py-2.5 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 text-sm flex items-center gap-2 shadow-md shadow-brand-600/20">
+                        <i class="ph-bold ph-plus"></i> Buat Kampanye
+                    </button>
+                </div>
+
+                <!-- Templates -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-soft">
+                    <h3 class="font-bold text-slate-800 mb-5">Template Pesan</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="p-4 border border-slate-200 rounded-xl hover:border-brand-300 transition-colors cursor-pointer">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center">
+                                    <i class="ph-fill ph-envelope-open"></i>
+                                </div>
+                                <span class="pill pill-emerald">Aktif</span>
+                            </div>
+                            <p class="font-bold text-sm text-slate-800 mb-1">Welcome Email</p>
+                            <p class="text-[11px] text-slate-500 leading-relaxed">Otomatis dikirim setelah pendaftaran berhasil submit.</p>
+                            <p class="text-[10px] text-slate-400 mt-2 font-bold">Terkirim: 3.150</p>
+                        </div>
+                        <div class="p-4 border border-slate-200 rounded-xl hover:border-brand-300 transition-colors cursor-pointer">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                                    <i class="ph-fill ph-bell-ringing"></i>
+                                </div>
+                                <span class="pill pill-emerald">Aktif</span>
+                            </div>
+                            <p class="font-bold text-sm text-slate-800 mb-1">Payment Reminder</p>
+                            <p class="text-[11px] text-slate-500 leading-relaxed">Reminder otomatis 3 hari sebelum jatuh tempo.</p>
+                            <p class="text-[10px] text-slate-400 mt-2 font-bold">Terkirim: 245</p>
+                        </div>
+                        <div class="p-4 border border-slate-200 rounded-xl hover:border-brand-300 transition-colors cursor-pointer">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                    <i class="ph-fill ph-trophy"></i>
+                                </div>
+                                <span class="pill pill-emerald">Aktif</span>
+                            </div>
+                            <p class="font-bold text-sm text-slate-800 mb-1">Acceptance Letter</p>
+                            <p class="text-[11px] text-slate-500 leading-relaxed">Notifikasi kelulusan + instruksi onboarding.</p>
+                            <p class="text-[10px] text-slate-400 mt-2 font-bold">Terkirim: 890</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <!-- Active campaigns -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-100 shadow-soft">
+                        <h3 class="font-bold text-slate-800 mb-5">Kampanye Aktif</h3>
+                        <div class="space-y-3">
+                            <div class="p-4 border border-slate-200 rounded-xl flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+                                    <i class="ph-fill ph-envelope text-lg"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <p class="font-bold text-sm text-slate-800 truncate">Pengumuman Gelombang 1 Hampir Tutup</p>
+                                        <span class="pill pill-emerald shrink-0">Berjalan</span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500">Email + WhatsApp · Target: 5.420 leads · Dijadwalkan 25 Jun</p>
+                                    <div class="flex items-center gap-4 mt-2 text-[11px]">
+                                        <span class="font-bold text-slate-700">Terkirim: <span class="text-brand-600">2.840</span></span>
+                                        <span class="font-bold text-slate-700">Dibuka: <span class="text-emerald-600">76%</span></span>
+                                        <span class="font-bold text-slate-700">Klik: <span class="text-amber-600">28%</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 border border-slate-200 rounded-xl flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <i class="ph-fill ph-whatsapp-logo text-lg"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <p class="font-bold text-sm text-slate-800 truncate">Reminder Pembayaran Formulir H-3</p>
+                                        <span class="pill pill-amber shrink-0">Terjadwal</span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500">WhatsApp blast · Target: 35 pendaftar pending · Besok 09:00</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto-workflows -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-soft">
+                        <h3 class="font-bold text-slate-800 mb-5">Otomasi (Workflow)</h3>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-3">
+                                <div class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
+                                <div class="text-xs">
+                                    <p class="font-bold text-slate-800">Form Submitted</p>
+                                    <p class="text-slate-500 mt-0.5">→ Kirim Welcome Email</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
+                                <div class="text-xs">
+                                    <p class="font-bold text-slate-800">3 hari tanpa bayar</p>
+                                    <p class="text-slate-500 mt-0.5">→ Reminder email + SMS</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
+                                <div class="text-xs">
+                                    <p class="font-bold text-slate-800">Payment Confirmed</p>
+                                    <p class="text-slate-500 mt-0.5">→ Kirim NIM + Acceptance</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0"></div>
+                                <div class="text-xs">
+                                    <p class="font-bold text-slate-800">5 hari tanpa onboard</p>
+                                    <p class="text-slate-500 mt-0.5">→ Reminder onboarding</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- PANEL: GELOMBANG                                             -->
+            <!-- ============================================================ -->
+            <div id="panel-gelombang" class="hidden fade-in space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Konfigurasi</p>
+                        <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Gelombang & Kuota</h2>
+                        <p class="text-sm text-slate-500 mt-1">Atur periode pendaftaran dan kuota mahasiswa per program studi</p>
+                    </div>
+                    <button class="px-4 py-2.5 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 text-sm flex items-center gap-2 shadow-md shadow-brand-600/20">
+                        <i class="ph-bold ph-plus"></i> Buat Gelombang
+                    </button>
+                </div>
+
+                <!-- Wave cards -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <!-- Wave 1: Active -->
+                    <div class="bg-white rounded-2xl border border-emerald-200 shadow-soft overflow-hidden">
+                        <div class="h-[3px] bg-emerald-500"></div>
+                        <div class="p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div>
+                                    <span class="pill pill-emerald mb-2">Aktif</span>
+                                    <h3 class="font-display text-xl font-bold text-slate-800 mt-1">Gelombang 1 Ganjil</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">TA 2026/2027</p>
+                                </div>
+                                <button class="text-slate-400 hover:text-brand-600 p-1.5 rounded-lg hover:bg-slate-100">
+                                    <i class="ph-bold ph-dots-three-vertical text-lg"></i>
+                                </button>
+                            </div>
+
+                            <div class="space-y-3 text-sm">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500">Periode</span>
+                                    <span class="font-bold text-slate-700">01 Juni - 30 Juni 2026</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500">Total Pendaftar</span>
+                                    <span class="font-bold text-slate-700 font-mono">3.150</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500">Target Kuota</span>
+                                    <span class="font-bold text-slate-700 font-mono">3.000</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500">Sisa Hari</span>
+                                    <span class="font-bold text-emerald-600">15 hari</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-4 border-t border-slate-100">
+                                <div class="flex items-center justify-between text-xs mb-1.5">
+                                    <span class="font-bold text-slate-700">Progres</span>
+                                    <span class="font-mono font-bold text-emerald-600">105%</span>
+                                </div>
+                                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-emerald-500 rounded-full" style="width: 100%"></div>
+                                </div>
+                                <p class="text-[10px] text-emerald-600 mt-1.5 font-bold">⚡ Melebihi target awal</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Wave 2: Draft -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+                        <div class="h-[3px] bg-slate-300"></div>
+                        <div class="p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div>
+                                    <span class="pill pill-slate mb-2">Draft</span>
+                                    <h3 class="font-display text-xl font-bold text-slate-800 mt-1">Gelombang 2 Ganjil</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">TA 2026/2027</p>
+                                </div>
+                                <button class="text-slate-400 hover:text-brand-600 p-1.5 rounded-lg hover:bg-slate-100">
+                                    <i class="ph-bold ph-dots-three-vertical text-lg"></i>
+                                </button>
+                            </div>
+
+                            <div class="space-y-3 text-sm">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500">Periode</span>
+                                    <span class="font-bold text-slate-700">01 Juli - 31 Agustus 2026</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500">Target Kuota</span>
+                                    <span class="font-bold text-slate-700 font-mono">2.000</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500">Pre-registrasi</span>
+                                    <span class="font-bold text-amber-600">87 leads</span>
+                                </div>
+                            </div>
+
+                            <button class="w-full mt-5 py-2.5 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 text-sm">
+                                Aktifkan Gelombang
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quota per program -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-soft">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <h3 class="font-bold text-slate-800">Kuota per Program Studi</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Gelombang 1 Ganjil · TA 2026/2027</p>
+                        </div>
+                        <button class="text-xs font-bold text-brand-600 hover:text-brand-700">Edit Kuota →</button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- S1 Informatika -->
+                        <div>
+                            <div class="flex items-center justify-between text-sm mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-slate-800">S1 Informatika</span>
+                                    <span class="pill pill-amber">Hampir Penuh</span>
+                                </div>
+                                <span class="font-mono font-bold text-slate-800">85 / 100</span>
+                            </div>
+                            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-amber-500 rounded-full" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <!-- S1 SI -->
+                        <div>
+                            <div class="flex items-center justify-between text-sm mb-2">
+                                <span class="font-bold text-slate-800">S1 Sistem Informasi</span>
+                                <span class="font-mono font-bold text-slate-800">62 / 80</span>
+                            </div>
+                            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-brand-600 rounded-full" style="width: 77.5%"></div>
+                            </div>
+                        </div>
+                        <!-- S1 Manajemen -->
+                        <div>
+                            <div class="flex items-center justify-between text-sm mb-2">
+                                <span class="font-bold text-slate-800">S1 Manajemen</span>
+                                <span class="font-mono font-bold text-slate-800">48 / 60</span>
+                            </div>
+                            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-brand-500 rounded-full" style="width: 80%"></div>
+                            </div>
+                        </div>
+                        <!-- S1 Akuntansi -->
+                        <div>
+                            <div class="flex items-center justify-between text-sm mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-slate-800">S1 Akuntansi</span>
+                                    <span class="pill pill-amber">Hampir Penuh</span>
+                                </div>
+                                <span class="font-mono font-bold text-slate-800">35 / 40</span>
+                            </div>
+                            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-amber-500 rounded-full" style="width: 87.5%"></div>
+                            </div>
+                        </div>
+                        <!-- S1 Komunikasi -->
+                        <div>
+                            <div class="flex items-center justify-between text-sm mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-slate-800">S1 Ilmu Komunikasi</span>
+                                    <span class="pill pill-rose">Underperform</span>
+                                </div>
+                                <span class="font-mono font-bold text-slate-800">15 / 20</span>
+                            </div>
+                            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-rose-500 rounded-full" style="width: 75%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- PANEL: PENGATURAN                                            -->
+            <!-- ============================================================ -->
+            <div id="panel-pengaturan" class="hidden fade-in space-y-6">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pengaturan</p>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Pengguna & Sistem</h2>
+                    <p class="text-sm text-slate-500 mt-1">Manajemen pengguna, peran, dan konfigurasi sistem</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <!-- Sidebar nav -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-2xl p-2 border border-slate-100 shadow-soft">
+                            <button class="w-full text-left px-4 py-3 rounded-xl bg-brand-50 text-brand-700 font-bold text-sm flex items-center gap-3">
+                                <i class="ph-fill ph-users text-lg"></i> Pengguna Admin
+                            </button>
+                            <button class="w-full text-left px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-bold text-sm flex items-center gap-3">
+                                <i class="ph-bold ph-shield-star text-lg"></i> Peran & Akses
+                            </button>
+                            <button class="w-full text-left px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-bold text-sm flex items-center gap-3">
+                                <i class="ph-bold ph-graduation-cap text-lg"></i> Program Studi
+                            </button>
+                            <button class="w-full text-left px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-bold text-sm flex items-center gap-3">
+                                <i class="ph-bold ph-currency-circle-dollar text-lg"></i> Biaya & UKT
+                            </button>
+                            <button class="w-full text-left px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-bold text-sm flex items-center gap-3">
+                                <i class="ph-bold ph-envelope-simple text-lg"></i> Template Surat
+                            </button>
+                            <button class="w-full text-left px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-bold text-sm flex items-center gap-3">
+                                <i class="ph-bold ph-plug text-lg"></i> Integrasi PDDikti
+                            </button>
+                            <button class="w-full text-left px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-50 font-bold text-sm flex items-center gap-3">
+                                <i class="ph-bold ph-clipboard-text text-lg"></i> Audit Log
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
+                            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-bold text-slate-800">Pengguna Admin</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">4 pengguna aktif</p>
+                                </div>
+                                <button class="px-4 py-2 bg-brand-600 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 hover:bg-brand-700">
+                                    <i class="ph-bold ph-plus"></i> Tambah
+                                </button>
+                            </div>
+
+                            <ul class="divide-y divide-slate-100">
+                                <li class="px-6 py-4 flex items-center gap-4">
+                                    <img src="https://ui-avatars.com/api/?name=Aris+Wijaya&background=FED524&color=0f487b&rounded=true&bold=true" class="w-10 h-10 rounded-full">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <p class="font-bold text-sm text-slate-800">Aris Wijaya</p>
+                                            <span class="pill pill-brand">Super Admin</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-0.5">aris.wijaya@unsia.ac.id</p>
+                                    </div>
+                                    <div class="hidden sm:block text-right">
+                                        <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Online</p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">Login terakhir: Sekarang</p>
+                                    </div>
+                                </li>
+                                <li class="px-6 py-4 flex items-center gap-4">
+                                    <img src="https://ui-avatars.com/api/?name=Sari+Wulan&background=f0f4f8&color=0f487b&rounded=true&bold=true" class="w-10 h-10 rounded-full">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <p class="font-bold text-sm text-slate-800">Sari Wulan</p>
+                                            <span class="pill pill-slate">Verifikator</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-0.5">sari.wulan@unsia.ac.id</p>
+                                    </div>
+                                    <div class="hidden sm:block text-right">
+                                        <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Online</p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">Login terakhir: 5m</p>
+                                    </div>
+                                </li>
+                                <li class="px-6 py-4 flex items-center gap-4">
+                                    <img src="https://ui-avatars.com/api/?name=Doni+Putra&background=f0f4f8&color=0f487b&rounded=true&bold=true" class="w-10 h-10 rounded-full">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <p class="font-bold text-sm text-slate-800">Doni Putra</p>
+                                            <span class="pill pill-slate">Manajer PMB</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-0.5">doni.putra@unsia.ac.id</p>
+                                    </div>
+                                    <div class="hidden sm:block text-right">
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Offline</p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">Login terakhir: 2j</p>
+                                    </div>
+                                </li>
+                                <li class="px-6 py-4 flex items-center gap-4">
+                                    <img src="https://ui-avatars.com/api/?name=Rina+Sari&background=f0f4f8&color=0f487b&rounded=true&bold=true" class="w-10 h-10 rounded-full">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <p class="font-bold text-sm text-slate-800">Rina Sari</p>
+                                            <span class="pill pill-slate">Keuangan</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-0.5">rina.sari@unsia.ac.id</p>
+                                    </div>
+                                    <div class="hidden sm:block text-right">
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Offline</p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">Login terakhir: 1h</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // ============================================================
+        // DUMMY DATA
+        // ============================================================
+        const dummyPendaftar = [
+            { id: 'PMB202600124', nama: 'Budi Santoso', email: 'budi@email.com', phone: '081234567890', prodi: 'S1 Informatika', jalur: 'Reguler (PJJ)', status: 'lulus', bayar: 'lunas', tanggal: '08 Jun 2026' },
+            { id: 'PMB202600125', nama: 'Citra Lestari', email: 'citra@email.com', phone: '082345678901', prodi: 'S1 Sistem Informasi', jalur: 'Reguler (PJJ)', status: 'verifikasi', bayar: 'lunas', tanggal: '11 Jun 2026' },
+            { id: 'PMB202600126', nama: 'Dewi Anggraini', email: 'dewi@email.com', phone: '083456789012', prodi: 'S1 Manajemen', jalur: 'Prestasi', status: 'tolak', bayar: 'pending', tanggal: '11 Jun 2026' },
+            { id: 'PMB202600127', nama: 'Eka Pradana', email: 'eka@email.com', phone: '084567890123', prodi: 'S1 Informatika', jalur: 'Reguler (PJJ)', status: 'verifikasi', bayar: 'overdue', tanggal: '07 Jun 2026' },
+            { id: 'PMB202600128', nama: 'Fajar Maulana', email: 'fajar@email.com', phone: '085678901234', prodi: 'S1 Akuntansi', jalur: 'Beasiswa Penuh', status: 'lulus', bayar: 'lunas', tanggal: '12 Jun 2026' },
+            { id: 'PMB202600129', nama: 'Gita Rahmawati', email: 'gita@email.com', phone: '086789012345', prodi: 'S1 Ilmu Komunikasi', jalur: 'Karyawan/Mitra', status: 'verifikasi', bayar: 'lunas', tanggal: '14 Jun 2026' },
+            { id: 'PMB202600130', nama: 'Hari Subandi', email: 'hari@email.com', phone: '087890123456', prodi: 'S1 Informatika', jalur: 'Reguler (PJJ)', status: 'bayar', bayar: 'pending', tanggal: '15 Jun 2026' },
+            { id: 'PMB202600131', nama: 'Indra Wijaya', email: 'indra@email.com', phone: '088901234567', prodi: 'S1 Sistem Informasi', jalur: 'Prestasi', status: 'lulus', bayar: 'lunas', tanggal: '13 Jun 2026' },
+        ];
+
+        const statusConfig = {
+            bayar: { label: 'Menunggu Bayar', pill: 'pill-slate' },
+            verifikasi: { label: 'Verifikasi Berkas', pill: 'pill-amber' },
+            lulus: { label: 'Lulus Seleksi', pill: 'pill-emerald' },
+            tolak: { label: 'Revisi Berkas', pill: 'pill-rose' }
+        };
+        const bayarConfig = {
+            pending: { label: 'Pending', pill: 'pill-amber' },
+            lunas: { label: 'Lunas', pill: 'pill-emerald' },
+            overdue: { label: 'Overdue', pill: 'pill-rose' }
+        };
+
+        // ============================================================
+        // SIDEBAR
+        // ============================================================
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('sidebar-overlay').classList.toggle('hidden');
+        }
+
+        // ============================================================
+        // PANEL ROUTING
+        // ============================================================
+        function switchPanel(id) {
+            const panels = ['dashboard','monitoring','pendaftar','verifikasi','pembayaran','komunikasi','gelombang','pengaturan'];
+            panels.forEach(p => {
+                const el = document.getElementById('panel-' + p);
+                if (el) el.classList.add('hidden');
+                const nav = document.getElementById('nav-' + p);
+                if (nav) {
+                    nav.className = "nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent";
+                    const icon = nav.querySelector('i');
+                    if (icon && !icon.classList.contains('ph-warning-circle')) {
+                        icon.classList.replace('ph-fill', 'ph-bold');
+                        icon.classList.remove('text-brand-accent');
+                    }
+                }
+            });
+
+            const target = document.getElementById('panel-' + id);
+            if (target) target.classList.remove('hidden');
+
+            const nav = document.getElementById('nav-' + id);
+            if (nav) {
+                nav.className = "nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white font-bold bg-white/15 transition-all text-left border border-white/20";
+                const icon = nav.querySelector('i');
+                if (icon) {
+                    icon.classList.replace('ph-bold', 'ph-fill');
+                    icon.classList.add('text-brand-accent');
+                }
+            }
+
+            // Update header title
+            const titles = {
+                dashboard: 'Beranda Analitik',
+                monitoring: 'Monitoring PMB',
+                pendaftar: 'Data Pendaftar',
+                verifikasi: 'Verifikasi Berkas',
+                pembayaran: 'Pembayaran',
+                komunikasi: 'Komunikasi',
+                gelombang: 'Gelombang & Kuota',
+                pengaturan: 'Pengaturan'
+            };
+            document.getElementById('header-title').innerText = titles[id] || '—';
+            document.getElementById('main-scroll').scrollTop = 0;
+
+            // Close sidebar on mobile
+            if (window.innerWidth < 1024) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('sidebar-overlay').classList.add('hidden');
+            }
+        }
+
+        // ============================================================
+        // RENDER PENDAFTAR TABLE
+        // ============================================================
+        function renderPendaftarTable(data) {
+            const tbody = document.getElementById('pendaftar-tbody');
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="7" class="px-5 py-12 text-center">
+                        <i class="ph-fill ph-folder-open text-4xl text-slate-300 mb-2 block"></i>
+                        <p class="text-sm font-bold text-slate-500">Tidak ada data ditemukan</p>
+                        <p class="text-xs text-slate-400 mt-1">Coba ubah filter atau kata kunci pencarian</p>
+                    </td></tr>
+                `;
+                document.getElementById('row-count').innerText = '0';
+                return;
+            }
+            tbody.innerHTML = data.map(p => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer" onclick="openDrawer('${p.id}')">
+                    <td class="px-5 py-3.5 font-mono text-xs font-bold text-brand-600">#${p.id}</td>
+                    <td class="px-5 py-3.5">
+                        <div class="flex items-center gap-3">
+                            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.nama)}&background=f0f4f8&color=0f487b&rounded=true&bold=true" class="w-8 h-8 rounded-full">
+                            <div>
+                                <p class="font-bold text-slate-800 text-sm">${p.nama}</p>
+                                <p class="text-[11px] text-slate-500">${p.email}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-5 py-3.5 text-slate-700 font-medium text-sm">${p.prodi}</td>
+                    <td class="px-5 py-3.5 text-slate-600 text-xs font-medium">${p.jalur}</td>
+                    <td class="px-5 py-3.5"><span class="pill ${statusConfig[p.status].pill}">${statusConfig[p.status].label}</span></td>
+                    <td class="px-5 py-3.5"><span class="pill ${bayarConfig[p.bayar].pill}">${bayarConfig[p.bayar].label}</span></td>
+                    <td class="px-5 py-3.5">
+                        <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+                            <button onclick="openDrawer('${p.id}')" class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-brand-600 hover:border-brand-300 flex items-center justify-center" title="Detail">
+                                <i class="ph-bold ph-eye text-sm"></i>
+                            </button>
+                            ${p.status === 'lulus' ? `
+                            <button class="w-8 h-8 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center" title="Generate LoA">
+                                <i class="ph-bold ph-file-text text-sm"></i>
+                            </button>` : ''}
+                            <button class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-brand-600 hover:border-brand-300 flex items-center justify-center" title="Pesan">
+                                <i class="ph-bold ph-chat-circle-dots text-sm"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            document.getElementById('row-count').innerText = `1-${data.length}`;
+        }
+
+        function filterPendaftar() {
+            const q = document.getElementById('search-pendaftar').value.toLowerCase();
+            const prodi = document.getElementById('filter-prodi').value;
+            const status = document.getElementById('filter-status').value;
+
+            const filtered = dummyPendaftar.filter(p => {
+                const matchQ = !q || p.nama.toLowerCase().includes(q) || p.email.toLowerCase().includes(q) || p.id.toLowerCase().includes(q);
+                const matchProdi = !prodi || p.prodi === prodi;
+                const matchStatus = !status || p.status === status;
+                return matchQ && matchProdi && matchStatus;
+            });
+            renderPendaftarTable(filtered);
+        }
+
+        function resetFilter() {
+            document.getElementById('search-pendaftar').value = '';
+            document.getElementById('filter-prodi').value = '';
+            document.getElementById('filter-status').value = '';
+            renderPendaftarTable(dummyPendaftar);
+        }
+
+        // ============================================================
+        // DRAWER
+        // ============================================================
+        let currentDrawerId = null;
+        function openDrawer(id) {
+            const p = dummyPendaftar.find(x => x.id === id);
+            if (!p) return;
+            currentDrawerId = id;
+
+            document.getElementById('drawer-name').innerText = p.nama;
+            document.getElementById('drawer-id').innerText = '#' + p.id;
+            document.getElementById('drawer-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.nama)}&background=f0f4f8&color=0f487b&rounded=true&bold=true`;
+
+            switchDrawerTab('akademik');
+
+            const overlay = document.getElementById('drawer-overlay');
+            const panel = document.getElementById('drawer-panel');
+            overlay.classList.remove('hidden');
+            panel.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                overlay.classList.add('opacity-100');
+                overlay.classList.remove('opacity-0');
+                panel.classList.remove('translate-x-full');
+            });
+        }
+
+        function closeDrawer() {
+            const overlay = document.getElementById('drawer-overlay');
+            const panel = document.getElementById('drawer-panel');
+            overlay.classList.add('opacity-0');
+            panel.classList.add('translate-x-full');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                panel.classList.add('hidden');
+            }, 400);
+        }
+
+        function switchDrawerTab(tab) {
+            const buttons = document.querySelectorAll('#drawer-panel .tab-btn');
+            buttons.forEach(b => {
+                if (b.dataset.tab === tab) {
+                    b.classList.add('active');
+                    b.classList.replace('text-slate-500', 'text-slate-700');
+                } else {
+                    b.classList.remove('active');
+                    b.classList.add('text-slate-500');
+                }
+            });
+
+            const p = dummyPendaftar.find(x => x.id === currentDrawerId);
+            const content = document.getElementById('drawer-content');
+            if (!p) return;
+
+            const tabs = {
+                akademik: `
+                    <div class="space-y-3">
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Program Studi</p>
+                            <p class="font-bold text-slate-800">${p.prodi}</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Fakultas Teknologi Komunikasi</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Jalur Seleksi</p>
+                            <p class="font-bold text-slate-800">${p.jalur}</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Gelombang</p>
+                            <p class="font-bold text-slate-800">Gelombang 1 Ganjil 2026/2027</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Asal Sekolah</p>
+                            <p class="font-bold text-slate-800">SMA Negeri 12 Jakarta</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Nilai Rapor rata-rata: 85,2</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Saat Ini</p>
+                            <span class="pill ${statusConfig[p.status].pill}">${statusConfig[p.status].label}</span>
+                        </div>
+                    </div>
+                `,
+                personal: `
+                    <div class="space-y-3">
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</p>
+                            <p class="font-bold text-slate-800">${p.email}</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">WhatsApp</p>
+                            <p class="font-bold text-slate-800">+62 ${p.phone}</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Tempat & Tanggal Lahir</p>
+                            <p class="font-bold text-slate-800">Jakarta, 15 Januari 2005</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Alamat</p>
+                            <p class="font-bold text-slate-800 leading-relaxed text-sm">Jl. Merdeka No. 123, RT 04/RW 02, Kel. Setiabudi, Kec. Setiabudi, Jakarta Selatan, DKI Jakarta 12910</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">NIK</p>
+                            <p class="font-mono font-bold text-slate-800">3271 23 4567 8901 23</p>
+                        </div>
+                    </div>
+                `,
+                pembayaran: `
+                    <div class="space-y-3">
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Invoice Formulir</p>
+                                <span class="pill ${bayarConfig[p.bayar].pill}">${bayarConfig[p.bayar].label}</span>
+                            </div>
+                            <p class="font-mono font-bold text-brand-600 text-sm mb-2">INV-2026-001245</p>
+                            <p class="font-mono font-extrabold text-2xl text-slate-800">Rp 250.000</p>
+                            <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1">
+                                <div class="flex justify-between"><span>Metode</span><span class="font-bold text-slate-700">BCA Virtual Account</span></div>
+                                <div class="flex justify-between"><span>Tanggal Bayar</span><span class="font-bold text-slate-700">10 Jun 2026 14:35</span></div>
+                                <div class="flex justify-between"><span>Reference</span><span class="font-mono font-bold text-slate-700">8902081234567890</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Riwayat Pembayaran</p>
+                            <p class="text-xs text-slate-500">1 transaksi · Total Rp 250.000</p>
+                        </div>
+                    </div>
+                `,
+                dokumen: `
+                    <div class="space-y-2">
+                        ${['KTP','Ijazah SMA','Pas Foto','Rapor'].map((doc, i) => `
+                            <div class="bg-white rounded-xl p-3 border border-slate-100 flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+                                    <i class="ph-fill ph-file-text"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-sm text-slate-800">${doc}</p>
+                                    <p class="text-[10px] text-slate-500">${doc.toLowerCase().replace(' ', '-')}-${p.id.toLowerCase()}.pdf</p>
+                                </div>
+                                <span class="pill ${i === 3 ? 'pill-amber' : 'pill-emerald'}">${i === 3 ? 'Pending' : 'Verified'}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `,
+                komunikasi: `
+                    <div class="space-y-3">
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="ph-fill ph-envelope text-brand-600"></i>
+                                <p class="text-xs font-bold text-slate-700">Email: Welcome to UNSIA</p>
+                            </div>
+                            <p class="text-[11px] text-slate-500">Dibuka · 08 Jun 2026 14:35</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="ph-fill ph-whatsapp-logo text-emerald-600"></i>
+                                <p class="text-xs font-bold text-slate-700">WhatsApp: Konfirmasi pembayaran diterima</p>
+                            </div>
+                            <p class="text-[11px] text-slate-500">Terkirim · 10 Jun 2026 15:00</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-slate-100">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="ph-fill ph-envelope text-brand-600"></i>
+                                <p class="text-xs font-bold text-slate-700">Email: Anda diterima sebagai Mahasiswa UNSIA</p>
+                            </div>
+                            <p class="text-[11px] text-slate-500">Dibuka · 12 Jun 2026 09:15</p>
+                        </div>
+                    </div>
+                `,
+                timeline: `
+                    <div class="relative pl-6 space-y-4">
+                        <div class="absolute left-2 top-2 bottom-2 w-0.5 bg-slate-200"></div>
+                        ${[
+                            {label:'Form pendaftaran submitted', date:'08 Jun 2026 14:22', icon:'user-plus', color:'brand'},
+                            {label:'Pembayaran formulir LUNAS', date:'10 Jun 2026 14:35', icon:'check-circle', color:'emerald'},
+                            {label:'Berkas diverifikasi (KTP, Ijazah, Foto)', date:'11 Jun 2026 08:15', icon:'shield-check', color:'emerald'},
+                            {label:'Status: LULUS SELEKSI', date:'12 Jun 2026 06:00', icon:'trophy', color:'amber'},
+                            {label:'NIM diterbitkan: 26090182', date:'12 Jun 2026 06:30', icon:'identification-badge', color:'brand'}
+                        ].map(t => `
+                            <div class="relative">
+                                <div class="absolute -left-[18px] w-4 h-4 rounded-full bg-${t.color}-500 border-2 border-white shadow"></div>
+                                <p class="text-sm font-bold text-slate-800">${t.label}</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5 font-medium font-mono">${t.date}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `
+            };
+            content.innerHTML = tabs[tab] || '';
+        }
+
+        // ============================================================
+        // VERIFIKASI
+        // ============================================================
+        const verifQueue = [
+            { id: 'PMB202600125', nama: 'Citra Lestari', prodi: 'S1 Sistem Informasi', active: true },
+            { id: 'PMB202600127', nama: 'Eka Pradana', prodi: 'S1 Informatika', active: false },
+            { id: 'PMB202600129', nama: 'Gita Rahmawati', prodi: 'S1 Ilmu Komunikasi', active: false },
+            { id: 'PMB202600131', nama: 'Indra Wijaya', prodi: 'S1 Sistem Informasi', active: false },
+            { id: 'PMB202600132', nama: 'Jihan Putri', prodi: 'S1 Manajemen', active: false },
+            { id: 'PMB202600133', nama: 'Krisna Bayu', prodi: 'S1 Akuntansi', active: false },
+        ];
+
+        function renderVerifQueue() {
+            const container = document.getElementById('verif-queue');
+            container.innerHTML = verifQueue.map((p, idx) => `
+                <button onclick="selectVerif(${idx})" class="queue-card w-full text-left p-3 rounded-xl border-2 ${p.active ? 'active' : 'border-transparent hover:bg-white'} transition-colors flex items-center gap-3">
+                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.nama)}&background=f0f4f8&color=0f487b&rounded=true&bold=true" class="w-10 h-10 rounded-full shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-sm text-slate-800 truncate">${p.nama}</p>
+                        <p class="text-[11px] text-slate-500 truncate">${p.prodi}</p>
+                        <p class="text-[10px] text-brand-600 font-mono font-bold mt-0.5">#${p.id}</p>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function selectVerif(idx) {
+            verifQueue.forEach((p, i) => p.active = (i === idx));
+            renderVerifQueue();
+            const p = verifQueue[idx];
+            document.getElementById('verif-name').innerText = p.nama;
+            document.getElementById('verif-id').innerText = '#' + p.id;
+            document.getElementById('verif-prodi').innerText = p.prodi;
+            document.getElementById('verif-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.nama)}&background=f0f4f8&color=0f487b&rounded=true&bold=true`;
+        }
+
+        function previewDoc(type) {
+            const labels = {
+                ktp: 'Pratinjau Dokumen — KTP',
+                ijazah: 'Pratinjau Dokumen — Ijazah SMA',
+                foto: 'Pratinjau Dokumen — Pas Foto'
+            };
+            const icons = { ktp: 'ph-identification-card', ijazah: 'ph-scroll', foto: 'ph-image-square' };
+            const titles = { ktp: 'KTP', ijazah: 'Ijazah SMA', foto: 'Pas Foto' };
+            const subtitles = { ktp: 'NIK: 3271xxxx · DKI Jakarta', ijazah: 'SMA Negeri 12 Jakarta · 2024', foto: 'Latar merah · 480x600px' };
+
+            document.getElementById('preview-label').innerText = labels[type];
+            const activeP = verifQueue.find(p => p.active);
+            const nama = activeP ? activeP.nama : 'Pendaftar';
+
+            document.getElementById('preview-area').innerHTML = `
+                <div class="text-center">
+                    <div class="w-14 h-14 bg-white rounded-xl border border-slate-200 flex items-center justify-center mx-auto mb-3">
+                        <i class="ph-fill ${icons[type]} text-2xl text-brand-600"></i>
+                    </div>
+                    <p class="text-sm font-bold text-slate-600">${titles[type]} — ${nama}</p>
+                    <p class="text-xs text-slate-500 mt-1">${subtitles[type]}</p>
+                    <p class="text-[10px] text-slate-400 mt-3 font-medium">Pratinjau dokumen simulasi</p>
+                </div>
+            `;
+        }
+
+        function approveVerif() {
+            runLoading('Menyimpan Perubahan', 'Memperbarui status verifikasi & mengirim notifikasi.', 1500, () => {
+                const p = verifQueue.find(x => x.active);
+                document.getElementById('verif-success-name').innerText = p ? p.nama : '—';
+                const modal = document.getElementById('verif-success-modal');
+                const card = document.getElementById('verif-success-card');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                requestAnimationFrame(() => {
+                    modal.classList.remove('opacity-0');
+                    card.classList.add('show');
+                });
+            });
+        }
+
+        function closeVerifSuccess() {
+            const modal = document.getElementById('verif-success-modal');
+            const card = document.getElementById('verif-success-card');
+            modal.classList.add('opacity-0');
+            card.classList.remove('show');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+
+                // Decrement badge
+                const badge = document.getElementById('badge-verif');
+                let count = parseInt(badge.innerText) - 1;
+                badge.innerText = count;
+                if (count <= 0) badge.classList.add('hidden');
+
+                // Move to next in queue
+                const activeIdx = verifQueue.findIndex(p => p.active);
+                if (activeIdx >= 0 && activeIdx < verifQueue.length - 1) {
+                    selectVerif(activeIdx + 1);
+                }
+            }, 400);
+        }
+
+        // ============================================================
+        // LOADING OVERLAY
+        // ============================================================
+        function runLoading(title, desc, duration, callback) {
+            const overlay = document.getElementById('loading-overlay');
+            const box = document.getElementById('loading-box');
+            const bar = document.getElementById('loading-bar');
+
+            document.getElementById('loading-title').innerText = title;
+            document.getElementById('loading-desc').innerText = desc;
+
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            requestAnimationFrame(() => {
+                overlay.classList.remove('opacity-0');
+                box.classList.remove('scale-95', 'opacity-0');
+                box.classList.add('scale-100', 'opacity-100');
+            });
+
+            bar.style.width = "0%";
+            setTimeout(() => bar.style.width = "55%", duration * 0.4);
+            setTimeout(() => bar.style.width = "95%", duration * 0.85);
+
+            setTimeout(() => {
+                bar.style.width = "100%";
+                setTimeout(() => {
+                    overlay.classList.add('opacity-0');
+                    box.classList.remove('scale-100');
+                    box.classList.add('scale-95');
+                    setTimeout(() => {
+                        overlay.classList.remove('flex');
+                        overlay.classList.add('hidden');
+                        if (callback) callback();
+                    }, 300);
+                }, 350);
+            }, duration);
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        renderPendaftarTable(dummyPendaftar);
+        renderVerifQueue();
+
+        // Set today's date
+        const today = new Date();
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        document.getElementById('today-label').innerText = `${days[today.getDay()]}, ${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}`;
+    </script>
+</body>
+</html>

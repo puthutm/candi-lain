@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS Universitas Siber Asia - Discussion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+        body, .font-sans {
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        
+        /* Post Card Hover Tipis & Manis */
+        .post-card {
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid transparent;
+        }
+        .post-card:hover {
+            border-left-color: #3b82f6; 
+            border-top-color: #e0e7ff;
+            border-right-color: #e0e7ff;
+            border-bottom-color: #e0e7ff;
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* Comment Reply Button - Hidden by default, shown on hover */
+        .comment-row .reply-btn {
+            opacity: 0;
+            transform: translateX(-5px);
+            transition: all 0.2s ease;
+        }
+        .comment-row:hover .reply-btn {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="bg-[#F9FBFC] text-slate-900 min-h-screen font-sans">
+
+    <!-- MAIN CONTENT ONLY (Sidebar Removed) -->
+    <main class="w-full flex flex-col min-h-screen">
+        
+        <!-- HEADER -->
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 flex-shrink-0 sticky top-0 z-50 shadow-sm">
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-400">
+                <div class="w-8 h-8 bg-[#004996] rounded flex items-center justify-center text-white font-bold text-xs mr-2">U</div>
+                <span class="hover:text-blue-600 cursor-pointer transition-colors">Courses Offered</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                <span class="text-slate-900 font-bold">SI-0011</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="text-slate-400 hover:text-blue-600 transition-colors relative">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 border border-white rounded-full"></span>
+                </button>
+                <div class="text-right ml-2">
+                    <p class="text-xs font-bold">Yuda Jasper Va...</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-tighter font-bold">yuda</p>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-blue-100 border-2 border-white shadow-sm overflow-hidden">
+                    <img src="https://ui-avatars.com/api/?name=Yuda+Jasper&background=004996&color=fff" alt="User" />
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT SCROLL AREA -->
+        <div class="flex-grow p-6 lg:p-12 overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-8 pb-20">
+                
+                <!-- COURSE INFO HEADER CARD -->
+                <div class="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center shadow-sm relative overflow-hidden group hover:border-blue-200 transition-colors duration-400">
+                    
+                    <div class="absolute right-0 top-0 w-64 h-64 bg-green-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/4"></div>
+
+                    <div class="space-y-4 relative z-10 w-full md:w-auto">
+                        <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Sistem Operasi</h1>
+                        
+                        <div class="flex flex-wrap items-center gap-4 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                            <span class="bg-[#00A99D] text-white px-3 py-1.5 rounded-lg shadow-sm">SI-0011</span>
+                            <span class="flex items-center gap-1.5"><i data-lucide="book" class="w-3.5 h-3.5 text-slate-400"></i> 3 sks</span>
+                            <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i> Genap Tahun ajaran 2026</span>
+                            <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i> Friday, 04:00 - 05:00</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-4 mt-4 pt-5 border-t border-slate-100">
+                            <img src="https://ui-avatars.com/api/?name=Noviandri+S&background=1e293b&color=fff" class="w-11 h-11 rounded-full shadow-sm" alt="Dosen"/>
+                            <div>
+                                <p class="text-[13px] font-extrabold text-slate-800">Noviandri S.Kom., MMSI S.Kom., MMSI</p>
+                                <p class="text-[10px] text-slate-400 font-semibold tracking-widest mt-0.5">NIDN : 2110102006</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- PROGRESS CIRCLE -->
+                    <div class="mt-8 md:mt-0 flex shrink-0 relative z-10 mx-auto md:mx-0">
+                        <div class="relative w-28 h-28 flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90 absolute top-0 left-0" viewBox="0 0 36 36">
+                                <path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f1f5f9" stroke-width="3"></path>
+                                <path stroke-dasharray="4, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#facc15" stroke-width="3.5" class="animate-pulse" stroke-linecap="round"></path>
+                                <path stroke-dasharray="18, 100" stroke-dashoffset="-4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#86efac" stroke-width="3.5" stroke-linecap="round"></path>
+                            </svg>
+                            <div class="flex flex-col items-center justify-center bg-white rounded-full w-20 h-20 shadow-sm border border-slate-50 z-10 group-hover:scale-105 transition-transform duration-400">
+                                <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Progress</span>
+                                <span class="text-xl font-black text-slate-800 -mt-1">4%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SHARE SOMETHING WIDGET -->
+                <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:border-amber-200 transition-colors duration-400">
+                    <p class="text-xs font-bold text-slate-700 mb-4">Share Something with Your Class :</p>
+                    <div onclick="showToast('Membuka form Survey...')" class="border-2 border-dashed border-amber-200 bg-[#FFFCF5] rounded-2xl p-5 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-amber-50 hover:border-amber-300 hover:scale-[1.01] transition-all duration-400">
+                        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-amber-500 shadow-sm">
+                            <i data-lucide="check-square" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[10px] font-extrabold text-amber-600 uppercase tracking-wider">Survey</span>
+                    </div>
+                </div>
+
+                <!-- DISCUSSION POST 1 -->
+                <div class="post-card bg-white rounded-3xl overflow-hidden bg-white">
+                    <!-- Header -->
+                    <div class="p-6 md:p-8 pb-4">
+                        <div class="flex items-start gap-4">
+                            <img src="https://ui-avatars.com/api/?name=Noviandri+S&background=1e293b&color=fff" alt="Dosen" class="w-10 h-10 rounded-full shadow-sm" />
+                            <div>
+                                <h3 class="text-xs font-extrabold text-slate-800 flex items-center gap-2">
+                                    Noviandri S.Kom., MMSI
+                                </h3>
+                                <p class="text-[9px] font-semibold mt-1 flex items-center gap-1.5">
+                                    <span class="text-blue-600 cursor-pointer hover:underline tracking-wide">Share Something with Your Class</span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="text-slate-400 tracking-wide">5 months ago</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="mt-5 space-y-2.5">
+                            <h2 class="text-sm font-extrabold text-slate-800 leading-snug">Session 1 - Manajemen Sistem Informasi</h2>
+                            <p class="text-[13px] text-slate-600 leading-relaxed font-medium">
+                                <span class="font-bold text-slate-800">ICT</span> <span class="italic text-slate-500">adalah fondasi</span> <span class="underline decoration-slate-300 underline-offset-2">teknis</span> yang memungkinkan sistem informasi berjalan, mencakup perangkat keras, jaringan, perangkat lunak, dan layanan cloud yang bersama-sama mengumpulkan, mengolah, menyimpan, serta mendistribusikan data agar keputusan bisnis lebih cepat dan akurat. Dalam praktiknya, ICT menghadirkan konektivitas, otomatisasi proses, integrasi antaraplikasi, analitik data, dan pengalaman pengguna yang konsisten lintas perangkat.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Materials Dropdown -->
+                    <div class="px-6 md:px-8 py-3 bg-slate-50/70 border-y border-slate-100 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors" onclick="showToast('Menampilkan materi tambahan')">
+                        <span class="text-[10px] font-extrabold text-slate-500 tracking-wider">Materials (2)</span>
+                        <button class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[9px] font-extrabold text-slate-600 uppercase tracking-widest hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
+                            Lihat Materi <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Post Actions -->
+                    <div class="px-6 md:px-8 py-4 flex items-center gap-6 border-b border-slate-100">
+                        <button onclick="showToast('Menyukai postingan')" class="flex items-center gap-1.5 text-[10px] font-extrabold tracking-wider transition-colors group text-red-500">
+                            <i data-lucide="heart" class="w-4 h-4 fill-red-500 group-hover:scale-110 transition-transform"></i>
+                            1 Likes
+                        </button>
+                        <button class="flex items-center gap-1.5 text-[10px] font-extrabold tracking-wider text-slate-400 hover:text-blue-600 transition-colors group">
+                            <i data-lucide="message-square" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                            4 Comments
+                        </button>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="px-6 md:px-8 py-6 bg-[#FAFCFD] space-y-6">
+                        
+                        <!-- Comment 1 -->
+                        <div class="flex gap-4 comment-row">
+                            <img src="https://ui-avatars.com/api/?name=Yuda+Jasper&background=e2e8f0&color=475569" alt="User" class="w-8 h-8 rounded-full shrink-0" />
+                            <div class="flex-grow">
+                                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                    <h4 class="text-[11px] font-extrabold text-slate-800">Yuda Jasper Van Der Wel</h4>
+                                    <span class="text-[9px] font-bold text-slate-300 hidden sm:inline">-</span>
+                                    <span class="text-[9px] font-bold text-slate-400 tracking-wider">25003002010002 <span class="font-semibold text-slate-400 ml-0.5">(Student)</span></span>
+                                </div>
+                                <p class="text-xs text-slate-600 mt-0.5 font-medium">tes lagi</p>
+                                <button class="reply-btn bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 px-3 py-1 rounded text-[9px] font-extrabold uppercase tracking-widest mt-2">Reply</button>
+                            </div>
+                        </div>
+
+                        <!-- Comment 2 -->
+                        <div class="flex gap-4 comment-row">
+                            <img src="https://ui-avatars.com/api/?name=Yuda+Jasper&background=e2e8f0&color=475569" alt="User" class="w-8 h-8 rounded-full shrink-0" />
+                            <div class="flex-grow">
+                                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                    <h4 class="text-[11px] font-extrabold text-slate-800">Yuda Jasper Van Der Wel</h4>
+                                    <span class="text-[9px] font-bold text-slate-300 hidden sm:inline">-</span>
+                                    <span class="text-[9px] font-bold text-slate-400 tracking-wider">25003002010002 <span class="font-semibold text-slate-400 ml-0.5">(Student)</span></span>
+                                </div>
+                                <p class="text-xs text-slate-600 mt-0.5 font-medium">tes</p>
+                                <button class="reply-btn bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 px-3 py-1 rounded text-[9px] font-extrabold uppercase tracking-widest mt-2">Reply</button>
+                            </div>
+                        </div>
+
+                        <!-- Comment 3 -->
+                        <div class="flex gap-4 comment-row">
+                            <img src="https://ui-avatars.com/api/?name=Yuda+Jasper&background=e2e8f0&color=475569" alt="User" class="w-8 h-8 rounded-full shrink-0" />
+                            <div class="flex-grow">
+                                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                    <h4 class="text-[11px] font-extrabold text-slate-800">Yuda Jasper Van Der Wel</h4>
+                                    <span class="text-[9px] font-bold text-slate-300 hidden sm:inline">-</span>
+                                    <span class="text-[9px] font-bold text-slate-400 tracking-wider">25003002010002 <span class="font-semibold text-slate-400 ml-0.5">(Student)</span></span>
+                                </div>
+                                <p class="text-xs text-slate-600 mt-0.5 font-medium">ftest</p>
+                                <button class="reply-btn bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 px-3 py-1 rounded text-[9px] font-extrabold uppercase tracking-widest mt-2">Reply</button>
+                            </div>
+                        </div>
+
+                        <!-- Comment 4 -->
+                        <div class="flex gap-4 comment-row">
+                            <img src="https://ui-avatars.com/api/?name=Yuda+Jasper&background=e2e8f0&color=475569" alt="User" class="w-8 h-8 rounded-full shrink-0" />
+                            <div class="flex-grow">
+                                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                    <h4 class="text-[11px] font-extrabold text-slate-800">Yuda Jasper Van Der Wel</h4>
+                                    <span class="text-[9px] font-bold text-slate-300 hidden sm:inline">-</span>
+                                    <span class="text-[9px] font-bold text-slate-400 tracking-wider">25003002010002 <span class="font-semibold text-slate-400 ml-0.5">(Student)</span></span>
+                                </div>
+                                <p class="text-xs text-slate-600 mt-0.5 font-medium">ddws</p>
+                                <button class="reply-btn bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 px-3 py-1 rounded text-[9px] font-extrabold uppercase tracking-widest mt-2">Reply</button>
+                            </div>
+                        </div>
+
+                        <!-- Comment Input -->
+                        <div class="flex items-start gap-4 pt-4 border-t border-slate-200 mt-6">
+                            <img src="https://ui-avatars.com/api/?name=Yuda+Jasper&background=004996&color=fff" alt="User" class="w-9 h-9 rounded-full shadow-sm shrink-0" />
+                            <div class="flex-grow flex flex-col gap-2">
+                                <div class="relative flex items-center bg-white border border-slate-200 rounded-2xl focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-50 transition-all shadow-sm overflow-hidden p-1 pl-2">
+                                    
+                                    <button class="flex items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200 px-2.5 py-1.5 rounded-xl text-[10px] font-extrabold tracking-wider transition-colors shrink-0">
+                                        <i data-lucide="at-sign" class="w-3 h-3"></i> mention
+                                    </button>
+                                    
+                                    <input 
+                                        type="text" 
+                                        placeholder="Write a message.." 
+                                        class="flex-grow bg-transparent border-none outline-none text-[11px] font-medium px-3 text-slate-700 placeholder:text-slate-400"
+                                    />
+                                    
+                                    <button 
+                                        onclick="showToast('Komentar diposting')"
+                                        class="flex items-center justify-center gap-1.5 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white px-5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase transition-all shrink-0 active:scale-95"
+                                    >
+                                        Post
+                                    </button>
+                                </div>
+                                <p class="text-[9px] text-slate-400 font-medium ml-2">
+                                    Gunakan <span class="font-extrabold text-slate-500">@</span> untuk mention dosen dan mahasiswa.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- DISCUSSION POST 2 -->
+                <div class="post-card bg-white rounded-3xl overflow-hidden bg-white">
+                    <!-- Header -->
+                    <div class="p-6 md:p-8 pb-4">
+                        <div class="flex items-start gap-4">
+                            <img src="https://ui-avatars.com/api/?name=Noviandri+S&background=1e293b&color=fff" alt="Dosen" class="w-10 h-10 rounded-full shadow-sm" />
+                            <div>
+                                <h3 class="text-xs font-extrabold text-slate-800 flex items-center gap-2">
+                                    Noviandri S.Kom., MMSI
+                                </h3>
+                                <p class="text-[9px] font-semibold mt-1 flex items-center gap-1.5">
+                                    <span class="text-blue-600 cursor-pointer hover:underline tracking-wide">Share Something with Your Class</span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="text-slate-400 tracking-wide">5 months ago</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="mt-5 space-y-2.5">
+                            <h2 class="text-sm font-extrabold text-slate-800 leading-snug">Session 2 - Evolusi Teknologi Informasi dan Komunikasi</h2>
+                            <p class="text-[13px] text-slate-600 leading-relaxed font-medium">
+                                Linimasa perkembangan perangkat, internet, dan layanan digital. Diskusi kritis tentang bagaimana perubahan teknologi memengaruhi cara belajar dan bekerja.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Materials Dropdown -->
+                    <div class="px-6 md:px-8 py-3 bg-slate-50/70 border-y border-slate-100 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors" onclick="showToast('Menampilkan materi tambahan')">
+                        <span class="text-[10px] font-extrabold text-slate-500 tracking-wider">Materials (2)</span>
+                        <button class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[9px] font-extrabold text-slate-600 uppercase tracking-widest hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
+                            Lihat Materi <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Post Actions -->
+                    <div class="px-6 md:px-8 py-4 flex items-center gap-6 border-b border-slate-100">
+                        <button onclick="showToast('Menyukai postingan')" class="flex items-center gap-1.5 text-[10px] font-extrabold tracking-wider text-slate-400 hover:text-red-500 transition-colors group">
+                            <i data-lucide="heart" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                            0 Likes
+                        </button>
+                        <button class="flex items-center gap-1.5 text-[10px] font-extrabold tracking-wider text-slate-400 hover:text-blue-600 transition-colors group">
+                            <i data-lucide="message-square" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                            1 Comments
+                        </button>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="px-6 md:px-8 py-6 bg-[#FAFCFD] space-y-6">
+                        
+                        <!-- Comment 1 -->
+                        <div class="flex gap-4 comment-row">
+                            <img src="https://ui-avatars.com/api/?name=Yuda+Jasper&background=e2e8f0&color=475569" alt="User" class="w-8 h-8 rounded-full shrink-0" />
+                            <div class="flex-grow">
+                                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                    <h4 class="text-[11px] font-extrabold text-slate-800">Yuda Jasper Van Der Wel</h4>
+                                    <span class="text-[9px] font-bold text-slate-300 hidden sm:inline">-</span>
+                                    <span class="text-[9px] font-bold text-slate-400 tracking-wider">25003002010002 <span class="font-semibold text-slate-400 ml-0.5">(Student)</span></span>
+                                </div>
+                                <p class="text-xs text-slate-600 mt-0.5 font-medium">test</p>
+                                <button class="reply-btn bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 px-3 py-1 rounded text-[9px] font-extrabold uppercase tracking-widest mt-2">Reply</button>
+                            </div>
+                        </div>
+
+                        <!-- Comment Input -->
+                        <div class="flex items-start gap-4 pt-4 border-t border-slate-200 mt-6">
+                            <img src="https://ui-avatars.com/api/?name=Yuda+Jasper&background=004996&color=fff" alt="User" class="w-9 h-9 rounded-full shadow-sm shrink-0" />
+                            <div class="flex-grow flex flex-col gap-2">
+                                <div class="relative flex items-center bg-white border border-slate-200 rounded-2xl focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-50 transition-all shadow-sm overflow-hidden p-1 pl-2">
+                                    
+                                    <button class="flex items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200 px-2.5 py-1.5 rounded-xl text-[10px] font-extrabold tracking-wider transition-colors shrink-0">
+                                        <i data-lucide="at-sign" class="w-3 h-3"></i> mention
+                                    </button>
+                                    
+                                    <input 
+                                        type="text" 
+                                        placeholder="Write a message.." 
+                                        class="flex-grow bg-transparent border-none outline-none text-[11px] font-medium px-3 text-slate-700 placeholder:text-slate-400"
+                                    />
+                                    
+                                    <button 
+                                        onclick="showToast('Komentar diposting')"
+                                        class="flex items-center justify-center gap-1.5 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white px-5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase transition-all shrink-0 active:scale-95"
+                                    >
+                                        Post
+                                    </button>
+                                </div>
+                                <p class="text-[9px] text-slate-400 font-medium ml-2">
+                                    Gunakan <span class="font-extrabold text-slate-500">@</span> untuk mention dosen dan mahasiswa.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- TOAST POPUP -->
+    <div id="toast" class="fixed bottom-10 right-10 z-[100] transform translate-y-20 opacity-0 pointer-events-none transition-all duration-500">
+        <div class="bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4">
+            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold">
+                <i data-lucide="check-circle" class="w-[18px] h-[18px]"></i>
+            </div>
+            <p id="toast-text" class="text-sm font-semibold">Memproses...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Render Icons
+        lucide.createIcons();
+
+        // Toast Notification System
+        let toastTimeout;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastText = document.getElementById('toast-text');
+            
+            toastText.innerText = message;
+            
+            // Show Toast
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            // Hide Toast after 3s
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

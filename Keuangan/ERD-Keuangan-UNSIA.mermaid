@@ -1,0 +1,317 @@
+erDiagram
+
+    %% ================= MASTER & TARIF =================
+    TUITION_RATES {
+        uuid id PK
+        uuid study_program_ref "ref logis ke SIAKAD study_programs, bukan FK"
+        string study_program_name_snapshot
+        string academic_period_label
+        decimal spp_amount
+        decimal bop_amount
+        decimal total_amount
+        boolean requires_yayasan_approval
+        timestamp effective_date
+    }
+
+    PMB_FEE_RATES {
+        uuid id PK
+        string wave_label
+        decimal registration_fee
+        decimal exam_fee
+        decimal reregistration_fee
+        decimal matriculation_fee
+    }
+
+    SCHOLARSHIP_PROGRAMS {
+        uuid id PK
+        string code UK
+        string name
+        enum funding_source "kip_k|internal|mitra"
+        decimal amount_per_student_per_semester
+        int recipient_count
+        enum status "aktif|nonaktif"
+    }
+
+    SCHOLARSHIP_RECIPIENTS {
+        uuid id PK
+        uuid scholarship_program_id FK
+        uuid student_user_id "ref SSO_USERS, bukan FK"
+        string academic_period_label
+    }
+
+    SCHOLARSHIP_PROGRAMS ||--o{ SCHOLARSHIP_RECIPIENTS : "memiliki_penerima"
+
+    CHART_OF_ACCOUNTS {
+        uuid id PK
+        string account_code UK "1101, 4101, 5101, dst"
+        string account_name
+        enum account_type "aset|liabilitas|ekuitas|pendapatan|beban"
+        uuid parent_account_id FK
+    }
+
+    %% ================= PENERIMAAN MAHASISWA =================
+    STUDENT_INVOICES ||--o{ STUDENT_INVOICE_ITEMS : "berisi"
+    STUDENT_INVOICES ||--o{ PAYMENTS : "dibayar_melalui"
+    STUDENT_INVOICES ||--o| INSTALLMENT_PLANS : "dapat_dicicil"
+    SCHOLARSHIP_RECIPIENTS ||--o{ STUDENT_INVOICE_ITEMS : "memotong_via"
+
+    STUDENT_INVOICES {
+        uuid id PK
+        uuid student_user_id "ref SSO_USERS"
+        string invoice_number UK
+        enum invoice_type "ukt|pmb|wisuda|lainnya"
+        string academic_period_label
+        decimal total_amount
+        decimal paid_amount
+        decimal outstanding_amount
+        enum status "outstanding|lunas|cicilan|beasiswa|overdue"
+        date due_date
+        timestamp created_at
+    }
+
+    STUDENT_INVOICE_ITEMS {
+        uuid id PK
+        uuid invoice_id FK
+        string component_name "SPP Pokok|BOP|Potongan Beasiswa"
+        decimal amount "negatif jika potongan"
+        uuid scholarship_recipient_id FK "nullable"
+    }
+
+    PAYMENTS {
+        uuid id PK
+        uuid invoice_id FK
+        enum channel "virtual_account|qris|kartu_kredit|manual_dipa|setor_tunai"
+        string provider_ref "ref transaksi Midtrans"
+        decimal amount
+        enum status "pending|success|failed"
+        boolean auto_reconciled
+        timestamp paid_at
+        uuid journal_entry_id FK "auto-jurnal setelah sukses"
+    }
+
+    INSTALLMENT_PLANS {
+        uuid id PK
+        uuid invoice_id FK
+        enum scheme "cicilan_2x|cicilan_3x|penundaan_1bulan"
+        int term_count
+        string reason
+        string document_url "SKTM/PHK, wajib"
+        enum status "diajukan|disetujui|ditolak|berjalan|selesai|gagal"
+        uuid approved_by_user_id
+        timestamp approved_at
+    }
+
+    INSTALLMENT_TERMS {
+        uuid id PK
+        uuid installment_plan_id FK
+        int term_number
+        decimal amount
+        date due_date
+        enum status "belum_bayar|lunas|terlambat"
+    }
+
+    INSTALLMENT_PLANS ||--o{ INSTALLMENT_TERMS : "terbagi_atas"
+
+    %% ================= PENGELUARAN =================
+    PURCHASE_ORDERS ||--o{ PO_APPROVALS : "melalui"
+    PURCHASE_ORDERS ||--o| PAYMENTS_OUT : "dibayarkan_via"
+
+    PURCHASE_ORDERS {
+        uuid id PK
+        string po_number UK
+        string vendor_name
+        string item_description
+        enum category "utilities|atk|it_lisensi|maintenance|sewa|konsumsi"
+        decimal amount
+        boolean requires_3_quotation "otomatis true jika amount > 25jt"
+        date due_date
+        enum status "pending_approval|approved|paid"
+    }
+
+    PO_APPROVALS {
+        uuid id PK
+        uuid po_id FK
+        enum approval_level "kepala_biro|wr2|rektor_yayasan"
+        uuid approver_user_id
+        enum decision "setuju|tolak"
+        timestamp decided_at
+    }
+
+    PAYMENTS_OUT {
+        uuid id PK
+        uuid po_id FK
+        decimal gross_amount
+        decimal tax_withheld
+        decimal net_amount
+        uuid journal_entry_id FK
+        timestamp paid_at
+    }
+
+    EXTERNAL_HONORARIUMS {
+        uuid id PK
+        string recipient_name
+        string activity_role
+        decimal gross_amount
+        enum tax_type "pph21_bukan_pegawai|pph23"
+        decimal tax_withheld
+        decimal net_amount
+        enum status "pending|paid"
+        string bukti_potong_number
+        uuid journal_entry_id FK
+    }
+
+    PAYROLL_DISBURSEMENTS ||--o{ PAYROLL_DISBURSEMENT_ITEMS : "berisi"
+
+    PAYROLL_DISBURSEMENTS {
+        uuid id PK
+        string period_label "Mei 2026"
+        decimal total_gross
+        decimal total_net
+        decimal total_tax_bpjs
+        enum pipeline_stage "persiapan_hris|validasi_keuangan|kalkulasi_pajak|approval_wr2|disburse"
+        timestamp hris_ready_at
+        timestamp finance_validated_at
+        timestamp tax_calculated_at
+        uuid approved_by_wr2_id
+        timestamp approved_at
+        timestamp disbursed_at
+        uuid journal_entry_id FK
+    }
+
+    PAYROLL_DISBURSEMENT_ITEMS {
+        uuid id PK
+        uuid disbursement_id FK
+        uuid employee_ref "ref logis ke HRIS, bukan FK"
+        string employee_name_snapshot
+        decimal gross_amount
+        decimal pph21_withheld
+        decimal bpjs_withheld
+        decimal net_amount
+        string bank_account_number
+    }
+
+    REFERRAL_DISBURSEMENTS {
+        uuid id PK
+        uuid crm_disbursement_ref "ref logis ke CRM, bukan FK"
+        enum program_type "representatif|egs|sgs|kerjasama|alumni"
+        string partner_name
+        string period_label
+        int registrant_count
+        decimal fee_amount
+        enum status "hold|ready|paid"
+        enum payment_channel "transfer_pg|masuk_payroll|transfer_rekening_mahasiswa|batch_transfer_alumni"
+        timestamp disbursed_at
+        uuid journal_entry_id FK
+    }
+
+    %% ================= KAS & BANK =================
+    BANK_ACCOUNTS ||--o{ BANK_MUTATIONS : "punya_mutasi"
+
+    BANK_ACCOUNTS {
+        uuid id PK
+        string bank_name
+        string account_number UK
+        string account_function "operasional|penerimaan_mahasiswa|cadangan|yayasan"
+        decimal current_balance
+        enum status "aktif|reserve|nonaktif"
+    }
+
+    BANK_MUTATIONS {
+        uuid id PK
+        uuid bank_account_id FK
+        enum direction "debit|kredit"
+        decimal amount
+        string description
+        decimal balance_after
+        boolean reconciled
+        timestamp transaction_date
+    }
+
+    INTERNAL_TRANSFERS {
+        uuid id PK
+        uuid from_bank_account_id FK
+        uuid to_bank_account_id FK
+        decimal amount
+        string note
+        timestamp transferred_at
+    }
+
+    %% ================= PAJAK =================
+    TAX_WITHHOLDINGS {
+        uuid id PK
+        enum tax_type "pph21|pph23|pph4_2"
+        string source_reference "ref ke payroll_disbursements/honorariums/po"
+        decimal base_amount
+        decimal tax_amount
+        date due_date
+        enum report_status "belum_lapor|sudah_lapor"
+    }
+
+    TAX_REPORTS {
+        uuid id PK
+        string report_type "SPT_Masa_PPh21|SPT_Masa_Unifikasi|e_Bupot|SPT_Tahunan"
+        string period_label
+        enum status "belum_lapor|sudah_lapor"
+        timestamp submitted_at
+        string file_url
+    }
+
+    %% ================= AKUNTANSI =================
+    JOURNAL_ENTRIES ||--o{ JOURNAL_ENTRY_LINES : "terdiri_atas"
+    CHART_OF_ACCOUNTS ||--o{ JOURNAL_ENTRY_LINES : "dicatat_pada"
+
+    JOURNAL_ENTRIES {
+        uuid id PK
+        string journal_number UK
+        date entry_date
+        string description
+        enum source "auto_penerimaan|auto_payroll|auto_po|manual"
+        enum status "draft|posted"
+        uuid created_by_user_id
+    }
+
+    JOURNAL_ENTRY_LINES {
+        uuid id PK
+        uuid journal_entry_id FK
+        uuid account_id FK
+        decimal debit
+        decimal credit
+    }
+
+    BUDGET_ALLOCATIONS {
+        uuid id PK
+        string unit_cluster_name
+        int fiscal_year
+        decimal approved_budget
+        decimal realized_amount
+        timestamp yayasan_approved_at
+    }
+
+    %% ================= GOVERNANCE & INTEGRASI =================
+    FINANCE_CLEARANCE_STATUS {
+        uuid id PK
+        uuid student_user_id "ref SSO_USERS"
+        enum status "aktif|lms_dibatasi|lms_suspend"
+        string reason "invoice_id yang menyebabkan tertahan"
+        timestamp status_changed_at
+        boolean published_to_siakad
+        boolean published_to_lms
+    }
+
+    SYNC_LOGS {
+        uuid id PK
+        string entity_synced "mahasiswa_siakad|karyawan_hris|komisi_crm|funnel_pmb"
+        int row_count
+        enum status "sukses|gagal|sebagian"
+        timestamp synced_at
+    }
+
+    AUDIT_LOGS {
+        uuid id PK
+        string actor_ref "ref SSO_USERS"
+        string entity_type
+        uuid entity_id
+        string action
+        json detail
+        timestamp created_at
+    }

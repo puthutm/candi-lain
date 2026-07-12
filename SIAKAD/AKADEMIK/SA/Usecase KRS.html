@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alur Integrasi KRS: Kaprodi, Biro Akademik & Mahasiswa</title>
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --secondary-slate: #475569;
+            --system-bg: #f8fafc;
+            --uc-bg: #ffffff;
+            --uc-border: #3b82f6;
+            --actor-color: #1e293b;
+            --line-color: #334155;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+
+        body {
+            background-color: #e2e8f0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            z-index: 50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { font-size: 1.25rem; color: var(--primary-blue); font-weight: 700; }
+        .subtitle { font-size: 0.875rem; color: var(--secondary-slate); }
+
+        /* Main Canvas */
+        #canvas {
+            flex: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+            padding-bottom: 12rem; /* Ditambah untuk mengakomodasi node baru */
+            overflow: auto;
+            background: #cbd5e1;
+        }
+
+        /* Layout Grid */
+        .diagram-container {
+            display: grid;
+            grid-template-columns: 160px 1fr 160px;
+            gap: 3rem;
+            width: 100%;
+            max-width: 1200px;
+            position: relative; 
+            margin-bottom: 2rem;
+        }
+
+        /* SVG Layer */
+        #svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            overflow: visible;
+        }
+
+        /* Actors */
+        .actor-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4rem; 
+            position: relative;
+            z-index: 20;
+            height: 100%;
+            padding: 2rem 0;
+        }
+
+        .actor {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid #94a3b8;
+            width: 130px;
+            position: relative;
+            z-index: 20;
+            transition: transform 0.2s;
+        }
+
+        .actor:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .actor svg { width: 50px; height: 50px; fill: var(--actor-color); margin-bottom: 0.5rem; }
+        .actor-name { font-weight: 700; font-size: 0.8rem; text-align: center; line-height: 1.3; }
+
+        /* System Boundary */
+        .system-boundary {
+            background: white;
+            border: 2px solid var(--secondary-slate);
+            border-radius: 4px;
+            padding: 3rem 2rem;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            z-index: 5; 
+        }
+
+        .system-title {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: white;
+            padding: 0 10px;
+            font-weight: bold;
+            color: var(--secondary-slate);
+            z-index: 6;
+            border-radius: 4px;
+        }
+
+        /* Phase Groups */
+        .phase-group {
+            border: 1px dashed #cbd5e1;
+            padding: 1.5rem;
+            border-radius: 8px;
+            position: relative;
+            z-index: 5;
+            background: #f8fafc;
+        }
+        
+        .phase-label {
+            font-size: 0.8rem;
+            color: #475569;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-align: center;
+            background: #e2e8f0;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+        }
+
+        .uc-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem; /* Sedikit dirapatkan agar muat */
+            align-items: center;
+        }
+
+        /* Use Case Oval */
+        .usecase {
+            background: var(--uc-bg);
+            border: 2px solid var(--uc-border);
+            border-radius: 50px;
+            width: 320px; /* Lebar ditambah untuk judul panjang */
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0.5rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 15;
+        }
+
+        .usecase:hover {
+            background: #eff6ff;
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+            z-index: 25;
+        }
+
+        .usecase.active {
+            background: var(--primary-blue);
+            color: white;
+            border-color: #1d4ed8;
+        }
+
+        /* Detail Panel */
+        #detail-panel {
+            position: fixed;
+            right: -450px;
+            top: 80px;
+            bottom: 20px;
+            width: 400px;
+            background: white;
+            box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+            padding: 2rem;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px 0 0 12px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        #detail-panel.open { right: 0; }
+
+        .spec-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .spec-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+
+        .spec-label { font-weight: 600; color: #64748b; width: 100px; }
+        .spec-value { color: #1e293b; }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .diagram-container { grid-template-columns: 1fr; gap: 2rem; }
+            .actor-column { flex-direction: row; justify-content: space-around; order: -1; gap: 1rem; height: auto; margin-bottom: 1rem; }
+            .system-boundary { order: 1; padding: 1rem; }
+            #svg-layer { display: none; }
+            .usecase { width: 100%; border-radius: 12px; height: auto; padding: 1rem; }
+            #detail-panel { width: 100%; bottom: -100%; top: auto; height: 70vh; right: 0; border-radius: 16px 16px 0 0; }
+            #detail-panel.open { bottom: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>Alur Integrasi KRS - Universitas Siber Asia</h1>
+        <div class="subtitle">Sistem Informasi Akademik (SIAKAD)</div>
+    </div>
+</header>
+
+<div id="canvas">
+    <div class="diagram-container" id="main-diagram">
+        <svg id="svg-layer"></svg>
+        
+        <!-- Left Actor: KAPRODI & BIRO AKADEMIK -->
+        <div class="actor-column">
+            <div class="actor" id="actor-kaprodi">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span class="actor-name">KAPRODI<br>(Manajemen Prodi)</span>
+            </div>
+            
+            <div class="actor" id="actor-baak">
+                <svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+                <span class="actor-name">KEPALA BIRO<br>AKADEMIK</span>
+            </div>
+        </div>
+
+        <!-- System Boundary -->
+        <div class="system-boundary">
+            <div class="system-title">Sistem Informasi Akademik (SIAKAD) - KRS</div>
+
+            <!-- FASE 1 -->
+            <div class="phase-group">
+                <div class="phase-label">Fase 1: Perencanaan & Persiapan (Pra-KRS)</div>
+                <div class="uc-container">
+                    <div class="usecase" id="uc-0" onclick="showSpec('uc-0')">Setup Periode & Master Kurikulum</div>
+                    <!-- Tugas Inti Kaprodi Dipecah Jelas -->
+                    <div class="usecase" id="uc-1" onclick="showSpec('uc-1')">Penentuan MK (Offering)</div>
+                    <div class="usecase" id="uc-plot" onclick="showSpec('uc-plot')">Plotting Dosen Pengampu</div>
+                    <div class="usecase" id="uc-jadwal" onclick="showSpec('uc-jadwal')">Penyusunan Jadwal Perkuliahan</div>
+                    <!-- End Tugas Inti -->
+                    <div class="usecase" id="uc-3" onclick="showSpec('uc-3')">Perencanaan Studi</div>
+                </div>
+            </div>
+
+            <!-- FASE 2 -->
+            <div class="phase-group">
+                <div class="phase-label">Fase 2: Pelaksanaan Registrasi</div>
+                <div class="uc-container">
+                    <div class="usecase" id="uc-4" onclick="showSpec('uc-4')">Pengisian KRS Online</div>
+                    <div class="usecase" id="uc-5" onclick="showSpec('uc-5')">Monitoring & Manajemen Kelas</div>
+                    <div class="usecase" id="uc-6" onclick="showSpec('uc-6')">Update Kuota/Kapasitas</div>
+                </div>
+            </div>
+
+            <!-- FASE 3 -->
+            <div class="phase-group">
+                <div class="phase-label">Fase 3: Evaluasi & Finalisasi</div>
+                <div class="uc-container">
+                    <div class="usecase" id="uc-7" onclick="showSpec('uc-7')">Evaluasi & Efisiensi Kelas</div>
+                    <div class="usecase" id="uc-8" onclick="showSpec('uc-8')">Validasi & Penerbitan KSM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Actors: MAHASISWA & DOSEN PA -->
+        <div class="actor-column">
+            <div class="actor" id="actor-mhs">
+                <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                <span class="actor-name">MAHASISWA<br>(Peserta Didik)</span>
+            </div>
+            
+            <div class="actor" id="actor-wali">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+                <span class="actor-name">DOSEN PA<br>(Pembimbing)</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="detail-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 id="spec-title" style="color: var(--primary-blue);">Judul</h2>
+        <span style="cursor: pointer; font-size: 1.5rem;" onclick="closeSpec()">&times;</span>
+    </div>
+    <p id="spec-desc" style="color: #475569; margin-bottom: 1rem;">Deskripsi...</p>
+    <table class="spec-table">
+        <tr><td class="spec-label">Aktor</td><td class="spec-value" id="spec-actor">...</td></tr>
+        <tr><td class="spec-label">Pre-Kondisi</td><td class="spec-value" id="spec-pre">...</td></tr>
+        <tr><td class="spec-label">Post-Kondisi</td><td class="spec-value" id="spec-post">...</td></tr>
+        <tr><td class="spec-label">Alur Utama</td><td class="spec-value" id="spec-flow">...</td></tr>
+    </table>
+</div>
+
+<script>
+    const useCases = {
+        "uc-0": {
+            title: "Setup Periode & Master Kurikulum",
+            desc: "Biro Akademik membuka Tahun Ajaran dan Semester baru serta memastikan struktur kurikulum universitas aktif.",
+            actor: "Kepala Biro Akademik",
+            pre: "Kalender Akademik telah disahkan.",
+            post: "Sistem siap menerima input kurikulum dari Prodi.",
+            flow: "1. Mengaktifkan periode akademik (contoh: 2024 Ganjil).\n2. Mengatur batasan tanggal KRS.\n3. Membuka akses 'Course Offering' untuk Prodi."
+        },
+        "uc-1": {
+            title: "Penentuan MK (Offering)",
+            desc: "Kaprodi menentukan daftar mata kuliah dari kurikulum yang akan dibuka pada semester aktif ini.",
+            actor: "Kaprodi",
+            pre: "Periode Akademik telah diaktifkan.",
+            post: "Daftar Mata Kuliah semester siap.",
+            flow: "1. Login sebagai Kaprodi.\n2. Buka menu Kurikulum.\n3. Checklist mata kuliah Wajib & Pilihan yang akan dibuka."
+        },
+        "uc-plot": {
+            title: "Plotting Dosen Pengampu",
+            desc: "Tugas inti Kaprodi untuk menunjuk siapa dosen yang mengajar di kelas mana, serta memvalidasi beban SKS dosen.",
+            actor: "Kaprodi",
+            pre: "Mata Kuliah Offering sudah diset.",
+            post: "Setiap kelas memiliki Dosen Pengampu.",
+            flow: "1. Pilih Mata Kuliah.\n2. Pilih nama Dosen.\n3. Sistem cek bentrok jadwal dosen & beban SKS."
+        },
+        "uc-jadwal": {
+            title: "Penyusunan Jadwal Perkuliahan",
+            desc: "Mengatur Hari, Jam, Ruangan, dan Kuota untuk setiap kelas. Validasi ruangan dilakukan bersama Biro Akademik.",
+            actor: "Kaprodi & Biro Akademik",
+            pre: "Dosen sudah di-plot.",
+            post: "Jadwal kuliah lengkap (Hari, Jam, Ruang, Kuota).",
+            flow: "1. Kaprodi set Hari & Sesi Jam.\n2. Kaprodi input Kuota Kelas.\n3. Biro Akademik memvalidasi ketersediaan Ruang."
+        },
+        "uc-3": {
+            title: "Perencanaan Studi (Pra-KRS)",
+            desc: "Tugas inti Mahasiswa: mengecek jatah SKS dan memasukkan mata kuliah incaran ke draft KRS sebelum disimpan.",
+            actor: "Mahasiswa",
+            pre: "Nilai semester sebelumnya keluar.",
+            post: "Rencana studi tersimpan di draft.",
+            flow: "1. Cek IPK & Jatah SKS.\n2. Cari kelas di Jadwal.\n3. Masukkan ke draft KRS."
+        },
+        "uc-4": {
+            title: "Pengisian KRS Online",
+            desc: "Eksekusi pendaftaran mata kuliah secara resmi. Sistem memvalidasi jadwal dan prasyarat secara real-time.",
+            actor: "Mahasiswa",
+            pre: "Jadwal pengisian KRS dibuka.",
+            post: "Mahasiswa terdaftar resmi di kelas.",
+            flow: "1. Klik 'Ambil KRS' dari draft.\n2. Sistem validasi (Bentrok? Prasyarat? Kuota?).\n3. Sukses atau Masuk Waiting List."
+        },
+        "uc-5": {
+            title: "Monitoring & Manajemen Kelas",
+            desc: "Kaprodi memantau distribusi peserta kelas dan melakukan penyesuaian kuota atau pembukaan kelas baru.",
+            actor: "Kaprodi",
+            pre: "Periode pengisian KRS sedang berlangsung.",
+            post: "Kapasitas kelas disesuaikan.",
+            flow: "1. Pantau dashboard kelas penuh/kosong.\n2. Tambah kuota jika perlu.\n3. Buka kelas paralel baru."
+        },
+        "uc-6": {
+            title: "Update Kuota/Kapasitas",
+            desc: "Pendaftaran manual oleh Kaprodi untuk mahasiswa yang mengalami kendala sistem atau membutuhkan dispensasi.",
+            actor: "Kaprodi & Mahasiswa",
+            pre: "Mahasiswa terkendala sistem.",
+            post: "Mahasiswa terdaftar manual.",
+            flow: "1. Mahasiswa lapor ke Kaprodi.\n2. Kaprodi bypass aturan sistem.\n3. Daftarkan mahasiswa ke kelas."
+        },
+        "uc-7": {
+            title: "Evaluasi & Efisiensi Kelas",
+            desc: "Tindakan penggabungan atau pembatalan kelas yang jumlah pesertanya tidak memenuhi kuota minimal.",
+            actor: "Kaprodi",
+            pre: "Periode pengisian KRS ditutup.",
+            post: "Kelas efisien.",
+            flow: "1. Cek kelas peserta sedikit.\n2. Batalkan/Gabung kelas.\n3. Pindahkan mahasiswa."
+        },
+        "uc-8": {
+            title: "Validasi & Penerbitan KSM",
+            desc: "Persetujuan rencana studi oleh Dosen PA dan validasi administratif oleh Biro Akademik.",
+            actor: "Mahasiswa, Dosen PA, & Biro Akademik",
+            pre: "Jadwal kuliah final.",
+            post: "KSM diterbitkan.",
+            flow: "1. Mahasiswa ajukan validasi.\n2. Dosen PA setuju.\n3. Biro Akademik verifikasi.\n4. Cetak KSM."
+        }
+    };
+
+    // Connections Map
+    const connections = [
+        // FASE 1
+        { from: 'actor-baak', to: 'uc-0' }, 
+        
+        { from: 'actor-kaprodi', to: 'uc-1' }, // Offering
+        { from: 'actor-kaprodi', to: 'uc-plot' }, // Plotting (Added)
+        { from: 'actor-kaprodi', to: 'uc-jadwal' }, // Jadwal (Added)
+        { from: 'actor-baak', to: 'uc-jadwal' }, // Validasi Ruang
+        
+        { from: 'actor-mhs', to: 'uc-3' }, // Perencanaan
+
+        // FASE 2
+        { from: 'actor-mhs', to: 'uc-4' },
+        { from: 'actor-kaprodi', to: 'uc-5' },
+        { from: 'actor-kaprodi', to: 'uc-6' },
+        { from: 'actor-mhs', to: 'uc-6' }, 
+
+        // FASE 3
+        { from: 'actor-kaprodi', to: 'uc-7' },
+        { from: 'actor-mhs', to: 'uc-8' },
+        { from: 'actor-wali', to: 'uc-8' },
+        { from: 'actor-baak', to: 'uc-8' }
+    ];
+
+    function showSpec(id) {
+        const data = useCases[id];
+        const panel = document.getElementById('detail-panel');
+        document.querySelectorAll('.usecase').forEach(u => u.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.getElementById('spec-title').innerText = data.title;
+        document.getElementById('spec-desc').innerText = data.desc;
+        document.getElementById('spec-actor').innerText = data.actor;
+        document.getElementById('spec-pre').innerText = data.pre;
+        document.getElementById('spec-post').innerText = data.post;
+        document.getElementById('spec-flow').innerText = data.flow;
+        panel.classList.add('open');
+    }
+
+    function closeSpec() {
+        document.getElementById('detail-panel').classList.remove('open');
+        document.querySelectorAll('.usecase').forEach(u => u.classList.remove('active'));
+    }
+
+    function drawLines() {
+        const svg = document.getElementById('svg-layer');
+        const container = document.getElementById('main-diagram');
+        svg.innerHTML = '';
+        if (window.innerWidth <= 768) return;
+
+        const containerRect = container.getBoundingClientRect();
+
+        connections.forEach(conn => {
+            const fromEl = document.getElementById(conn.from);
+            const toEl = document.getElementById(conn.to);
+            if (!fromEl || !toEl) return;
+
+            const fromRect = fromEl.getBoundingClientRect();
+            const toRect = toEl.getBoundingClientRect();
+
+            let x1, y1, x2, y2;
+
+            if (fromRect.left < toRect.left) { // Kiri ke Kanan
+                x1 = fromRect.right - containerRect.left;
+                y1 = fromRect.top + (fromRect.height/2) - containerRect.top;
+                x2 = toRect.left - containerRect.left;
+                y2 = toRect.top + (toRect.height/2) - containerRect.top;
+            } else { // Kanan ke Kiri
+                x1 = fromRect.left - containerRect.left;
+                y1 = fromRect.top + (fromRect.height/2) - containerRect.top;
+                x2 = toRect.right - containerRect.left;
+                y2 = toRect.top + (toRect.height/2) - containerRect.top;
+            }
+
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
+            line.setAttribute("stroke", "#334155"); 
+            line.setAttribute("stroke-width", "2");
+            line.setAttribute("stroke-opacity", "0.6");
+            svg.appendChild(line);
+        });
+    }
+
+    window.addEventListener('resize', drawLines);
+    window.addEventListener('load', drawLines);
+    document.getElementById('canvas').addEventListener('scroll', drawLines);
+    setTimeout(drawLines, 500);
+</script>
+</body>
+</html>

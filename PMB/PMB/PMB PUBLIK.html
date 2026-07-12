@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Portal PMB — Universitas Siber Asia</title>
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --pmb-primary: #0f487b;
+    --pmb-primary-dark: #08294d;
+    --pmb-accent: #ecc94b;
+  }
+  html, body {
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .font-display { font-family: "Outfit", "Plus Jakarta Sans", sans-serif; letter-spacing: -0.01em; }
+
+  /* Scrollbars */
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,.35); border-radius: 999px; }
+  .dark-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+  .dark-scrollbar::-webkit-scrollbar-thumb { background: rgba(236,201,75,.25); border-radius: 999px; }
+
+  ::selection { background: #ecc94b; color: #0f487b; }
+
+  .pmb-grid-pattern {
+    background-image:
+      linear-gradient(rgba(236,201,75,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(236,201,75,.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .pmb-accent-glow { box-shadow: 0 0 0 1px rgba(236,201,75,.35), 0 10px 40px -10px rgba(236,201,75,.5); }
+
+  @keyframes pmbPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(236,201,75,.55); } 50% { box-shadow: 0 0 0 8px rgba(236,201,75,0); } }
+  .pmb-pulse { animation: pmbPulse 2s infinite; }
+
+  /* Wizard step fade/slide */
+  @keyframes stepIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  .step-anim { animation: stepIn .25s ease both; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-up { animation: fadeUp .35s ease both; }
+  .no-anim { animation: none !important; opacity: 1 !important; }
+
+  @keyframes pop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+  .pop { animation: pop .5s cubic-bezier(.4,0,.2,1) both; }
+
+  .gradient-blue { background: linear-gradient(135deg, #0f487b 0%, #0a3460 55%, #08294d 100%); }
+  .gradient-btn { background: linear-gradient(135deg, #0f487b 0%, #08294d 100%); }
+
+  .hide { display: none !important; }
+</style>
+</head>
+
+<body class="min-h-screen">
+
+<div class="grid grid-cols-1 lg:grid-cols-12 min-h-screen">
+
+  <!-- SIDEBAR -->
+  <aside class="lg:col-span-4 xl:col-span-3 relative lg:sticky lg:top-0 lg:h-screen flex flex-col text-white overflow-hidden gradient-blue">
+    <div class="absolute inset-0 pmb-grid-pattern opacity-50 pointer-events-none"></div>
+    <div class="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-yellow-400/10 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-blue-500/30 blur-3xl pointer-events-none"></div>
+
+    <div class="relative flex flex-col h-full p-5 sm:p-6 md:p-8 lg:p-10 overflow-y-auto dark-scrollbar">
+      <!-- Brand -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#ecc94b] flex items-center justify-center pmb-accent-glow shrink-0">
+          <i data-lucide="graduation-cap" class="w-5 h-5 sm:w-6 sm:h-6 text-[#0f487b]" stroke-width="2.5"></i>
+        </div>
+        <div class="leading-tight min-w-0">
+          <div class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-slate-200/80">Portal PMB</div>
+          <div class="font-display font-bold text-sm sm:text-base truncate">Universitas Siber Asia</div>
+        </div>
+      </div>
+
+      <div class="mt-8 lg:mt-12">
+        <div class="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-[#ecc94b]/90" id="academic-year"></div>
+        <h1 class="font-display text-2xl sm:text-3xl lg:text-[2.4rem] leading-[1.1] font-bold mt-3">
+          Daftar jadi <span class="text-[#ecc94b]">mahasiswa baru</span> dalam 4 langkah.
+        </h1>
+        <p class="text-slate-200/80 text-xs sm:text-sm mt-3 sm:mt-4 max-w-sm leading-relaxed">
+          Pengalaman pendaftaran digital ala enterprise — cepat, aman, dan sepenuhnya online.
+        </p>
+      </div>
+
+      <!-- Desktop progress -->
+      <div id="progress-desktop" class="hidden lg:flex flex-col gap-3 mt-10"></div>
+
+      <div class="mt-auto pt-6 lg:pt-8 text-[10px] sm:text-[11px] text-slate-300/70">
+        © <span id="footer-year"></span> Universitas Siber Asia.
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="lg:col-span-8 xl:col-span-9 bg-[#f8fafc] relative">
+
+    <!-- Top bar -->
+    <div class="sticky top-0 z-30 backdrop-blur-md bg-[#f8fafc]/85 border-b border-slate-200/70">
+      <div class="flex items-center justify-between px-4 sm:px-6 md:px-8 lg:px-14 py-3 sm:py-4">
+        <div id="step-label-top" class="text-[10px] sm:text-[11px] uppercase tracking-[0.22em] text-slate-500 font-semibold">Langkah 1 dari 4</div>
+        <button id="btn-login" class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-white font-semibold text-xs sm:text-sm shadow-md hover:brightness-110 transition-all gradient-btn">
+          <i data-lucide="log-in" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+          <span class="hidden sm:inline">Login Kandidat</span>
+          <span class="sm:hidden">Login</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="absolute top-20 right-0 w-[28rem] h-[28rem] rounded-full bg-yellow-400/10 blur-3xl pointer-events-none -z-0"></div>
+
+    <div class="relative p-5 sm:p-8 lg:p-14 xl:p-20">
+      <!-- Wizard area -->
+      <div id="wizard-area">
+        <!-- Mobile stepper -->
+        <div id="progress-mobile" class="lg:hidden flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar mb-6"></div>
+
+        <div class="hidden lg:flex items-center justify-end mb-2">
+          <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="clock" class="w-3 h-3"></i> Estimasi: 2 menit
+          </div>
+        </div>
+
+        <div id="step-content"></div>
+
+        <!-- Navigation -->
+        <div class="mt-8 sm:mt-10 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-6 border-t border-slate-200">
+          <button id="btn-prev" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-slate-700 font-semibold border border-slate-200 hover:bg-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali
+          </button>
+          <button id="btn-next" disabled class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all bg-slate-200 text-slate-400 cursor-not-allowed">
+            <span id="btn-next-label">Lanjutkan</span>
+            <i id="btn-next-icon" data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Success area -->
+      <div id="success-area" class="hide"></div>
+    </div>
+  </main>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" class="hide fixed inset-0 z-50 bg-[#08294d]/95 backdrop-blur-md items-center justify-center p-6 fade-up" style="display:none;">
+  <div class="absolute inset-0 pmb-grid-pattern opacity-40 pointer-events-none"></div>
+  <div class="relative max-w-md w-full bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur text-white">
+    <div class="flex items-center gap-3 text-[#ecc94b] mb-1">
+      <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+      <span class="text-[11px] uppercase tracking-[0.22em] font-semibold">Memproses</span>
+    </div>
+    <h3 class="font-display text-2xl font-semibold leading-tight">Menyiapkan pendaftaranmu...</h3>
+    <p class="text-slate-300/80 text-sm mt-2">Sistem sedang menyinkronkan data ke ERP kampus secara realtime.</p>
+    <div id="loading-tasks" class="mt-7 space-y-3"></div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div id="login-modal" class="hide fixed inset-0 z-50 bg-[#08294d]/70 backdrop-blur-md items-center justify-center p-4" style="display:none;">
+  <div id="login-modal-card" class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden pop">
+    <div class="relative h-28 overflow-hidden gradient-blue">
+      <div class="absolute inset-0 pmb-grid-pattern opacity-40"></div>
+      <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-yellow-400/20 blur-3xl"></div>
+      <button id="login-close" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur flex items-center justify-center text-white transition-all">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+      <div class="absolute bottom-4 left-6 right-6 text-white">
+        <div class="text-[10px] uppercase tracking-[0.22em] text-[#ecc94b]/90 font-semibold">Portal Kandidat</div>
+        <div class="font-display text-xl font-bold mt-0.5">Masuk ke Dashboard</div>
+      </div>
+    </div>
+    <form id="login-form" class="p-6 sm:p-8 space-y-5">
+      <p class="text-sm text-slate-500 leading-relaxed -mt-1">
+        Lanjutkan proses pendaftaran, unggah dokumen, dan pantau status seleksi kamu.
+      </p>
+      <div>
+        <label class="text-sm font-semibold text-slate-700 mb-2 block">Email Terdaftar</label>
+        <div class="relative">
+          <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+          <input id="login-email" type="email" placeholder="nama@email.com"
+            class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pl-11 text-sm outline-none focus:border-[#0f487b] focus:ring-2 focus:ring-yellow-400/40" />
+        </div>
+      </div>
+      <div>
+        <label class="text-sm font-semibold text-slate-700 mb-2 block">Kata Sandi</label>
+        <div class="relative">
+          <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+          <input id="login-password" type="password" placeholder="Minimal 6 karakter"
+            class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pl-11 text-sm outline-none focus:border-[#0f487b] focus:ring-2 focus:ring-yellow-400/40" />
+        </div>
+      </div>
+      <div class="flex items-center justify-between text-xs">
+        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+          <input type="checkbox" checked class="w-4 h-4 rounded border-slate-300 text-[#0f487b]" />
+          <span class="text-slate-600">Ingat saya</span>
+        </label>
+        <button type="button" class="text-[#0f487b] font-semibold hover:underline">Lupa kata sandi?</button>
+      </div>
+      <button id="login-submit" type="submit" disabled
+        class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-slate-300 cursor-not-allowed transition-all">
+        <i data-lucide="log-in" class="w-4 h-4"></i> Masuk Dashboard
+      </button>
+      <div class="flex items-center gap-2 text-[11px] text-slate-400 justify-center pt-1">
+        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i>
+        Koneksi terenkripsi · SSO Siber Asia
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="hide fixed top-5 right-5 z-[60] bg-white border border-slate-200 rounded-xl shadow-xl px-4 py-3 flex items-center gap-3 fade-up" style="display:none;">
+  <i id="toast-icon" data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500"></i>
+  <span id="toast-text" class="text-sm font-medium text-slate-800"></span>
+</div>
+
+<script>
+/* ============================================================
+   DATA
+============================================================ */
+const GELOMBANG = [
+  { id: "g1", name: "Gelombang 1 — Ganjil", period: "01 Okt — 31 Des 2025", quota: "Kuota tersedia", status: "active" },
+  { id: "g2", name: "Gelombang 2 — Ganjil", period: "02 Jan — 28 Feb 2026", quota: "Belum dibuka", status: "disabled" },
+  { id: "alih", name: "Alih Jenjang", period: "Tertutup sementara", quota: "Akan dibuka kembali", status: "closed" },
+];
+
+const JALUR = [
+  { id: "reguler", name: "Reguler", desc: "Jalur umum tanpa syarat khusus", price: 250000, icon: "sparkles" },
+  { id: "prestasi", name: "Prestasi", desc: "Diskon biaya untuk pencapaian akademik / non-akademik", price: 150000, icon: "trophy" },
+  { id: "mitra", name: "Mitra", desc: "Untuk siswa dari sekolah / lembaga mitra resmi", price: 200000, icon: "handshake" },
+  { id: "beasiswa", name: "Beasiswa", desc: "Pembebasan biaya pendaftaran", price: 0, free: true, icon: "gift" },
+];
+
+const PRODI = [
+  { id: "if", name: "Informatika", faculty: "Fakultas Sains & Teknologi", icon: "cpu" },
+  { id: "si", name: "Sistem Informasi", faculty: "Fakultas Sains & Teknologi", icon: "database" },
+  { id: "mn", name: "Manajemen", faculty: "Fakultas Bisnis", icon: "briefcase" },
+  { id: "ak", name: "Akuntansi", faculty: "Fakultas Bisnis", icon: "calculator" },
+  { id: "ik", name: "Ilmu Komunikasi", faculty: "Fakultas Humaniora", icon: "megaphone" },
+  { id: "ds", name: "Desain", faculty: "Fakultas Seni & Desain", icon: "palette" },
+];
+
+const STEPS = [
+  { id: 1, label: "Gelombang", sub: "Pilih periode pendaftaran" },
+  { id: 2, label: "Jalur", sub: "Tentukan jalur masuk" },
+  { id: 3, label: "Program Studi", sub: "Pilih jurusan pilihan" },
+  { id: 4, label: "Data Diri", sub: "Lengkapi identitas" },
+];
+
+const formatIDR = (n) =>
+  n === 0 ? "Gratis" : new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n);
+
+/* ============================================================
+   STATE
+============================================================ */
+const state = {
+  step: 1,
+  gelombang: null,
+  jalur: null,
+  prodi: null,
+  data: { name: "", phone: "", email: "", agree: false },
+  done: false,
+};
+
+/* ============================================================
+   RENDER HELPERS
+============================================================ */
+const $ = (sel) => document.querySelector(sel);
+const refreshIcons = () => window.lucide && lucide.createIcons();
+
+function renderAcademicYear() {
+  const y = new Date().getFullYear();
+  $("#academic-year").textContent = `T.A. ${y} / ${y + 1}`;
+  $("#footer-year").textContent = y;
+}
+
+/* Sidebar progress */
+function renderProgressDesktop() {
+  const c = $("#progress-desktop");
+  c.innerHTML = STEPS.map((s, idx) => {
+    const isActive = state.step === s.id;
+    const isDone = state.step > s.id;
+    const canJump = isDone;
+    return `
+      <button data-jump="${s.id}" ${!canJump ? "disabled" : ""}
+        class="group flex items-start gap-4 text-left rounded-xl px-3 py-2.5 transition-all ${canJump ? "hover:bg-white/5 cursor-pointer" : "cursor-default"}">
+        <div class="relative">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all
+            ${isDone ? "bg-[#ecc94b] text-[#0f487b]" : isActive ? "bg-[#ecc94b] text-[#0f487b] pmb-pulse" : "bg-white/5 text-slate-300 border border-white/10"}">
+            ${isDone ? '<i data-lucide="check" class="w-4 h-4" stroke-width="3"></i>' : s.id}
+          </div>
+          ${idx !== STEPS.length - 1 ? `<div class="absolute left-1/2 -translate-x-1/2 top-9 w-px h-7 ${isDone ? "bg-[#ecc94b]/60" : "bg-white/10"}"></div>` : ""}
+        </div>
+        <div class="pt-1">
+          <div class="text-sm font-semibold ${isActive || isDone ? "text-white" : "text-slate-300"}">${s.label}</div>
+          <div class="text-xs text-slate-300/70 mt-0.5">${s.sub}</div>
+        </div>
+      </button>`;
+  }).join("");
+  c.querySelectorAll("[data-jump]").forEach(btn => btn.addEventListener("click", () => {
+    const id = parseInt(btn.dataset.jump);
+    if (id < state.step) { state.step = id; renderAll(); }
+  }));
+  refreshIcons();
+}
+
+function renderProgressMobile() {
+  const c = $("#progress-mobile");
+  c.innerHTML = STEPS.map((s, idx) => {
+    const isActive = state.step === s.id;
+    const isDone = state.step > s.id;
+    return `
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs whitespace-nowrap
+        ${isActive ? "bg-[#0f487b] text-white" : isDone ? "bg-yellow-400/20 text-[#0f487b]" : "bg-slate-100 text-slate-500"}">
+        <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold
+          ${isActive ? "bg-[#ecc94b] text-[#0f487b]" : isDone ? "bg-[#ecc94b] text-[#0f487b]" : "bg-white text-slate-500 border border-slate-200"}">
+          ${isDone ? '<i data-lucide="check" class="w-3 h-3" stroke-width="3"></i>' : s.id}
+        </span>
+        <span class="font-medium">${s.label}</span>
+      </div>
+      ${idx !== STEPS.length - 1 ? `<div class="w-3 h-px ${isDone ? "bg-[#ecc94b]" : "bg-slate-200"}"></div>` : ""}`;
+  }).join("");
+  refreshIcons();
+}
+
+/* Steps */
+function renderStepHeader() {
+  const s = STEPS.find(x => x.id === state.step);
+  return `
+    <h2 class="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">${s.label}</h2>
+    <p class="text-slate-500 mt-2 mb-6 sm:mb-8 text-sm sm:text-base">${s.sub}</p>`;
+}
+
+function renderStep1() {
+  const meta = {
+    active: { label: "Aktif", cls: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: "calendar-clock" },
+    disabled: { label: "Belum dibuka", cls: "bg-slate-100 text-slate-500 border-slate-200", icon: "clock" },
+    closed: { label: "Tertutup", cls: "bg-rose-50 text-rose-600 border-rose-100", icon: "lock" },
+  };
+  return `
+    <div class="space-y-4">
+      ${GELOMBANG.map((g) => {
+        const m = meta[g.status];
+        const disabled = g.status !== "active";
+        return `
+        <button data-gelombang="${g.id}" data-card ${disabled ? "disabled" : ""}
+          class="card-btn w-full text-left relative flex items-center gap-5 p-4 sm:p-5 rounded-2xl border transition-all
+          ${disabled ? "opacity-60 cursor-not-allowed border-slate-200 bg-slate-50/60"
+            : "border-slate-200 bg-white hover:border-[#0f487b]/40 hover:shadow-md"}">
+          <div data-icon-wrap class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 bg-slate-100 text-slate-500 transition-colors">
+            <i data-lucide="${m.icon}" class="w-5 h-5"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="font-display text-base sm:text-lg font-semibold text-slate-900">${g.name}</div>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${m.cls}">${m.label}</span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-500 mt-1 flex items-center gap-2 sm:gap-3 flex-wrap">
+              <span>${g.period}</span>
+              <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+              <span>${g.quota}</span>
+            </div>
+          </div>
+          <div data-radio class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all border-slate-300 bg-white">
+            <i data-lucide="check" class="hidden w-3.5 h-3.5 text-[#0f487b]" stroke-width="3"></i>
+          </div>
+        </button>`;
+      }).join("")}
+    </div>`;
+}
+
+function renderStep2() {
+  return `
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      ${JALUR.map((j) => `
+        <button data-jalur="${j.id}" data-card
+          class="card-btn relative text-left p-4 sm:p-5 rounded-2xl border transition-all overflow-hidden border-slate-200 bg-white hover:border-[#0f487b]/40 hover:shadow-md">
+          ${j.free ? '<div class="absolute top-3 right-3 text-[10px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-full bg-[#ecc94b] text-[#0f487b]">Gratis</div>' : ""}
+          <div class="flex items-start gap-4">
+            <div data-icon-wrap class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 bg-slate-100 text-slate-600 transition-colors">
+              <i data-lucide="${j.icon}" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 pr-8">
+              <div class="font-display text-base sm:text-lg font-semibold text-slate-900">${j.name}</div>
+              <div class="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">${j.desc}</div>
+            </div>
+          </div>
+          <div class="mt-5 pt-4 border-t border-dashed border-slate-200 flex items-end justify-between">
+            <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Biaya pendaftaran</span>
+            <span class="font-display text-lg sm:text-xl font-bold ${j.free ? "text-emerald-600" : "text-[#0f487b]"}">${formatIDR(j.price)}</span>
+          </div>
+          <div data-radio class="hidden absolute top-3 left-3 w-6 h-6 rounded-full bg-[#ecc94b] items-center justify-center">
+            <i data-lucide="check" class="w-3.5 h-3.5 text-[#0f487b]" stroke-width="3"></i>
+          </div>
+        </button>`).join("")}
+    </div>`;
+}
+
+function renderStep3() {
+  return `
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      ${PRODI.map((p) => `
+        <button data-prodi="${p.id}" data-card
+          class="card-btn relative text-left p-4 sm:p-5 rounded-2xl border transition-all group border-slate-200 bg-white hover:border-[#0f487b]/40 hover:shadow-md">
+          <div data-icon-wrap class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-colors bg-slate-100 text-slate-600 group-hover:bg-[#0f487b] group-hover:text-[#ecc94b]">
+            <i data-lucide="${p.icon}" class="w-5 h-5"></i>
+          </div>
+          <div class="mt-4">
+            <div class="font-display text-sm sm:text-base font-semibold text-slate-900">${p.name}</div>
+            <div class="text-xs text-slate-500 mt-1">${p.faculty}</div>
+          </div>
+          <div data-radio class="hidden absolute top-3 right-3 w-6 h-6 rounded-full bg-[#ecc94b] items-center justify-center">
+            <i data-lucide="check" class="w-3.5 h-3.5 text-[#0f487b]" stroke-width="3"></i>
+          </div>
+        </button>`).join("")}
+    </div>`;
+}
+
+function renderStep4() {
+  const inputCls = "w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pl-11 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#0f487b] focus:ring-2 focus:ring-yellow-400/40";
+
+  return `
+    <div class="space-y-5">
+      <div>
+        <div class="flex items-baseline justify-between mb-2">
+          <label class="text-sm font-semibold text-slate-700">Nama Lengkap</label>
+          <span class="text-[11px] text-slate-400">Sesuai dengan ijazah / KTP</span>
+        </div>
+        <div class="relative">
+          <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+          <input id="in-name" type="text" placeholder="Mis. Andi Pratama Wijaya" class="${inputCls}" />
+        </div>
+        <div id="err-name" class="text-xs text-rose-600 mt-1.5 hidden"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <div class="flex items-baseline justify-between mb-2">
+            <label class="text-sm font-semibold text-slate-700">Nomor WhatsApp</label>
+            <span class="text-[11px] text-slate-400">Aktif untuk verifikasi</span>
+          </div>
+          <div class="relative">
+            <i data-lucide="phone" class="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+            <input id="in-phone" type="tel" placeholder="08xxxxxxxxxx" class="${inputCls}" />
+          </div>
+          <div id="err-phone" class="text-xs text-rose-600 mt-1.5 hidden"></div>
+        </div>
+        <div>
+          <div class="flex items-baseline justify-between mb-2">
+            <label class="text-sm font-semibold text-slate-700">Email Aktif</label>
+            <span class="text-[11px] text-slate-400">Untuk kredensial SSO</span>
+          </div>
+          <div class="relative">
+            <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+            <input id="in-email" type="email" placeholder="nama@email.com" class="${inputCls}" />
+          </div>
+          <div id="err-email" class="text-xs text-rose-600 mt-1.5 hidden"></div>
+        </div>
+      </div>
+
+      <label id="agree-wrap" class="flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all bg-white border-slate-200 hover:border-slate-300">
+        <div id="agree-box" class="mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all bg-white border-slate-300">
+          <i data-lucide="check" class="hidden w-3.5 h-3.5 text-[#0f487b]" stroke-width="3"></i>
+        </div>
+        <input id="in-agree" type="checkbox" class="sr-only" />
+        <div class="text-sm leading-relaxed">
+          <div class="flex items-center gap-1.5 text-slate-900 font-semibold">
+            <i data-lucide="shield-check" class="w-4 h-4 text-[#0f487b]"></i>
+            Saya menyetujui syarat & ketentuan
+          </div>
+          <div class="text-slate-500 text-xs mt-1">
+            Saya menyatakan data yang diisi adalah benar dan menyetujui kebijakan privasi serta ketentuan pendaftaran Universitas Siber Asia.
+          </div>
+        </div>
+      </label>
+    </div>`;
+}
+
+/* ---- Selection visual updates (no DOM rebuild) ---- */
+const SEL_ACTIVE = ["border-[#ecc94b]", "bg-yellow-50", "shadow-[0_10px_30px_-15px_rgba(236,201,75,.6)]"];
+const SEL_IDLE = ["border-slate-200", "bg-white", "hover:border-[#0f487b]/40", "hover:shadow-md"];
+
+function updateCardVisual(scope, attr, selectedId) {
+  const cards = $("#step-content").querySelectorAll(`[${attr}]`);
+  cards.forEach((card) => {
+    if (card.disabled) return;
+    const isSelected = card.getAttribute(attr) === selectedId;
+    SEL_ACTIVE.forEach((c) => card.classList.toggle(c, isSelected));
+    SEL_IDLE.forEach((c) => card.classList.toggle(c, !isSelected));
+
+    const iconWrap = card.querySelector("[data-icon-wrap]");
+    if (iconWrap) {
+      iconWrap.classList.toggle("bg-[#0f487b]", isSelected);
+      iconWrap.classList.toggle("text-[#ecc94b]", isSelected);
+      iconWrap.classList.toggle("bg-slate-100", !isSelected);
+      iconWrap.classList.toggle("text-slate-500", !isSelected && scope === "gelombang");
+      iconWrap.classList.toggle("text-slate-600", !isSelected && scope !== "gelombang");
+    }
+
+    const radio = card.querySelector("[data-radio]");
+    if (radio) {
+      if (scope === "gelombang") {
+        radio.classList.toggle("border-[#ecc94b]", isSelected);
+        radio.classList.toggle("bg-[#ecc94b]", isSelected);
+        radio.classList.toggle("border-slate-300", !isSelected);
+        radio.classList.toggle("bg-white", !isSelected);
+        const check = radio.querySelector("i");
+        if (check) check.classList.toggle("hidden", !isSelected);
+      } else {
+        radio.classList.toggle("hidden", !isSelected);
+        radio.classList.toggle("flex", isSelected);
+      }
+    }
+  });
+}
+
+function updateStep4Errors() {
+  const d = state.data;
+  const errs = {
+    "err-name": d.name && d.name.trim().length < 3 ? "Nama minimal 3 karakter" : "",
+    "err-phone": d.phone && d.phone.replace(/\D/g, "").length < 9 ? "Nomor WhatsApp minimal 9 digit" : "",
+    "err-email": d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email) ? "Format email tidak valid" : "",
+  };
+  Object.entries(errs).forEach(([id, msg]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.toggle("hidden", !msg);
+  });
+  // Agree visual
+  const wrap = $("#agree-wrap");
+  const box = $("#agree-box");
+  if (wrap && box) {
+    wrap.classList.toggle("bg-yellow-50", d.agree);
+    wrap.classList.toggle("border-[#ecc94b]", d.agree);
+    wrap.classList.toggle("bg-white", !d.agree);
+    wrap.classList.toggle("border-slate-200", !d.agree);
+    box.classList.toggle("bg-[#ecc94b]", d.agree);
+    box.classList.toggle("border-[#ecc94b]", d.agree);
+    box.classList.toggle("bg-white", !d.agree);
+    box.classList.toggle("border-slate-300", !d.agree);
+    const check = box.querySelector("i");
+    if (check) check.classList.toggle("hidden", !d.agree);
+  }
+}
+
+let currentRenderedStep = 0;
+
+function renderStep() {
+  const wrap = $("#step-content");
+  if (currentRenderedStep === state.step) return; // skip; selection updates handled separately
+  // play animation on actual step change only
+  wrap.classList.remove("step-anim"); void wrap.offsetWidth; wrap.classList.add("step-anim");
+  let body = renderStepHeader();
+  if (state.step === 1) body += renderStep1();
+  if (state.step === 2) body += renderStep2();
+  if (state.step === 3) body += renderStep3();
+  if (state.step === 4) body += renderStep4();
+  wrap.innerHTML = body;
+  currentRenderedStep = state.step;
+
+  // Wire up selection events (these only fire on this step's elements)
+  wrap.querySelectorAll("[data-gelombang]").forEach((b) =>
+    b.addEventListener("click", () => {
+      state.gelombang = GELOMBANG.find((x) => x.id === b.dataset.gelombang);
+      updateCardVisual("gelombang", "data-gelombang", state.gelombang.id);
+      renderNav();
+    })
+  );
+  wrap.querySelectorAll("[data-jalur]").forEach((b) =>
+    b.addEventListener("click", () => {
+      state.jalur = JALUR.find((x) => x.id === b.dataset.jalur);
+      updateCardVisual("jalur", "data-jalur", state.jalur.id);
+      renderNav();
+    })
+  );
+  wrap.querySelectorAll("[data-prodi]").forEach((b) =>
+    b.addEventListener("click", () => {
+      state.prodi = PRODI.find((x) => x.id === b.dataset.prodi);
+      updateCardVisual("prodi", "data-prodi", state.prodi.id);
+      renderNav();
+    })
+  );
+
+  if (state.step === 4) {
+    const nameEl = $("#in-name"),
+      phoneEl = $("#in-phone"),
+      emailEl = $("#in-email"),
+      agreeWrap = $("#agree-wrap");
+    nameEl.value = state.data.name;
+    phoneEl.value = state.data.phone;
+    emailEl.value = state.data.email;
+
+    nameEl.addEventListener("input", (e) => {
+      state.data.name = e.target.value;
+      updateStep4Errors();
+      renderNav();
+    });
+    phoneEl.addEventListener("input", (e) => {
+      const cleaned = e.target.value.replace(/[^\d+]/g, "");
+      if (cleaned !== e.target.value) e.target.value = cleaned;
+      state.data.phone = cleaned;
+      updateStep4Errors();
+      renderNav();
+    });
+    emailEl.addEventListener("input", (e) => {
+      state.data.email = e.target.value;
+      updateStep4Errors();
+      renderNav();
+    });
+    agreeWrap.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      state.data.agree = !state.data.agree;
+      updateStep4Errors();
+      renderNav();
+    });
+    updateStep4Errors();
+  } else {
+    // Restore visual state for previously-selected card
+    if (state.step === 1 && state.gelombang)
+      updateCardVisual("gelombang", "data-gelombang", state.gelombang.id);
+    if (state.step === 2 && state.jalur)
+      updateCardVisual("jalur", "data-jalur", state.jalur.id);
+    if (state.step === 3 && state.prodi)
+      updateCardVisual("prodi", "data-prodi", state.prodi.id);
+  }
+
+  refreshIcons();
+}
+
+/* Navigation buttons */
+function canProceed() {
+  if (state.step === 1) return !!state.gelombang;
+  if (state.step === 2) return !!state.jalur;
+  if (state.step === 3) return !!state.prodi;
+  if (state.step === 4) {
+    const d = state.data;
+    return d.name.trim().length >= 3 &&
+      d.phone.replace(/\D/g, "").length >= 9 &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email) &&
+      d.agree;
+  }
+  return false;
+}
+function renderNav() {
+  $("#step-label-top").textContent = state.done ? "Selesai" : `Langkah ${state.step} dari 4`;
+  const prev = $("#btn-prev");
+  prev.disabled = state.step === 1;
+
+  const next = $("#btn-next");
+  const ok = canProceed();
+  next.disabled = !ok;
+  next.className = "w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all " +
+    (ok ? "text-white shadow-lg shadow-[#0f487b]/30 hover:brightness-110 gradient-btn"
+        : "bg-slate-200 text-slate-400 cursor-not-allowed");
+
+  if (state.step === 4) {
+    $("#btn-next-label").textContent = "Submit Pendaftaran";
+    $("#btn-next-icon").setAttribute("data-lucide", "check");
+  } else {
+    $("#btn-next-label").textContent = "Lanjutkan";
+    $("#btn-next-icon").setAttribute("data-lucide", "arrow-right");
+  }
+  refreshIcons();
+}
+
+/* Loading overlay */
+const TASKS = ["Verifikasi data pendaftar", "Konfigurasi akun ERP kampus", "Pembuatan kredensial SSO"];
+function renderLoading(stepIdx) {
+  $("#loading-tasks").innerHTML = TASKS.map((t, i) => {
+    const done = i < stepIdx, active = i === stepIdx;
+    return `
+    <div class="flex items-center gap-3 p-3 rounded-xl border ${done ? "bg-emerald-500/10 border-emerald-400/30" : active ? "bg-yellow-400/10 border-yellow-400/40" : "bg-white/5 border-white/10 opacity-50"}">
+      <div class="w-7 h-7 rounded-full flex items-center justify-center
+        ${done ? "bg-emerald-400 text-[#0f487b]" : active ? "bg-[#ecc94b] text-[#0f487b]" : "bg-white/10 text-slate-400"}">
+        ${done ? '<i data-lucide="check" class="w-4 h-4" stroke-width="3"></i>'
+              : active ? '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>'
+              : `<span class="text-[11px] font-bold">${i+1}</span>`}
+      </div>
+      <span class="text-sm ${done || active ? "text-white" : "text-slate-400"}">${t}</span>
+    </div>`;
+  }).join("");
+  refreshIcons();
+}
+function startLoading() {
+  const ov = $("#loading-overlay");
+  ov.classList.remove("hide");
+  ov.style.display = "flex";
+  let i = 0;
+  renderLoading(0);
+  const iv = setInterval(() => {
+    i += 1;
+    renderLoading(i);
+    if (i >= TASKS.length) {
+      clearInterval(iv);
+      setTimeout(() => {
+        ov.style.display = "none";
+        ov.classList.add("hide");
+        state.done = true;
+        renderSuccess();
+        showToast("Pendaftaran berhasil dikirim!");
+      }, 700);
+    }
+  }, 900);
+}
+
+/* Success screen */
+function renderSuccess() {
+  $("#wizard-area").classList.add("hide");
+  const ref = `PMB-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+  $("#success-area").classList.remove("hide");
+  $("#success-area").innerHTML = `
+    <div class="min-h-[80vh] flex items-center fade-up">
+      <div class="w-full max-w-2xl mx-auto">
+        <div class="w-20 h-20 rounded-full bg-emerald-500 mx-auto flex items-center justify-center shadow-[0_20px_50px_-15px_rgba(16,185,129,.6)] pop">
+          <i data-lucide="check" class="w-10 h-10 text-white" stroke-width="3"></i>
+        </div>
+        <div class="text-center mt-7">
+          <div class="text-xs uppercase tracking-[0.22em] text-emerald-600 font-semibold">Pendaftaran Berhasil</div>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 mt-3">
+            Selamat datang, <span class="text-[#0f487b]">${state.data.name}</span>!
+          </h2>
+          <p class="text-slate-500 mt-4 max-w-xl mx-auto leading-relaxed text-sm sm:text-base">
+            Kami telah mengirimkan detail akun kandidat kamu ke WhatsApp dan email.
+            Silakan masuk ke dashboard menggunakan akun tersebut untuk melanjutkan unggah dokumen,
+            pembayaran, dan menyelesaikan proses pendaftaranmu.
+          </p>
+        </div>
+
+        <div class="mt-8 bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-sm">
+          <div class="flex items-center justify-between border-b border-dashed border-slate-200 pb-4">
+            <div>
+              <div class="text-[11px] uppercase tracking-wider text-slate-400">Nomor Referensi</div>
+              <div class="font-mono text-lg font-semibold text-[#0f487b] mt-0.5">${ref}</div>
+            </div>
+            <button id="copy-ref" class="p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
+              <i data-lucide="copy" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <dl class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm">
+            ${row("Gelombang", state.gelombang?.name)}
+            ${row("Jalur", state.jalur?.name)}
+            ${row("Program Studi", state.prodi?.name)}
+            ${row("Email", state.data.email)}
+            ${row("Total Biaya", formatIDR(state.jalur?.price || 0), true)}
+          </dl>
+
+          <button id="cta-dashboard" class="mt-6 w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold gradient-btn hover:brightness-110 transition-all shadow-lg shadow-[#0f487b]/30">
+            Buka Dashboard Kandidat
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="mt-5 text-center">
+          <button id="cta-new" class="text-sm text-slate-500 hover:text-[#0f487b] font-medium inline-flex items-center gap-1.5 transition-colors">
+            <i data-lucide="mail" class="w-3.5 h-3.5"></i> Daftar pendaftar lain
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  $("#copy-ref").addEventListener("click", () => {
+    navigator.clipboard?.writeText(ref);
+    showToast("Nomor referensi disalin");
+  });
+  $("#cta-dashboard").addEventListener("click", openLogin);
+  $("#cta-new").addEventListener("click", resetWizard);
+
+  $("#step-label-top").textContent = "Selesai";
+  refreshIcons();
+}
+
+function row(label, value, accent) {
+  return `
+    <div>
+      <dt class="text-[11px] uppercase tracking-wider text-slate-400">${label}</dt>
+      <dd class="mt-0.5 font-semibold ${accent ? "text-[#0f487b]" : "text-slate-800"}">${value || "—"}</dd>
+    </div>`;
+}
+
+function resetWizard() {
+  state.step = 1;
+  state.gelombang = null; state.jalur = null; state.prodi = null;
+  state.data = { name: "", phone: "", email: "", agree: false };
+  state.done = false;
+  currentRenderedStep = 0;
+  $("#success-area").classList.add("hide");
+  $("#wizard-area").classList.remove("hide");
+  renderAll();
+}
+
+/* Login Modal */
+function openLogin() {
+  $("#login-email").value = state.data.email || "";
+  $("#login-password").value = "";
+  const m = $("#login-modal");
+  m.classList.remove("hide");
+  m.style.display = "flex";
+  refreshLoginBtn();
+  refreshIcons();
+}
+function closeLogin() {
+  const m = $("#login-modal");
+  m.classList.add("hide");
+  m.style.display = "none";
+}
+function refreshLoginBtn() {
+  const email = $("#login-email").value;
+  const pw = $("#login-password").value;
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && pw.length >= 6;
+  const btn = $("#login-submit");
+  btn.disabled = !ok;
+  btn.className = "w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all " +
+    (ok ? "gradient-btn shadow-lg shadow-[#0f487b]/30 hover:brightness-110" : "bg-slate-300 cursor-not-allowed");
+}
+
+/* Toast */
+let toastTimer;
+function showToast(text) {
+  const t = $("#toast");
+  $("#toast-text").textContent = text;
+  t.classList.remove("hide");
+  t.style.display = "flex";
+  refreshIcons();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.display = "none"; t.classList.add("hide"); }, 2200);
+}
+
+/* Render orchestrator */
+function renderAll() {
+  renderProgressDesktop();
+  renderProgressMobile();
+  renderStep();
+  renderNav();
+}
+
+/* ============================================================
+   EVENTS
+============================================================ */
+document.addEventListener("DOMContentLoaded", () => {
+  renderAcademicYear();
+  renderAll();
+  refreshIcons();
+
+  $("#btn-prev").addEventListener("click", () => {
+    if (state.step > 1) { state.step--; renderAll(); }
+  });
+  $("#btn-next").addEventListener("click", () => {
+    if (!canProceed()) return;
+    if (state.step < 4) { state.step++; renderAll(); }
+    else startLoading();
+  });
+
+  $("#btn-login").addEventListener("click", openLogin);
+  $("#login-close").addEventListener("click", closeLogin);
+  $("#login-modal").addEventListener("click", (e) => { if (e.target.id === "login-modal") closeLogin(); });
+  $("#login-email").addEventListener("input", refreshLoginBtn);
+  $("#login-password").addEventListener("input", refreshLoginBtn);
+  $("#login-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if ($("#login-submit").disabled) return;
+    const btn = $("#login-submit");
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Memproses...';
+    refreshIcons();
+    setTimeout(() => {
+      closeLogin();
+      showToast("Login berhasil! Membuka dashboard kandidat...");
+      btn.innerHTML = '<i data-lucide="log-in" class="w-4 h-4"></i> Masuk Dashboard';
+      refreshIcons();
+    }, 1400);
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS Universitas Siber Asia - Session Mahasiswa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+        body, .font-sans {
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        
+        .section-frame {
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            margin-bottom: 2rem;
+        }
+        .section-header-solid {
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.85rem 1.25rem;
+        }
+        
+        /* Hover Elegan, Manis, dan Tipis */
+        .item-card {
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+            border-left: 2px solid transparent; 
+            border-bottom: 1px solid #f9fafb;
+            background-color: #ffffff;
+        }
+        .item-card:last-child {
+            border-bottom: none;
+        }
+        .item-card:hover {
+            background-color: #fdfdfd;
+            border-left-color: #3b82f6; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            transform: translateX(3px); 
+            z-index: 10;
+        }
+        
+        /* Tombol Aksi */
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 6px 10px;
+            border-radius: 10px;
+            transition: all 0.2s;
+            min-width: 60px;
+        }
+        .action-btn:hover {
+            background-color: #f1f5f9;
+            transform: translateY(-2px);
+        }
+        .action-text {
+            font-size: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body class="bg-[#F9FBFC] text-slate-900 min-h-screen font-sans">
+
+    <!-- MAIN CONTENT ONLY (Sidebar Removed) -->
+    <main class="w-full flex flex-col min-h-screen">
+        
+        <!-- HEADER -->
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 flex-shrink-0 sticky top-0 z-50">
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-400">
+                <div class="w-8 h-8 bg-[#004996] rounded flex items-center justify-center text-white font-bold text-xs mr-2">U</div>
+                <span>Courses Offered</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                <span>SI-001</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                <span class="text-slate-900 font-bold">Session 1</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-xs font-bold">Yuda Jasper Va...</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-tighter font-bold">mahasiswa</p>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-blue-100 border-2 border-white shadow-sm overflow-hidden">
+                    <img src="https://ui-avatars.com/api/?name=Yuda+Jasper&background=004996&color=fff" alt="User" />
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT SCROLL AREA -->
+        <div class="flex-grow p-6 lg:p-12 overflow-y-auto custom-scrollbar">
+            <div class="max-w-6xl mx-auto space-y-6 pb-20">
+                
+                <!-- INFORMATION & PRESENSI SECTION -->
+                <div class="section-frame flex flex-col md:flex-row !mb-10">
+                    
+                    <!-- Left: Information -->
+                    <div class="p-8 md:w-[60%] border-b md:border-b-0 md:border-r border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-2 mb-6">
+                                <div class="w-1 h-4 bg-blue-600 rounded-full"></div>
+                                <h2 class="text-sm font-bold text-slate-700">Information (Session 1)</h2>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Learning Topic :</p>
+                                    <h1 class="text-lg font-extrabold text-slate-800">Manajemen Sistem Informasi</h1>
+                                </div>
+                                
+                                <div class="text-[13px] text-slate-600 leading-relaxed pr-4">
+                                    <span class="font-bold text-slate-900">ICT</span> adalah fondasi <span class="underline">teknis</span> yang memungkinkan sistem informasi berjalan, mencakup perangkat keras, jaringan, perangkat lunak, dan layanan cloud yang bersama-sama mengumpulkan, mengolah, menyimpan, serta mendistribusikan data agar keputusan bisnis lebih cepat dan akurat.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-10 pt-5 mt-6 border-t border-slate-50 text-[11px]">
+                            <div class="space-y-1">
+                                <p class="font-bold text-slate-400 uppercase tracking-wider">Date and time :</p>
+                                <p class="font-semibold text-slate-700">Deadline: Monday, 23 October 2026, 23:50</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="font-bold text-slate-400 uppercase tracking-wider">Status :</p>
+                                <span class="inline-block px-3 py-1 bg-red-50 text-red-500 font-extrabold rounded-full border border-red-100 uppercase text-[9px] tracking-wide shadow-sm">Class not Started</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Presensi Tracker -->
+                    <div class="p-8 md:w-[40%] bg-slate-50/60 relative overflow-hidden group flex flex-col justify-center">
+                        <div class="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-100/50 to-teal-50/50 rounded-full blur-3xl transform translate-x-1/4 -translate-y-1/4"></div>
+                        
+                        <div class="relative z-10 w-full">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-[13px] font-extrabold text-slate-800 flex items-center gap-2 uppercase tracking-wide">
+                                    <i data-lucide="clipboard-check" class="text-blue-600 w-[18px] h-[18px]"></i>
+                                    Presensi Aktivitas
+                                </h3>
+                                <span class="text-[10px] font-extrabold text-blue-700 bg-blue-100/80 px-2.5 py-1 rounded-lg border border-blue-200 shadow-sm">
+                                    4/6 Selesai
+                                </span>
+                            </div>
+
+                            <div class="w-full bg-slate-200 rounded-full h-1.5 mb-6 overflow-hidden shadow-inner">
+                                <div class="bg-blue-500 h-1.5 rounded-full transition-all duration-1000 ease-out" style="width: 66%;"></div>
+                            </div>
+                            
+                            <ul class="space-y-2.5">
+                                <!-- Done Item -->
+                                <li class="flex justify-between items-center p-2.5 rounded-xl border transition-all duration-300 hover:scale-[1.02] bg-green-50/70 border-green-100 hover:shadow-sm">
+                                    <span class="text-[10px] font-bold tracking-wide text-green-800">Buka Sesi</span>
+                                    <div class="w-5 h-5 rounded-full bg-green-200/50 flex items-center justify-center shrink-0">
+                                        <i data-lucide="check" class="w-3 h-3 text-green-600 stroke-[3]"></i>
+                                    </div>
+                                </li>
+                                <!-- Done Item -->
+                                <li class="flex justify-between items-center p-2.5 rounded-xl border transition-all duration-300 hover:scale-[1.02] bg-green-50/70 border-green-100 hover:shadow-sm">
+                                    <span class="text-[10px] font-bold tracking-wide text-green-800">View / Download Materi</span>
+                                    <div class="w-5 h-5 rounded-full bg-green-200/50 flex items-center justify-center shrink-0">
+                                        <i data-lucide="check" class="w-3 h-3 text-green-600 stroke-[3]"></i>
+                                    </div>
+                                </li>
+                                <!-- Missed Item -->
+                                <li class="flex justify-between items-center p-2.5 rounded-xl border transition-all duration-300 hover:scale-[1.02] bg-red-50/50 border-red-100/50 hover:bg-red-50">
+                                    <span class="text-[10px] font-bold tracking-wide text-slate-500">View / Download Video</span>
+                                    <div class="w-5 h-5 rounded-full bg-red-100/50 flex items-center justify-center shrink-0">
+                                        <i data-lucide="x-circle" class="w-3 h-3 text-red-400"></i>
+                                    </div>
+                                </li>
+                                <!-- Done Item -->
+                                <li class="flex justify-between items-center p-2.5 rounded-xl border transition-all duration-300 hover:scale-[1.02] bg-green-50/70 border-green-100 hover:shadow-sm">
+                                    <span class="text-[10px] font-bold tracking-wide text-green-800">Tugas</span>
+                                    <div class="w-5 h-5 rounded-full bg-green-200/50 flex items-center justify-center shrink-0">
+                                        <i data-lucide="check" class="w-3 h-3 text-green-600 stroke-[3]"></i>
+                                    </div>
+                                </li>
+                                <!-- Done Item -->
+                                <li class="flex justify-between items-center p-2.5 rounded-xl border transition-all duration-300 hover:scale-[1.02] bg-green-50/70 border-green-100 hover:shadow-sm">
+                                    <span class="text-[10px] font-bold tracking-wide text-green-800">Komentar</span>
+                                    <div class="w-5 h-5 rounded-full bg-green-200/50 flex items-center justify-center shrink-0">
+                                        <i data-lucide="check" class="w-3 h-3 text-green-600 stroke-[3]"></i>
+                                    </div>
+                                </li>
+                                <!-- Missed Item -->
+                                <li class="flex justify-between items-center p-2.5 rounded-xl border transition-all duration-300 hover:scale-[1.02] bg-red-50/50 border-red-100/50 hover:bg-red-50">
+                                    <span class="text-[10px] font-bold tracking-wide text-slate-500">Kuis</span>
+                                    <div class="w-5 h-5 rounded-full bg-red-100/50 flex items-center justify-center shrink-0">
+                                        <i data-lucide="x-circle" class="w-3 h-3 text-red-400"></i>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: EDUCATIONAL RESOURCES -->
+                <div class="section-frame">
+                    <div class="section-header-solid flex items-center gap-2">
+                        <div class="w-1.5 h-3.5 bg-amber-400 rounded-full"></div>
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Educational Resources</h3>
+                    </div>
+                    <div>
+                        <!-- Material Item 1 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Membuka Manajemen Sistem Informasi...')">
+                            <div class="flex items-center gap-4 min-w-0">
+                                <div class="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600 transition-colors group-hover:bg-amber-100">
+                                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                                </div>
+                                <div class="truncate">
+                                    <h4 class="text-xs font-bold text-slate-800">Manajemen Sistem Informasi</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter font-semibold">12 Oct 2026, 08:30 WIB • PDF DOCUMENT</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 ml-4">
+                                <button class="action-btn text-blue-500" onclick="event.stopPropagation(); showToast('Menampilkan PDF...')">
+                                    <i data-lucide="eye" class="w-4 h-4 mb-0.5"></i>
+                                    <span class="action-text">Tampilkan</span>
+                                </button>
+                                <button class="action-btn text-amber-600" onclick="event.stopPropagation(); showToast('Mengunduh PDF...')">
+                                    <i data-lucide="download" class="w-4 h-4 mb-0.5"></i>
+                                    <span class="action-text">Unduh</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Material Item 2 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Membuka Modul ICT Literacy...')">
+                            <div class="flex items-center gap-4 min-w-0">
+                                <div class="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600 transition-colors group-hover:bg-amber-100">
+                                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                                </div>
+                                <div class="truncate">
+                                    <h4 class="text-xs font-bold text-slate-800">Modul ICT Literacy_01_Pendahuluan</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter font-semibold">14 Oct 2026, 08:30 WIB • PDF DOCUMENT</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 ml-4">
+                                <button class="action-btn text-blue-500" onclick="event.stopPropagation(); showToast('Menampilkan PDF...')">
+                                    <i data-lucide="eye" class="w-4 h-4 mb-0.5"></i>
+                                    <span class="action-text">Tampilkan</span>
+                                </button>
+                                <button class="action-btn text-amber-600" onclick="event.stopPropagation(); showToast('Mengunduh PDF...')">
+                                    <i data-lucide="download" class="w-4 h-4 mb-0.5"></i>
+                                    <span class="action-text">Unduh</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: ASSIGNMENTS -->
+                <div class="section-frame">
+                    <div class="section-header-solid flex items-center gap-2">
+                        <div class="w-1.5 h-3.5 bg-blue-500 rounded-full"></div>
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Assignments</h3>
+                    </div>
+                    <div>
+                        <!-- Assignment Item 1 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Detail tugas...')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 transition-colors group-hover:bg-blue-100">
+                                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">Test Document Assignment</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter font-semibold">Due: 23 Oct 2026</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 ml-4">
+                                <button class="action-btn text-slate-500" onclick="event.stopPropagation(); showToast('Detail tugas...')">
+                                    <i data-lucide="eye" class="w-4 h-4 mb-0.5"></i>
+                                    <span class="action-text">Detail</span>
+                                </button>
+                                <button class="action-btn text-blue-600 border border-blue-100" onclick="event.stopPropagation(); showToast('Submit Tugas...')">
+                                    <i data-lucide="upload" class="w-4 h-4 mb-0.5"></i>
+                                    <span class="action-text">Submit</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Assignment Item 2 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Detail tugas...')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 transition-colors group-hover:bg-blue-100">
+                                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">Tugas 1 - ICT Literacy</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter font-semibold">Due: 25 Oct 2026</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 ml-4">
+                                <button class="action-btn text-slate-500" onclick="event.stopPropagation(); showToast('Detail tugas...')">
+                                    <i data-lucide="eye" class="w-4 h-4 mb-0.5"></i>
+                                    <span class="action-text">Detail</span>
+                                </button>
+                                <button class="action-btn text-blue-600 border border-blue-100" onclick="event.stopPropagation(); showToast('Submit Tugas...')">
+                                    <i data-lucide="upload" class="w-4 h-4 mb-0.5"></i>
+                                    <span class="action-text">Submit</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Assignment Item 3 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Detail tugas...')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 transition-colors group-hover:bg-blue-100">
+                                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">Test Assignments 123</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter font-semibold">Due: 25 Feb 2025</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 ml-4">
+                                <button class="action-btn text-slate-500" onclick="event.stopPropagation(); showToast('Detail tugas...')">
+                                    <i data-lucide="eye" class="w-4 h-4 mb-0.5"></i>
+                                    <span class="action-text">Detail</span>
+                                </button>
+                                <button class="action-btn text-blue-600 border border-blue-100" onclick="event.stopPropagation(); showToast('Submit Tugas...')">
+                                    <i data-lucide="upload" class="w-4 h-4 mb-0.5"></i>
+                                    <span class="action-text">Submit</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: QUIZ -->
+                <div class="section-frame">
+                    <div class="section-header-solid flex items-center gap-2">
+                        <div class="w-1.5 h-3.5 bg-cyan-400 rounded-full"></div>
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Quiz</h3>
+                    </div>
+                    <div>
+                        <!-- Quiz Item 1 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Membuka kuis: Ada tes')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center text-cyan-600 transition-colors group-hover:bg-cyan-100">
+                                    <i data-lucide="help-circle" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">Ada tes</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-semibold tracking-tighter">Periode: 21 Jan 1970, 11:30 - 21 Jan 1970, 11:35</p>
+                                </div>
+                            </div>
+                            <button onclick="event.stopPropagation(); showToast('Membuka kuis: Ada tes')" class="bg-cyan-600 text-white px-5 py-2 rounded-lg text-[10px] font-extrabold shadow-md shadow-cyan-50 hover:bg-cyan-700 transition-all active:scale-95">
+                                Open
+                            </button>
+                        </div>
+                        
+                        <!-- Quiz Item 2 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Membuka kuis: Quiz Management Info 1')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center text-cyan-600 transition-colors group-hover:bg-cyan-100">
+                                    <i data-lucide="help-circle" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">Quiz Management Info 1</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-semibold tracking-tighter">Periode: 21 Jan 1970, 10:46 - 21 Jan 1970, 10:47</p>
+                                </div>
+                            </div>
+                            <button onclick="event.stopPropagation(); showToast('Membuka kuis: Quiz Management Info 1')" class="bg-cyan-600 text-white px-5 py-2 rounded-lg text-[10px] font-extrabold shadow-md shadow-cyan-50 hover:bg-cyan-700 transition-all active:scale-95">
+                                Open
+                            </button>
+                        </div>
+
+                        <!-- Quiz Item 3 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Membuka kuis: Test quiz beralur')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center text-cyan-600 transition-colors group-hover:bg-cyan-100">
+                                    <i data-lucide="help-circle" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">Test quiz beralur</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-semibold tracking-tighter">Periode: 1 Jan 1970, 07:00 - 1 Jan 1970, 08:00</p>
+                                </div>
+                            </div>
+                            <button onclick="event.stopPropagation(); showToast('Membuka kuis: Test quiz beralur')" class="bg-cyan-600 text-white px-5 py-2 rounded-lg text-[10px] font-extrabold shadow-md shadow-cyan-50 hover:bg-cyan-700 transition-all active:scale-95">
+                                Open
+                            </button>
+                        </div>
+
+                        <!-- Quiz Item 4 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Membuka kuis: Sistem Operasi Windows')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center text-cyan-600 transition-colors group-hover:bg-cyan-100">
+                                    <i data-lucide="help-circle" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">Sistem Operasi Windows</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-semibold tracking-tighter">Periode: 9 Apr 2026, 00:00 - 10 Apr 2026, 00:00</p>
+                                </div>
+                            </div>
+                            <button onclick="event.stopPropagation(); showToast('Membuka kuis: Sistem Operasi Windows')" class="bg-cyan-600 text-white px-5 py-2 rounded-lg text-[10px] font-extrabold shadow-md shadow-cyan-50 hover:bg-cyan-700 transition-all active:scale-95">
+                                Open
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: INTERACTIVE VIDEO -->
+                <div class="section-frame">
+                    <div class="section-header-solid flex items-center gap-2">
+                        <div class="w-1.5 h-3.5 bg-purple-400 rounded-full"></div>
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Interactive Video</h3>
+                    </div>
+                    <div>
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Putar Video: Test Interactive Video ICT')">
+                            <div class="flex items-center gap-4 min-w-0">
+                                <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600 transition-colors group-hover:bg-purple-100">
+                                    <i data-lucide="play-circle" class="w-5 h-5"></i>
+                                </div>
+                                <div class="truncate">
+                                    <h4 class="text-xs font-bold text-slate-800">Test Interactive Video ICT</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-semibold tracking-tighter uppercase tracking-wide">Update: 23 May 2026</p>
+                                </div>
+                            </div>
+                            <button class="action-btn text-purple-600" onclick="event.stopPropagation(); showToast('Putar Video...')">
+                                <i data-lucide="play-circle" class="w-4 h-4 mb-0.5"></i>
+                                <span class="action-text">Putar</span>
+                            </button>
+                        </div>
+
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Putar Video: ICT - ICT')">
+                            <div class="flex items-center gap-4 min-w-0">
+                                <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600 transition-colors group-hover:bg-purple-100">
+                                    <i data-lucide="play-circle" class="w-5 h-5"></i>
+                                </div>
+                                <div class="truncate">
+                                    <h4 class="text-xs font-bold text-slate-800">ICT - ICT</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-semibold tracking-tighter uppercase tracking-wide">31 October 2024</p>
+                                </div>
+                            </div>
+                            <button class="action-btn text-purple-600" onclick="event.stopPropagation(); showToast('Putar Video...')">
+                                <i data-lucide="play-circle" class="w-4 h-4 mb-0.5"></i>
+                                <span class="action-text">Putar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: VIDEO CONFERENCE -->
+                <div class="section-frame">
+                    <div class="section-header-solid flex items-center gap-2">
+                        <div class="w-1.5 h-3.5 bg-teal-400 rounded-full"></div>
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Video Conference</h3>
+                    </div>
+                    <div>
+                        <!-- Vicon 1 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Bergabung ke vicon 1')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600 transition-colors group-hover:bg-teal-100">
+                                    <i data-lucide="video" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">vicon 1</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-semibold tracking-tighter flex items-center gap-1">
+                                        <i data-lucide="calendar" class="w-3 h-3"></i> 16 April 2026, 09:00 WIB
+                                    </p>
+                                </div>
+                            </div>
+                            <button onclick="event.stopPropagation(); showToast('Bergabung ke vicon 1')" class="bg-[#00A99D] hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-[10px] font-extrabold shadow-md transition-all active:scale-95 flex items-center gap-1.5">
+                                <i data-lucide="video" class="w-3.5 h-3.5"></i> Join Room
+                            </button>
+                        </div>
+
+                        <!-- Vicon 2 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Bergabung ke ICT - ICT')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600 transition-colors group-hover:bg-teal-100">
+                                    <i data-lucide="video" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">ICT - ICT</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-semibold tracking-tighter flex items-center gap-1">
+                                        <i data-lucide="calendar" class="w-3 h-3"></i> 31 October 2024, 10:00 WIB
+                                    </p>
+                                </div>
+                            </div>
+                            <button onclick="event.stopPropagation(); showToast('Bergabung ke ICT - ICT')" class="bg-[#00A99D] hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-[10px] font-extrabold shadow-md transition-all active:scale-95 flex items-center gap-1.5">
+                                <i data-lucide="video" class="w-3.5 h-3.5"></i> Join Room
+                            </button>
+                        </div>
+
+                        <!-- Vicon 3 -->
+                        <div class="item-card p-5 flex items-center justify-between group" onclick="showToast('Bergabung ke Sesi Vicon bersama mahasiswa pertemuan pertama')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600 transition-colors group-hover:bg-teal-100">
+                                    <i data-lucide="video" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">Sesi Vicon bersama mahasiswa pertemuan pertama</h4>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-semibold tracking-tighter flex items-center gap-1">
+                                        <i data-lucide="calendar" class="w-3 h-3"></i> 17 October 2024, 10:00 WIB
+                                    </p>
+                                </div>
+                            </div>
+                            <button onclick="event.stopPropagation(); showToast('Bergabung ke Sesi Vicon bersama mahasiswa pertemuan pertama')" class="bg-[#00A99D] hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-[10px] font-extrabold shadow-md transition-all active:scale-95 flex items-center gap-1.5">
+                                <i data-lucide="video" class="w-3.5 h-3.5"></i> Join Room
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- TOAST POPUP -->
+    <div id="toast" class="fixed bottom-10 right-10 z-[100] transform translate-y-20 opacity-0 pointer-events-none transition-all duration-500">
+        <div class="bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4">
+            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold">
+                <i data-lucide="check-circle" class="w-[18px] h-[18px]"></i>
+            </div>
+            <p id="toast-text" class="text-sm font-semibold">Memproses...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Render Icons
+        lucide.createIcons();
+
+        // Toast Notification System
+        let toastTimeout;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastText = document.getElementById('toast-text');
+            
+            toastText.innerText = message;
+            
+            // Show Toast
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            // Hide Toast after 3s
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRIS ERP UNSIA - Full Width Edition</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f7fb', 100: '#e0f0f6', 200: '#bae0ed', 300: '#7bc4de', 400: '#38a3cb',
+                            500: '#00719f', /* Secondary / Gradient Bottom */
+                            600: '#0f487b', /* Primary Brand */
+                            700: '#103a62', 800: '#123151', 900: '#142a44',
+                        },
+                        accent: { DEFAULT: '#FED524', hover: '#e5bf1d' }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s ease-out forwards',
+                        'pulse-soft': 'pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(15px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        pulseSoft: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0.7' } },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        /* Smooth tab transition */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans h-screen overflow-hidden flex selection:bg-brand-200 selection:text-brand-900">
+
+    <!-- MOBILE OVERLAY -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden transition-opacity lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-[#0f487b] to-[#00719f] shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 lg:translate-x-0 lg:relative lg:flex lg:flex-col h-full flex-shrink-0">
+        <!-- Logo Area -->
+        <div class="h-20 flex items-center px-6 border-b border-white/10 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg relative overflow-hidden">
+                    <div class="absolute inset-0 bg-accent/20"></div>
+                    <i class="ph-fill ph-users-three text-brand-600 text-2xl relative z-10"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-lg leading-tight tracking-wide">HRIS<span class="text-accent">.</span></h1>
+                    <p class="text-white/70 text-[10px] tracking-widest uppercase font-semibold">ERP UNSIA</p>
+                </div>
+            </div>
+            <button onclick="toggleSidebar()" class="ml-auto lg:hidden text-white/70 hover:text-white">
+                <i class="ph ph-x text-2xl"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Menus -->
+        <div class="flex-1 overflow-y-auto no-scrollbar py-6 px-4 flex flex-col gap-1.5" id="sidebar-nav">
+            
+            <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-white/50 mb-1 mt-2">Dashboard Utama</p>
+            <button onclick="switchMainTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/15 text-white font-bold border-l-4 border-accent transition-all text-sm text-left group shadow-md shrink-0">
+                <i class="ph-fill ph-squares-four text-accent text-lg shrink-0"></i>
+                <span class="truncate">Ringkasan Eksekutif</span>
+            </button>
+
+            <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-white/50 mb-1 mt-4">Core HR (Data Induk)</p>
+            <button onclick="switchMainTab('pegawai')" id="nav-pegawai" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-all text-sm text-left border-l-4 border-transparent group shrink-0">
+                <i class="ph-fill ph-identification-card text-lg shrink-0 group-hover:text-accent transition-colors"></i>
+                <span class="truncate">Direktori Pegawai</span>
+            </button>
+            <button onclick="showToast('Modul Organisasi', 'Fitur pemetaan struktur rektorat dan dekanat sedang dalam pengembangan.')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-all text-sm text-left border-l-4 border-transparent group shrink-0">
+                <i class="ph-fill ph-sitemap text-lg shrink-0 group-hover:text-accent transition-colors"></i>
+                <span class="truncate">Struktur Organisasi</span>
+            </button>
+            <button onclick="showToast('Portal E-Recruitment', 'Anda akan dialihkan ke portal pelamar eksternal.')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-all text-sm text-left border-l-4 border-transparent group shrink-0">
+                <div class="flex items-center gap-3 truncate">
+                    <i class="ph-fill ph-briefcase text-lg shrink-0 group-hover:text-accent transition-colors"></i>
+                    <span class="truncate">E-Recruitment</span>
+                </div>
+                <i class="ph ph-arrow-up-right text-xs opacity-50"></i>
+            </button>
+
+            <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-white/50 mb-1 mt-4">Operasional & Kinerja</p>
+            <button onclick="showToast('Presensi Kehadiran', 'Menarik data log login LMS dan tap kartu RFID.')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-all text-sm text-left border-l-4 border-transparent group shrink-0">
+                <i class="ph-fill ph-calendar-check text-lg shrink-0 group-hover:text-accent transition-colors"></i>
+                <span class="truncate">Presensi & Waktu</span>
+            </button>
+            <button onclick="switchMainTab('cuti')" id="nav-cuti" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-all text-sm text-left border-l-4 border-transparent group shrink-0">
+                <div class="flex items-center gap-3 truncate">
+                    <i class="ph-fill ph-airplane-tilt text-lg shrink-0 group-hover:text-accent transition-colors"></i>
+                    <span class="truncate">Cuti & Izin (ESS)</span>
+                </div>
+                <span class="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">4 Pengajuan</span>
+            </button>
+            <button onclick="showToast('Beban Kerja Dosen', 'Terhubung dengan jadwal SIAKAD untuk kalkulasi honor.')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-all text-sm text-left border-l-4 border-transparent group shrink-0">
+                <i class="ph-fill ph-chart-line-up text-lg shrink-0 group-hover:text-accent transition-colors"></i>
+                <span class="truncate">Kinerja & BKD</span>
+            </button>
+
+            <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-white/50 mb-1 mt-4">Finansial</p>
+            <button onclick="showToast('Modul Payroll Terkunci', 'Hanya dapat diakses oleh manajer keuangan tingkat lanjut.')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-all text-sm text-left border-l-4 border-transparent group shrink-0">
+                <div class="flex items-center gap-3 truncate opacity-70">
+                    <i class="ph-fill ph-wallet text-lg shrink-0 group-hover:text-accent transition-colors"></i>
+                    <span class="truncate">Penggajian (Payroll)</span>
+                </div>
+                <i class="ph-fill ph-lock-key text-xs opacity-50"></i>
+            </button>
+            
+            <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-white/50 mb-1 mt-4">Integrasi Pemerintah</p>
+            <button onclick="simulateSyncSister()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-white/70 hover:bg-emerald-900/40 hover:text-white font-medium transition-all text-sm text-left border-l-4 border-transparent group shrink-0">
+                <div class="flex items-center gap-3 truncate">
+                    <i class="ph-bold ph-arrows-merge text-lg shrink-0 text-emerald-400 group-hover:text-emerald-300 transition-colors"></i>
+                    <span class="truncate text-emerald-50">Sinkron SISTER</span>
+                </div>
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-soft"></span>
+            </button>
+        </div>
+
+        <!-- Tenant / User Profile -->
+        <div class="p-4 border-t border-white/10 shrink-0 bg-black/10">
+            <div class="flex items-center gap-3">
+                <img src="https://i.pravatar.cc/100?img=11" alt="Admin HR" class="w-10 h-10 rounded-full border-2 border-white/20 object-cover shadow-md">
+                <div class="flex-1 overflow-hidden">
+                    <p class="text-sm font-bold text-white truncate">Budi Santoso</p>
+                    <p class="text-[10px] text-white/60 truncate uppercase tracking-wide">Direktur SDM & BAU</p>
+                </div>
+                <button class="w-8 h-8 rounded-lg text-white/50 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="ph-bold ph-sign-out text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA (Flex-1 & Min-w-0 for precise full width) -->
+    <main class="flex-1 flex flex-col min-w-0 h-full bg-slate-50 relative">
+        <!-- Top Header (Fixed Height) -->
+        <header class="h-20 glass-panel border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 z-30 shrink-0">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 transition-colors shrink-0">
+                    <i class="ph-bold ph-list text-2xl"></i>
+                </button>
+                <div>
+                    <h2 class="text-xl font-bold text-brand-900 hidden sm:block">Human Resources Information System</h2>
+                    <p class="text-xs font-semibold text-slate-500 hidden sm:block tracking-wide uppercase mt-0.5">Universitas Siber Asia - Modul Pengelola</p>
+                    <h2 class="text-lg font-bold text-brand-900 sm:hidden">HRIS UNSIA</h2>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 sm:gap-5 shrink-0">
+                <div class="relative hidden md:block w-72">
+                    <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="Cari Pegawai, NIDN, atau Unit Kerja..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:font-normal">
+                    <div class="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                        <span class="bg-slate-100 text-slate-400 text-[10px] px-1.5 py-0.5 rounded font-bold border border-slate-200">⌘</span>
+                        <span class="bg-slate-100 text-slate-400 text-[10px] px-1.5 py-0.5 rounded font-bold border border-slate-200">K</span>
+                    </div>
+                </div>
+                <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+                <button class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
+                    <i class="ph-bold ph-bell text-xl"></i>
+                    <span class="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full animate-ping"></span>
+                    <span class="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Scrollable Main Panel Area -->
+        <div class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth w-full p-4 sm:p-8" id="main-scroll-area">
+            
+            <!-- PANEL 1: DASHBOARD UTAMA (Full Width Utilization) -->
+            <div id="panel-dashboard" class="main-panel block animate-fade-in w-full pb-24">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800">Ringkasan Eksekutif SDM</h3>
+                        <p class="text-slate-500 text-sm mt-1">Pantau analitik tenaga kependidikan dan pendidik aktif hari ini.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2">
+                            <i class="ph-bold ph-calendar-blank"></i> Periode: Sep 2026
+                        </button>
+                        <button class="bg-brand-600 border border-brand-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-brand-700 transition-colors shadow-md flex items-center gap-2">
+                            <i class="ph-bold ph-download-simple"></i> Ekspor Laporan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Grid (Adapts to Ultra Wide) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-8 w-full">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-start justify-between relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-brand-50 opacity-50 group-hover:scale-110 transition-transform duration-500"><i class="ph-fill ph-users text-8xl"></i></div>
+                        <div class="relative z-10">
+                            <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Total SDM Aktif</p>
+                            <h4 class="text-4xl font-extrabold text-slate-800 tracking-tight">428</h4>
+                            <p class="text-emerald-600 text-xs font-bold mt-2 bg-emerald-50 inline-flex px-2 py-1 rounded-md"><i class="ph-bold ph-trend-up mr-1"></i> +12 bulan ini</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 relative z-10">
+                            <i class="ph-fill ph-users text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-start justify-between relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-indigo-50 opacity-50 group-hover:scale-110 transition-transform duration-500"><i class="ph-fill ph-chalkboard-teacher text-8xl"></i></div>
+                        <div class="relative z-10">
+                            <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Dosen Tetap (NIDN)</p>
+                            <h4 class="text-4xl font-extrabold text-slate-800 tracking-tight">185</h4>
+                            <p class="text-indigo-600 text-xs font-bold mt-2 bg-indigo-50 inline-flex px-2 py-1 rounded-md"><i class="ph-bold ph-check-circle mr-1"></i> 100% Sync SISTER</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 relative z-10">
+                            <i class="ph-fill ph-chalkboard-teacher text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-start justify-between relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-amber-50 opacity-50 group-hover:scale-110 transition-transform duration-500"><i class="ph-fill ph-user-focus text-8xl"></i></div>
+                        <div class="relative z-10">
+                            <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Dosen Tamu / LB</p>
+                            <h4 class="text-4xl font-extrabold text-slate-800 tracking-tight">84</h4>
+                            <p class="text-amber-600 text-xs font-bold mt-2 bg-amber-50 inline-flex px-2 py-1 rounded-md"><i class="ph-bold ph-clock mr-1"></i> 12 Kontrak Expired</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 relative z-10">
+                            <i class="ph-fill ph-user-focus text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-start justify-between relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-rose-50 opacity-50 group-hover:scale-110 transition-transform duration-500"><i class="ph-fill ph-airplane-tilt text-8xl"></i></div>
+                        <div class="relative z-10">
+                            <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Cuti / Izin Aktif</p>
+                            <h4 class="text-4xl font-extrabold text-slate-800 tracking-tight">14</h4>
+                            <p class="text-rose-600 text-xs font-bold mt-2 bg-rose-50 inline-flex px-2 py-1 rounded-md"><i class="ph-bold ph-warning-circle mr-1"></i> 4 Butuh Approval</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 relative z-10">
+                            <i class="ph-fill ph-airplane-tilt text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Grid -->
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 w-full">
+                    <!-- Onboarding List (Takes 2/3 space on large screens) -->
+                    <div class="xl:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
+                        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 class="font-bold text-slate-800 text-lg">Progres Onboarding Pegawai Baru</h3>
+                            <button onclick="switchMainTab('pegawai')" class="text-brand-600 text-sm font-bold hover:underline flex items-center gap-1">Ke Direktori <i class="ph-bold ph-arrow-right"></i></button>
+                        </div>
+                        <div class="divide-y divide-slate-100 flex-1">
+                            <!-- Item 1 -->
+                            <div class="p-5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer group" onclick="openPegawaiDetail()">
+                                <div class="flex items-center gap-4 mb-3 sm:mb-0">
+                                    <div class="relative">
+                                        <img src="https://i.pravatar.cc/100?img=33" class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm group-hover:border-brand-200 transition-colors">
+                                        <span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                                    </div>
+                                    <div>
+                                        <p class="text-base font-bold text-slate-800 group-hover:text-brand-600 transition-colors">Dr. Anita Kumala, M.Kom.</p>
+                                        <div class="flex items-center gap-2 mt-0.5">
+                                            <span class="text-xs text-slate-500"><i class="ph-bold ph-briefcase"></i> Dosen Tetap - Informatika</span>
+                                            <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                            <span class="text-[10px] font-mono text-slate-400">ID: TMP-0824</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4 sm:text-right">
+                                    <div class="flex-1 sm:w-32">
+                                        <div class="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
+                                            <span>Kelengkapan</span>
+                                            <span class="text-amber-600">60%</span>
+                                        </div>
+                                        <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                            <div class="h-full bg-amber-500 rounded-full" style="width: 60%"></div>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex px-2.5 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-lg uppercase tracking-wide border border-amber-200 shrink-0">Lengkapi Data</span>
+                                </div>
+                            </div>
+                            <!-- Item 2 -->
+                            <div class="p-5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer group" onclick="openPegawaiDetail()">
+                                <div class="flex items-center gap-4 mb-3 sm:mb-0">
+                                    <div class="relative">
+                                        <img src="https://i.pravatar.cc/100?img=15" class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm group-hover:border-brand-200 transition-colors">
+                                        <span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                                    </div>
+                                    <div>
+                                        <p class="text-base font-bold text-slate-800 group-hover:text-brand-600 transition-colors">Rizky Pratama, S.E.</p>
+                                        <div class="flex items-center gap-2 mt-0.5">
+                                            <span class="text-xs text-slate-500"><i class="ph-bold ph-laptop"></i> Staf BAU - Keuangan</span>
+                                            <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                            <span class="text-[10px] font-mono text-slate-400">NIP: U20260901</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4 sm:text-right">
+                                    <div class="flex-1 sm:w-32">
+                                        <div class="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
+                                            <span>Kelengkapan</span>
+                                            <span class="text-emerald-600">100%</span>
+                                        </div>
+                                        <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                            <div class="h-full bg-emerald-500 rounded-full" style="width: 100%"></div>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-lg uppercase tracking-wide border border-emerald-200 shrink-0">Aktif & Selesai</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Integration & Shortcuts (Takes 1/3 space) -->
+                    <div class="flex flex-col gap-6">
+                        <div class="bg-gradient-to-br from-brand-700 to-brand-900 rounded-2xl shadow-lg shadow-brand-900/20 p-6 text-white relative overflow-hidden flex flex-col justify-between h-full border border-brand-600">
+                            <i class="ph-fill ph-arrows-merge absolute -right-6 -bottom-6 text-9xl text-brand-500 opacity-20"></i>
+                            <div class="relative z-10">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
+                                        <i class="ph-fill ph-database text-2xl text-emerald-400"></i>
+                                    </div>
+                                    <span class="bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span> SISTER Connected
+                                    </span>
+                                </div>
+                                <h3 class="text-xl font-extrabold mb-2 text-white">Sinkronisasi PDDikti</h3>
+                                <p class="text-sm text-brand-100 leading-relaxed">Pembaruan data Beban Kerja Dosen (BKD) dan Portofolio BIMA terakhir dilakukan <strong>2 jam yang lalu</strong>. Seluruh NIDN tervalidasi aktif.</p>
+                            </div>
+                            <button onclick="simulateSyncSister(this)" class="w-full mt-6 py-3 bg-white text-brand-900 font-bold rounded-xl text-sm hover:bg-slate-100 hover:shadow-lg transition-all shadow-sm flex items-center justify-center gap-2 relative z-10 group">
+                                <i class="ph-bold ph-arrows-clockwise group-hover:rotate-180 transition-transform duration-500"></i> Tarik Data Terbaru
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 2: DIREKTORI PEGAWAI (Full Width Table) -->
+            <div id="panel-pegawai" class="main-panel hidden animate-fade-in w-full pb-24">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800">Direktori Pegawai</h3>
+                        <p class="text-slate-500 text-sm mt-1">Basis data tunggal (Core HR) untuk seluruh Dosen dan Tenaga Kependidikan.</p>
+                    </div>
+                    <button onclick="tambahPegawai()" class="bg-brand-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-brand-700 transition-all shadow-md shadow-brand-600/30 flex items-center gap-2 shrink-0">
+                        <i class="ph-bold ph-user-plus"></i> Tambah Pegawai Baru
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col w-full">
+                    <!-- Filters -->
+                    <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col lg:flex-row gap-4 items-center justify-between w-full">
+                        <div class="relative w-full lg:max-w-md">
+                            <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" placeholder="Cari Nama, NIK, atau NIDN..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all shadow-sm">
+                        </div>
+                        <div class="flex gap-3 w-full lg:w-auto overflow-x-auto no-scrollbar pb-2 lg:pb-0">
+                            <select class="py-2.5 px-4 border border-slate-200 rounded-xl text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 bg-white font-medium shadow-sm shrink-0">
+                                <option>Semua Status Kepegawaian</option>
+                                <option>Dosen Tetap</option>
+                                <option>Dosen Tidak Tetap</option>
+                                <option>Tenaga Kependidikan</option>
+                            </select>
+                            <select class="py-2.5 px-4 border border-slate-200 rounded-xl text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 bg-white font-medium shadow-sm shrink-0">
+                                <option>Semua Fakultas / Unit</option>
+                                <option>Fakultas ICT</option>
+                                <option>Fakultas Manajemen</option>
+                                <option>Biro Rektorat</option>
+                            </select>
+                            <button class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 transition-all shadow-sm shrink-0">
+                                <i class="ph-bold ph-funnel text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Full Width Table -->
+                    <div class="overflow-x-auto w-full">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                                    <th class="p-4 sm:px-6">Profil Lengkap Pegawai</th>
+                                    <th class="p-4 sm:px-6">ID Kepegawaian</th>
+                                    <th class="p-4 sm:px-6">Status & Unit Kerja</th>
+                                    <th class="p-4 sm:px-6">Kontak SSO</th>
+                                    <th class="p-4 sm:px-6 text-center">Status HR</th>
+                                    <th class="p-4 sm:px-6 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
+                                <!-- Row 1 -->
+                                <tr class="hover:bg-slate-50/80 transition-colors group cursor-pointer" onclick="openPegawaiDetail()">
+                                    <td class="p-4 sm:px-6">
+                                        <div class="flex items-center gap-4">
+                                            <img src="https://i.pravatar.cc/100?img=33" class="w-12 h-12 rounded-full object-cover border-2 border-slate-100 group-hover:border-brand-200 transition-colors">
+                                            <div>
+                                                <p class="font-bold text-slate-800 text-base group-hover:text-brand-600 transition-colors">Dr. Anita Kumala, M.Kom.</p>
+                                                <p class="text-xs text-slate-500 mt-0.5">Jabatan: Lektor Kepala</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 sm:px-6">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <p class="font-mono text-slate-700 font-bold">0312058801</p>
+                                            <span class="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold border border-blue-200">NIDN</span>
+                                        </div>
+                                        <p class="text-xs text-slate-400">NIK: 31740123...</p>
+                                    </td>
+                                    <td class="p-4 sm:px-6">
+                                        <p class="font-bold text-slate-700 mb-0.5">Dosen Tetap</p>
+                                        <p class="text-xs text-slate-500">Fakultas ICT - Informatika</p>
+                                    </td>
+                                    <td class="p-4 sm:px-6">
+                                        <p class="font-medium text-slate-700 mb-0.5">anita.k@unsia.ac.id</p>
+                                        <p class="text-xs text-slate-500"><i class="ph-fill ph-whatsapp text-emerald-500 mr-1"></i>0812-3456-7890</p>
+                                    </td>
+                                    <td class="p-4 sm:px-6 text-center">
+                                        <span class="inline-flex px-3 py-1 bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-bold rounded-lg uppercase tracking-wide">Aktif</span>
+                                    </td>
+                                    <td class="p-4 sm:px-6 text-center" onclick="event.stopPropagation()">
+                                        <div class="flex justify-center gap-2">
+                                            <button onclick="openPegawaiDetail()" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 transition-colors inline-flex items-center justify-center shadow-sm">
+                                                <i class="ph-bold ph-pencil-simple"></i>
+                                            </button>
+                                            <button class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors inline-flex items-center justify-center shadow-sm">
+                                                <i class="ph-bold ph-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- Row 2 -->
+                                <tr class="hover:bg-slate-50/80 transition-colors group cursor-pointer" onclick="openPegawaiDetail()">
+                                    <td class="p-4 sm:px-6">
+                                        <div class="flex items-center gap-4">
+                                            <img src="https://i.pravatar.cc/100?img=15" class="w-12 h-12 rounded-full object-cover border-2 border-slate-100 group-hover:border-brand-200 transition-colors">
+                                            <div>
+                                                <p class="font-bold text-slate-800 text-base group-hover:text-brand-600 transition-colors">Rizky Pratama, S.E.</p>
+                                                <p class="text-xs text-slate-500 mt-0.5">Jabatan: Staf Ahli</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 sm:px-6">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <p class="font-mono text-slate-700 font-bold">U20260901</p>
+                                            <span class="text-[9px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-bold border border-slate-300">NIP</span>
+                                        </div>
+                                        <p class="text-xs text-slate-400">NIK: 32010145...</p>
+                                    </td>
+                                    <td class="p-4 sm:px-6">
+                                        <p class="font-bold text-slate-700 mb-0.5">Tenaga Kependidikan</p>
+                                        <p class="text-xs text-slate-500">Biro Adm. Keuangan</p>
+                                    </td>
+                                    <td class="p-4 sm:px-6">
+                                        <p class="font-medium text-slate-700 mb-0.5">rizky.p@unsia.ac.id</p>
+                                        <p class="text-xs text-slate-500"><i class="ph-fill ph-whatsapp text-emerald-500 mr-1"></i>0856-1122-3344</p>
+                                    </td>
+                                    <td class="p-4 sm:px-6 text-center">
+                                        <span class="inline-flex px-3 py-1 bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-bold rounded-lg uppercase tracking-wide">Aktif</span>
+                                    </td>
+                                    <td class="p-4 sm:px-6 text-center" onclick="event.stopPropagation()">
+                                        <div class="flex justify-center gap-2">
+                                            <button onclick="openPegawaiDetail()" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 transition-colors inline-flex items-center justify-center shadow-sm">
+                                                <i class="ph-bold ph-pencil-simple"></i>
+                                            </button>
+                                            <button class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors inline-flex items-center justify-center shadow-sm">
+                                                <i class="ph-bold ph-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="p-4 sm:px-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-sm text-slate-500 w-full">
+                        <p class="font-medium">Menampilkan <span class="font-bold text-slate-700">1-10</span> dari <span class="font-bold text-slate-700">428</span> pegawai</p>
+                        <div class="flex gap-1.5">
+                            <button class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-100 shadow-sm disabled:opacity-50" disabled><i class="ph-bold ph-caret-left"></i></button>
+                            <button class="w-8 h-8 rounded-lg flex items-center justify-center bg-brand-600 text-white font-bold shadow-md">1</button>
+                            <button class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-100 font-bold shadow-sm">2</button>
+                            <button class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-100 font-bold shadow-sm">3</button>
+                            <button class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-100 shadow-sm"><i class="ph-bold ph-caret-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 3: DETAIL PEGAWAI (Full Width Form Grid) -->
+            <div id="panel-detail" class="main-panel hidden animate-fade-in w-full pb-24">
+                
+                <!-- Back Button & Header -->
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 w-full">
+                    <div class="flex items-center gap-4">
+                        <button onclick="switchMainTab('pegawai')" class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-brand-600 hover:border-brand-300 transition-all shadow-sm shrink-0">
+                            <i class="ph-bold ph-arrow-left text-xl"></i>
+                        </button>
+                        <div>
+                            <div class="flex items-center gap-3">
+                                <h3 class="text-2xl font-bold text-slate-800" id="detail-title-name">Profil & Biodata Mendalam</h3>
+                                <span class="inline-flex px-2.5 py-1 bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-bold rounded-lg uppercase tracking-wider">Aktif</span>
+                            </div>
+                            <p class="text-slate-500 text-sm mt-1">Lengkapi data HR secara komprehensif untuk integrasi SISTER & Payroll.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 w-full md:w-auto">
+                        <button onclick="simulateLoading(this, 'Menyinkronkan...', () => showToast('Sinkronisasi SISTER', 'Data portofolio Dosen telah dikirim ke PDDikti.'))" class="flex-1 md:flex-none bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors shadow-sm flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-arrows-merge"></i> Push SISTER
+                        </button>
+                        <button onclick="saveData(this)" class="flex-1 md:flex-none bg-brand-600 border border-brand-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-brand-700 transition-all shadow-md shadow-brand-600/30 flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-floppy-disk"></i> Simpan Biodata
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Layout: Sidebar Tabs + Form Content (Full Width Strategy) -->
+                <div class="flex flex-col lg:flex-row gap-8 w-full">
+                    
+                    <!-- Left: Navigation Tabs (Fixed width on Desktop, scrollable on Mobile) -->
+                    <div class="w-full lg:w-72 shrink-0">
+                        <!-- Brief Profile Sticky Card -->
+                        <div class="sticky top-6">
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-4 text-center relative overflow-hidden">
+                                <div class="absolute top-0 left-0 right-0 h-16 bg-gradient-to-br from-brand-600 to-brand-800"></div>
+                                <div class="relative w-24 h-24 mx-auto mb-4 mt-4">
+                                    <img id="detail-img" src="https://i.pravatar.cc/150?img=33" class="w-full h-full object-cover rounded-full border-4 border-white shadow-md bg-white">
+                                    <button class="absolute bottom-0 right-0 w-8 h-8 bg-white border border-slate-200 rounded-full text-slate-600 hover:text-brand-600 hover:border-brand-300 shadow-md flex items-center justify-center transition-all hover:scale-110">
+                                        <i class="ph-fill ph-camera"></i>
+                                    </button>
+                                </div>
+                                <h4 class="font-extrabold text-slate-800 text-base" id="detail-name">Dr. Anita Kumala</h4>
+                                <p class="text-xs font-bold text-slate-500 mt-1 mb-3">NIDN: <span class="font-mono text-brand-600" id="detail-id">0312058801</span></p>
+                                <div class="border-t border-slate-100 pt-3 flex justify-center gap-4 text-xs text-slate-500">
+                                    <div class="text-center"><p class="font-bold text-slate-800">4</p><p class="text-[10px]">Thn Kerja</p></div>
+                                    <div class="w-px bg-slate-200"></div>
+                                    <div class="text-center"><p class="font-bold text-slate-800">14</p><p class="text-[10px]">SKS Ajar</p></div>
+                                    <div class="w-px bg-slate-200"></div>
+                                    <div class="text-center"><p class="font-bold text-emerald-600">A</p><p class="text-[10px]">Nilai KPI</p></div>
+                                </div>
+                            </div>
+
+                            <!-- Menu Tabs -->
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-2 flex flex-row lg:flex-col gap-1 overflow-x-auto no-scrollbar">
+                                <button onclick="switchDeepTab('tab-pribadi')" id="nav-tab-pribadi" class="tab-btn w-auto lg:w-full text-left px-4 py-3.5 rounded-xl text-sm font-bold bg-brand-50 text-brand-700 transition-colors flex items-center gap-3 shadow-sm border border-brand-100 shrink-0">
+                                    <i class="ph-fill ph-identification-badge text-xl"></i> <span class="whitespace-nowrap">Identitas Pribadi</span>
+                                </button>
+                                <button onclick="switchDeepTab('tab-karir')" id="nav-tab-karir" class="tab-btn w-auto lg:w-full text-left px-4 py-3.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors flex items-center gap-3 border border-transparent shrink-0">
+                                    <i class="ph-fill ph-briefcase text-xl"></i> <span class="whitespace-nowrap">Karir & Akademik</span>
+                                </button>
+                                <button onclick="switchDeepTab('tab-legal')" id="nav-tab-legal" class="tab-btn w-auto lg:w-full text-left px-4 py-3.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors flex items-center gap-3 border border-transparent shrink-0">
+                                    <i class="ph-fill ph-bank text-xl"></i> <span class="whitespace-nowrap">Legal & Finansial</span>
+                                </button>
+                                <button onclick="switchDeepTab('tab-keluarga')" id="nav-tab-keluarga" class="tab-btn w-auto lg:w-full text-left px-4 py-3.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors flex items-center gap-3 border border-transparent shrink-0">
+                                    <i class="ph-fill ph-users-three text-xl"></i> <span class="whitespace-nowrap">Keluarga & Darurat</span>
+                                </button>
+                                <button onclick="switchDeepTab('tab-pendidikan')" id="nav-tab-pendidikan" class="tab-btn w-auto lg:w-full text-left px-4 py-3.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors flex items-center gap-3 border border-transparent shrink-0">
+                                    <i class="ph-fill ph-graduation-cap text-xl"></i> <span class="whitespace-nowrap">Riwayat & Portofolio</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Form Contents (Takes remaining full width, uses CSS Grid internally) -->
+                    <div class="flex-1 w-full min-w-0">
+                        
+                        <!-- TAB 1: IDENTITAS PRIBADI -->
+                        <div id="tab-pribadi" class="tab-content active w-full">
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 w-full">
+                                <div class="bg-slate-50 border-b border-slate-100 px-6 py-4">
+                                    <h4 class="font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-identification-badge text-brand-600 text-lg"></i> Data Kependudukan Utama</h4>
+                                </div>
+                                <!-- Ultra-Wide Grid Form -->
+                                <div class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 w-full">
+                                    <div class="md:col-span-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Nama Lengkap (Sesuai KTP & Gelar)</label>
+                                        <input type="text" id="form-nama" value="Dr. Anita Kumala, M.Kom." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Nomor Induk Kependudukan (NIK)</label>
+                                        <input type="text" value="3174012345678901" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Tempat Lahir</label>
+                                        <input type="text" value="Jakarta" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Tanggal Lahir</label>
+                                        <input type="date" value="1988-05-12" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">J. Kelamin</label>
+                                            <select class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors">
+                                                <option>Laki-laki</option>
+                                                <option selected>Perempuan</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Agama</label>
+                                            <select class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors">
+                                                <option selected>Islam</option><option>Kristen</option><option>Katolik</option><option>Hindu</option><option>Buddha</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full">
+                                <div class="bg-slate-50 border-b border-slate-100 px-6 py-4">
+                                    <h4 class="font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-map-pin text-brand-600 text-lg"></i> Kontak, SSO & Alamat (Remote Ready)</h4>
+                                </div>
+                                <div class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 w-full">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Email Institusi (SSO)</label>
+                                        <input type="email" value="anita.k@unsia.ac.id" class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 font-medium cursor-not-allowed" readonly>
+                                        <p class="text-[10px] text-brand-600 mt-1.5 font-bold"><i class="ph-fill ph-shield-check"></i> Tersinkronisasi dengan Keycloak</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Email Pribadi</label>
+                                        <input type="email" value="anita.kumala@gmail.com" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">No. Telepon / WhatsApp</label>
+                                        <input type="tel" value="081234567890" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors">
+                                    </div>
+                                    
+                                    <div class="md:col-span-2 xl:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Alamat Lengkap Sesuai KTP</label>
+                                            <textarea rows="3" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors resize-none leading-relaxed">Jl. Margonda Raya No. 100, Kel. Pondok Cina, Kec. Beji, Kota Depok, Jawa Barat 16424</textarea>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Alamat Domisili Sekarang</label>
+                                            <textarea rows="3" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors resize-none leading-relaxed" placeholder="Kosongkan jika sama dengan KTP"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- Geolocation / Remote Work block filling full width elegantly -->
+                                    <div class="md:col-span-2 xl:col-span-3 bg-blue-50/50 p-5 rounded-2xl border border-blue-100 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between w-full">
+                                        <div class="flex gap-4 items-start">
+                                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shrink-0 mt-0.5"><i class="ph-fill ph-crosshair text-xl"></i></div>
+                                            <div>
+                                                <p class="text-sm font-bold text-blue-900 mb-1">Titik Koordinat Remote Working (WFH)</p>
+                                                <p class="text-xs text-blue-600/80 leading-relaxed max-w-xl">Konfigurasi lokasi default bagi pegawai yang diizinkan absen dari luar kampus. Pastikan format koordinat Google Maps (Latitude, Longitude).</p>
+                                            </div>
+                                        </div>
+                                        <div class="w-full sm:w-auto shrink-0">
+                                            <input type="text" placeholder="-6.3731, 106.8346" class="w-full sm:w-64 px-4 py-3 bg-white border border-blue-200 rounded-xl text-sm font-mono text-blue-900 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: KARIR & AKADEMIK -->
+                        <div id="tab-karir" class="tab-content w-full">
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 w-full border-t-4 border-t-brand-500">
+                                <div class="bg-slate-50 border-b border-slate-100 px-6 py-5 flex justify-between items-center">
+                                    <div>
+                                        <h4 class="font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-briefcase text-brand-600 text-lg"></i> Profil Profesi & Jabatan</h4>
+                                        <p class="text-[11px] text-slate-500 mt-0.5">Penempatan unit dan sinkronisasi status kepegawaian institusi.</p>
+                                    </div>
+                                    <span class="bg-emerald-100 text-emerald-700 text-xs px-3 py-1.5 rounded-lg font-bold border border-emerald-200"><i class="ph-bold ph-check"></i> SISTER Ready</span>
+                                </div>
+                                <div class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 w-full">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Status Ikatan Kerja</label>
+                                        <select class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                            <option selected>Dosen Tetap (Penuh Waktu)</option>
+                                            <option>Dosen Tidak Tetap / LB</option>
+                                            <option>Dosen Tamu / Pakar</option>
+                                            <option>Tenaga Kependidikan</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Penempatan Fakultas / Unit</label>
+                                        <select class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                            <option selected>Fakultas ICT (Sistem Informasi)</option>
+                                            <option>Fakultas Manajemen</option>
+                                            <option>Fakultas Komunikasi</option>
+                                            <option>Biro Rektorat</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">NIDN / NIDK / NUP / NIP</label>
+                                        <input type="text" id="form-id" value="0312058801" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-brand-700 font-bold font-mono focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Rumpun Ilmu (Sesuai SK)</label>
+                                        <input type="text" value="Ilmu Komputer (Informatika)" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Jabatan Fungsional Akademik</label>
+                                        <select class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors">
+                                            <option>Tenaga Pengajar</option><option>Asisten Ahli</option><option>Lektor</option><option selected>Lektor Kepala</option><option>Guru Besar</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Kepangkatan & Golongan Ruang</label>
+                                        <select class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors">
+                                            <option>III/a - Penata Muda</option><option>III/b - Penata Muda Tk.I</option><option>III/c - Penata</option><option>III/d - Penata Tk.I</option><option selected>IV/a - Pembina</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Full width Serdos toggle -->
+                                    <div class="md:col-span-2 xl:col-span-3 bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2">
+                                        <div class="flex gap-4">
+                                            <div class="w-10 h-10 bg-white text-emerald-600 rounded-xl flex items-center justify-center border border-slate-200 shadow-sm shrink-0"><i class="ph-fill ph-certificate text-xl"></i></div>
+                                            <div>
+                                                <p class="text-sm font-bold text-slate-800 mb-0.5">Sertifikasi Dosen (Serdos) DIKTI</p>
+                                                <p class="text-xs text-slate-500 leading-relaxed">Berpengaruh pada kalkulasi tunjangan fungsional di modul Penggajian (Payroll).</p>
+                                            </div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                            <input type="checkbox" class="sr-only peer" checked>
+                                            <div class="w-12 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                            <span class="ml-3 text-sm font-bold text-slate-700 peer-checked:text-emerald-600">Terverifikasi Lulus</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: LEGAL & FINANSIAL -->
+                        <div id="tab-legal" class="tab-content w-full">
+                            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full">
+                                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-full">
+                                    <div class="bg-slate-50 border-b border-slate-100 px-6 py-4">
+                                        <h4 class="font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-scales text-brand-600 text-lg"></i> Legalitas & Pajak (PPh 21)</h4>
+                                    </div>
+                                    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        <div class="sm:col-span-2">
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Nomor NPWP</label>
+                                            <input type="text" value="78.123.456.7-890.123" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Status PTKP (Kalkulasi PPh 21)</label>
+                                            <select class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                                <option>TK/0 (Tidak Kawin, 0 Tanggungan)</option>
+                                                <option selected>K/2 (Kawin, 2 Tanggungan)</option>
+                                                <option>K/3 (Kawin, 3 Tanggungan)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">No. BPJS Kesehatan</label>
+                                            <input type="text" value="0001234567890" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">No. BPJS Ketenagakerjaan</label>
+                                            <input type="text" value="98765432109" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden border-t-4 border-t-brand-600 h-full">
+                                    <div class="bg-brand-50/50 border-b border-brand-100 px-6 py-4">
+                                        <h4 class="font-bold text-brand-800 flex items-center gap-2"><i class="ph-fill ph-bank text-brand-600 text-lg"></i> Rekening Pencairan Payroll</h4>
+                                    </div>
+                                    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        <div class="sm:col-span-2">
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Bank Tujuan</label>
+                                            <select class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                                <option selected>Bank Mandiri (Persero)</option>
+                                                <option>BCA</option><option>BNI</option><option>BRI</option>
+                                            </select>
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Nomor Rekening</label>
+                                            <div class="relative">
+                                                <input type="text" value="157000123456" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-lg text-slate-800 font-mono font-bold tracking-widest shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 pl-12">
+                                                <i class="ph-fill ph-credit-card absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl"></i>
+                                            </div>
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Nama Pemilik (Sesuai Buku Tabungan)</label>
+                                            <input type="text" value="ANITA KUMALA" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 font-bold uppercase shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                            <p class="text-[10px] text-brand-600 mt-2 font-semibold bg-brand-50 p-2 rounded-lg border border-brand-100"><i class="ph-fill ph-info"></i> Data ini akan didorong ke Modul Keuangan setiap tanggal cut-off penggajian.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: KELUARGA & DARURAT -->
+                        <div id="tab-keluarga" class="tab-content w-full">
+                            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full">
+                                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                    <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                                        <h4 class="font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-users-three text-brand-600 text-lg"></i> Susunan Keluarga</h4>
+                                    </div>
+                                    <div class="p-6 grid grid-cols-1 gap-6">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Nama Pasangan (Suami/Istri)</label>
+                                            <input type="text" value="Budi Setiawan, S.T." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center justify-between">
+                                                <span>Jumlah Anak yang Ditanggung</span>
+                                                <span class="text-[9px] bg-brand-100 text-brand-700 px-2 py-0.5 rounded">Tunjangan Max: 3</span>
+                                            </label>
+                                            <input type="number" value="2" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-rose-50 rounded-2xl border border-rose-200 shadow-sm overflow-hidden h-full">
+                                    <div class="bg-rose-100/50 border-b border-rose-200 px-6 py-4">
+                                        <h4 class="font-bold text-rose-800 flex items-center gap-2"><i class="ph-fill ph-phone-call text-rose-600 text-lg"></i> Kontak Darurat (Emergency)</h4>
+                                    </div>
+                                    <div class="p-6 grid grid-cols-1 gap-6">
+                                        <div>
+                                            <label class="block text-xs font-bold text-rose-700/70 uppercase tracking-wide mb-2">Nama Kontak Darurat</label>
+                                            <input type="text" value="Budi Setiawan" class="w-full px-4 py-3 bg-white border border-rose-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-sm">
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-xs font-bold text-rose-700/70 uppercase tracking-wide mb-2">Hubungan</label>
+                                                <input type="text" value="Suami" class="w-full px-4 py-3 bg-white border border-rose-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-rose-700/70 uppercase tracking-wide mb-2">Nomor Telepon</label>
+                                                <input type="tel" value="081999888777" class="w-full px-4 py-3 bg-white border border-rose-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-sm font-mono">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 5: PENDIDIKAN & PORTOFOLIO -->
+                        <div id="tab-pendidikan" class="tab-content w-full">
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 w-full">
+                                <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                                    <h4 class="font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-graduation-cap text-brand-600 text-lg"></i> Riwayat Pendidikan Formal (Dikti)</h4>
+                                    <button class="text-xs font-bold text-brand-600 hover:text-brand-800 bg-brand-50 px-3 py-1.5 rounded-lg border border-brand-100 flex items-center gap-1.5 transition-colors"><i class="ph-bold ph-plus"></i> Tambah Riwayat</button>
+                                </div>
+                                <div class="p-0 divide-y divide-slate-100">
+                                    <!-- S3 -->
+                                    <div class="p-6 grid grid-cols-1 md:grid-cols-4 gap-4 md:items-center hover:bg-slate-50 transition-colors">
+                                        <div class="md:col-span-1">
+                                            <span class="inline-block bg-slate-800 text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">S3 (Doktoral)</span>
+                                            <p class="text-xs font-bold text-slate-500 mt-2"><i class="ph-bold ph-calendar-blank"></i> 2018 - 2022</p>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <h5 class="text-base font-bold text-slate-800">Ilmu Komputer (Informatika)</h5>
+                                            <p class="text-sm text-slate-600 mt-0.5">Universitas Indonesia</p>
+                                        </div>
+                                        <div class="md:col-span-1 md:text-right mt-2 md:mt-0">
+                                            <button class="text-xs font-bold text-brand-600 hover:underline flex items-center md:justify-end gap-1.5 w-full"><i class="ph-fill ph-file-pdf text-lg text-rose-500"></i> Ijazah (SIVIL)</button>
+                                        </div>
+                                    </div>
+                                    <!-- S2 -->
+                                    <div class="p-6 grid grid-cols-1 md:grid-cols-4 gap-4 md:items-center hover:bg-slate-50 transition-colors">
+                                        <div class="md:col-span-1">
+                                            <span class="inline-block bg-slate-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">S2 (Magister)</span>
+                                            <p class="text-xs font-bold text-slate-500 mt-2"><i class="ph-bold ph-calendar-blank"></i> 2012 - 2014</p>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <h5 class="text-base font-bold text-slate-800">Teknik Informatika</h5>
+                                            <p class="text-sm text-slate-600 mt-0.5">Institut Teknologi Bandung</p>
+                                        </div>
+                                        <div class="md:col-span-1 md:text-right mt-2 md:mt-0">
+                                            <button class="text-xs font-bold text-brand-600 hover:underline flex items-center md:justify-end gap-1.5 w-full"><i class="ph-fill ph-file-pdf text-lg text-rose-500"></i> Ijazah (PDF)</button>
+                                        </div>
+                                    </div>
+                                    <!-- S1 -->
+                                    <div class="p-6 grid grid-cols-1 md:grid-cols-4 gap-4 md:items-center hover:bg-slate-50 transition-colors">
+                                        <div class="md:col-span-1">
+                                            <span class="inline-block bg-slate-400 text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">S1 (Sarjana)</span>
+                                            <p class="text-xs font-bold text-slate-500 mt-2"><i class="ph-bold ph-calendar-blank"></i> 2006 - 2010</p>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <h5 class="text-base font-bold text-slate-800">Sistem Informasi</h5>
+                                            <p class="text-sm text-slate-600 mt-0.5">Universitas Gunadarma</p>
+                                        </div>
+                                        <div class="md:col-span-1 md:text-right mt-2 md:mt-0">
+                                            <button class="text-xs font-bold text-brand-600 hover:underline flex items-center md:justify-end gap-1.5 w-full"><i class="ph-fill ph-file-pdf text-lg text-rose-500"></i> Ijazah (PDF)</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- BIMA Link Banner (Full width utilization) -->
+                            <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full relative overflow-hidden">
+                                <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-brand-600/30 to-transparent"></div>
+                                <div class="relative z-10">
+                                    <h4 class="font-extrabold text-xl flex items-center gap-3"><i class="ph-fill ph-books text-accent text-3xl"></i> Portofolio Riset & BIMA Ristekdikti</h4>
+                                    <p class="text-sm text-slate-300 mt-2 max-w-2xl leading-relaxed">Seluruh data publikasi, paten, dan pengabdian masyarakat ditarik otomatis dari SISTER dan BIMA. Tidak perlu entry ulang secara manual di HRIS.</p>
+                                </div>
+                                <button onclick="simulateLoading(this, 'Membuka BIMA...', () => showToast('Akses BIMA', 'Portal eksternal BIMA berhasil dibuka di tab baru.'))" class="relative z-10 shrink-0 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 px-6 py-3.5 rounded-xl text-sm font-bold transition-all shadow-lg flex items-center gap-2 group">
+                                    Lihat Data Sinkron <i class="ph-bold ph-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Global Toast Notification (Premium SaaS Style) -->
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-[150%] opacity-0 transition-all duration-500 z-50">
+        <div class="bg-slate-900 text-white px-5 py-4 rounded-2xl shadow-2xl shadow-brand-900/30 flex items-start gap-4 border border-slate-700 min-w-[300px]">
+            <i id="toast-icon" class="ph-fill ph-check-circle text-emerald-400 text-2xl shrink-0 mt-0.5"></i>
+            <div>
+                <h4 class="font-bold text-sm tracking-wide" id="toast-title">Sukses</h4>
+                <p class="text-xs text-slate-300 mt-1 leading-relaxed" id="toast-desc">Tindakan berhasil dilakukan.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. UI Navigation Logistics ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Master Tab Switcher (Dashboard vs Pegawai vs Detail)
+        function switchMainTab(tabId) {
+            // Hide all panels
+            document.querySelectorAll('.main-panel').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            });
+
+            // Reset Sidebar Buttons
+            document.querySelectorAll('.nav-btn').forEach(n => {
+                n.className = "nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-all text-sm text-left border-l-4 border-transparent group shrink-0";
+                const icon = n.querySelector('i');
+                if(icon) icon.classList.replace('text-accent', 'group-hover:text-accent');
+            });
+
+            // Show Target
+            const targetPanel = document.getElementById(`panel-${tabId}`);
+            if(targetPanel) {
+                targetPanel.classList.remove('hidden');
+                targetPanel.classList.add('block');
+            }
+
+            // Highlight Target Nav (if exists)
+            const targetNav = document.getElementById(`nav-${tabId}`);
+            if(targetNav) {
+                targetNav.className = "nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/15 text-white font-bold border-l-4 border-accent transition-all text-sm text-left group relative overflow-hidden shadow-md shrink-0";
+                const icon = targetNav.querySelector('i');
+                if(icon) icon.classList.replace('group-hover:text-accent', 'text-accent');
+            }
+
+            // Scroll to top & hide mobile sidebar
+            document.getElementById('main-scroll-area').scrollTop = 0;
+            if(window.innerWidth < 1024 && !document.getElementById('sidebar').classList.contains('-translate-x-full')) {
+                toggleSidebar();
+            }
+        }
+
+        // Inner Form Tab Switcher (The Deep Biodata)
+        function switchDeepTab(tabId) {
+            // Hide all inner tabs
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Reset tab buttons styling
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn w-auto lg:w-full text-left px-4 py-3.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors flex items-center gap-3 border border-transparent shrink-0";
+            });
+
+            // Activate content
+            const targetContent = document.getElementById(tabId);
+            if(targetContent) targetContent.classList.add('active');
+
+            // Activate button
+            const targetBtn = document.getElementById(`nav-${tabId}`);
+            if(targetBtn) {
+                targetBtn.className = "tab-btn w-auto lg:w-full text-left px-4 py-3.5 rounded-xl text-sm font-bold bg-brand-50 text-brand-700 transition-colors flex items-center gap-3 shadow-sm border border-brand-100 shrink-0";
+            }
+        }
+
+        // --- 2. Action Simulations ---
+        
+        function openPegawaiDetail(isNew = false) {
+            switchMainTab('detail');
+            switchDeepTab('tab-pribadi');
+            
+            if(isNew) {
+                // Clear Form (Simulation)
+                document.getElementById('detail-title-name').innerHTML = "Tambah Pegawai Baru";
+                document.getElementById('detail-name').innerText = "Pegawai Baru";
+                document.getElementById('detail-id').innerText = "Belum Ter-Generate";
+                document.getElementById('form-nama').value = "";
+                document.getElementById('form-id').value = "";
+                document.getElementById('detail-img').src = "data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22150%22%20height%3D%22150%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%22150%22%20height%3D%22150%22%20fill%3D%22%23e2e8f0%22%2F%3E%3Ccircle%20cx%3D%2275%22%20cy%3D%2260%22%20r%3D%2225%22%20fill%3D%22%2394a3b8%22%2F%3E%3Cpath%20d%3D%22M25%20130c0-25%2025-40%2050-40s50%2015%2050%2040v20H25v-20z%22%20fill%3D%22%2394a3b8%22%2F%3E%3C%2Fsvg%3E";
+            } else {
+                // Fill Form (Simulation based on Anita Kumala)
+                document.getElementById('detail-title-name').innerHTML = "Profil & Biodata Mendalam";
+                document.getElementById('detail-name').innerText = "Dr. Anita Kumala";
+                document.getElementById('detail-id').innerText = "0312058801";
+                document.getElementById('form-nama').value = "Dr. Anita Kumala, M.Kom.";
+                document.getElementById('form-id').value = "0312058801";
+                document.getElementById('detail-img').src = "https://i.pravatar.cc/150?img=33";
+            }
+        }
+
+        function tambahPegawai() {
+            openPegawaiDetail(true);
+        }
+
+        function saveData(btn) {
+            simulateLoading(btn, "Menyimpan...", () => {
+                showToast("Biodata Tersimpan", "Perubahan data induk pegawai berhasil direkam ke database utama.");
+                // Update header dynamically if it was a new employee
+                const currentName = document.getElementById('form-nama').value || "Pegawai Tanpa Nama";
+                document.getElementById('detail-title-name').innerHTML = "Profil & Biodata Mendalam";
+                document.getElementById('detail-name').innerText = currentName;
+            });
+        }
+
+        function simulateSyncSister(btn = null) {
+            if(btn) {
+                simulateLoading(btn, "Menyinkronkan...", () => {
+                    showToast("SISTER Tersinkronisasi", "Seluruh data beban kerja dan portofolio dosen berhasil diperbarui dengan server DIKTI.");
+                });
+            } else {
+                // From sidebar
+                showToast("SISTER Background Sync", "Proses sinkronisasi massal sedang berjalan di latar belakang (Message Queue).");
+            }
+        }
+
+        // Generic Async Button Simulator
+        function simulateLoading(btn, loadingText, callback) {
+            if(btn.disabled) return;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> ${loadingText}`;
+            btn.disabled = true;
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
+
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                btn.classList.remove('opacity-80', 'cursor-not-allowed');
+                if(callback) callback();
+            }, 1200);
+        }
+
+        // Global Premium Toast
+        function showToast(title, desc, iconType = "success") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-desc').innerText = desc;
+            
+            if(iconType === "success") {
+                icon.className = "ph-fill ph-check-circle text-emerald-400 text-2xl shrink-0 mt-0.5";
+            } else if(iconType === "warning") {
+                icon.className = "ph-fill ph-warning-circle text-amber-400 text-2xl shrink-0 mt-0.5";
+            }
+            
+            toast.classList.remove('translate-y-[150%]', 'opacity-0');
+            
+            // Clear existing timeout if multiple clicks happen
+            if(window.toastTimer) clearTimeout(window.toastTimer);
+            
+            window.toastTimer = setTimeout(() => {
+                toast.classList.add('translate-y-[150%]', 'opacity-0');
+            }, 4000);
+        }
+
+        // Initialize state on load
+        switchMainTab('dashboard');
+    </script>
+</body>
+</html>

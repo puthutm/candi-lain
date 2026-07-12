@@ -1,0 +1,300 @@
+erDiagram
+
+    ORGANIZATION_UNITS ||--o{ POSITIONS : "menaungi"
+    ORGANIZATION_UNITS ||--o{ EMPLOYEES : "menaungi"
+    POSITIONS ||--o{ EMPLOYEES : "dijabat_oleh"
+
+    EMPLOYEES ||--o| EMPLOYEE_ONBOARDING : "melalui"
+    EMPLOYEES ||--o{ EMPLOYMENT_STATUS_HISTORY : "punya_riwayat"
+
+    EMPLOYEES ||--o{ ATTENDANCES : "tercatat"
+    LEAVE_TYPES ||--o{ LEAVE_REQUESTS : "berjenis"
+    EMPLOYEES ||--o{ LEAVE_REQUESTS : "mengajukan"
+    EMPLOYEES ||--o{ LEAVE_BALANCES : "punya_saldo"
+    LEAVE_TYPES ||--o{ LEAVE_BALANCES : "untuk_jenis"
+
+    EMPLOYEES ||--o{ MUTATION_LETTERS : "subjek_dari"
+    POSITIONS ||--o{ MUTATION_LETTERS : "posisi_tujuan"
+    EMPLOYEES ||--o{ CREDIT_POINT_RECORDS : "mengumpulkan"
+
+    PAYROLL_RUNS ||--o{ PAYROLL_RUN_STEPS : "terdiri_dari"
+    PAYROLL_RUNS ||--o{ EMPLOYEE_PAYROLL_ITEMS : "menghasilkan"
+    EMPLOYEES ||--o{ EMPLOYEE_PAYROLL_ITEMS : "menerima"
+    PAYROLL_COMPONENTS ||--o{ EMPLOYEE_PAYROLL_ITEMS : "berdasarkan"
+    EMPLOYEE_PAYROLL_ITEMS ||--o| PAYSLIPS : "diterbitkan_sebagai"
+
+    TAX_BRACKETS ||--o{ TAX_CALCULATIONS : "diterapkan_pada"
+    EMPLOYEES ||--o{ TAX_CALCULATIONS : "dihitung_untuk"
+    PAYROLL_RUNS ||--o{ TAX_CALCULATIONS : "bagian_dari"
+    EMPLOYEES ||--o{ BPJS_CONTRIBUTIONS : "dipotong"
+    PAYROLL_RUNS ||--o{ BPJS_CONTRIBUTIONS : "bagian_dari"
+    TAX_CALCULATIONS ||--o{ TAX_FILINGS : "disetor_via"
+
+    EMPLOYEES ||--o{ LECTURER_WORKLOADS : "beban_kerja"
+    EMPLOYEES ||--o{ PERFORMANCE_EVALUATIONS : "dinilai"
+
+    TRAINING_PROGRAMS ||--o{ TRAINING_ENROLLMENTS : "diikuti_via"
+    EMPLOYEES ||--o{ TRAINING_ENROLLMENTS : "mendaftar"
+    EMPLOYEES ||--o{ CERTIFICATIONS : "memiliki"
+    TRAINING_PROGRAMS ||--o{ CERTIFICATIONS : "menerbitkan"
+
+    ORGANIZATION_UNITS {
+        uuid id PK
+        string code UK
+        string name
+        string type "fakultas|prodi|biro|unit"
+        uuid parent_id FK "self reference, nullable"
+    }
+
+    POSITIONS {
+        uuid id PK
+        string name
+        string abbreviation
+        int functional_allowance
+        string rank_group "golongan/pangkat"
+        boolean is_active
+    }
+
+    EMPLOYEES {
+        uuid id PK
+        string employee_number UK "NIP/NIDN"
+        string full_name
+        string employee_type "dosen|tendik"
+        uuid organization_unit_id FK
+        uuid position_id FK
+        string rank_group
+        int base_salary
+        string status "aktif|non_aktif|pensiun|cuti_panjang"
+        string bank_account_number
+        string bank_name
+        string sso_user_id "ref SSO users.id, bukan FK (microservices)"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    EMPLOYEE_ONBOARDING {
+        uuid id PK
+        uuid employee_id FK
+        int completeness_percent
+        string status "draf|proses|selesai"
+        text checklist_json
+        timestamp started_at
+        timestamp completed_at
+    }
+
+    EMPLOYMENT_STATUS_HISTORY {
+        uuid id PK
+        uuid employee_id FK
+        string from_status
+        string to_status
+        text note
+        uuid changed_by "ref SSO users.id"
+        timestamp changed_at
+    }
+
+    ATTENDANCES {
+        uuid id PK
+        uuid employee_id FK
+        date attendance_date
+        string status "hadir|terlambat|wfh|cuti|alpha"
+        time check_in
+        time check_out
+        decimal work_hours
+    }
+
+    LEAVE_TYPES {
+        uuid id PK
+        string code UK "tahunan|sakit|izin|dinas_luar|lembur|cuti_besar"
+        string name
+        int default_quota_days
+    }
+
+    LEAVE_REQUESTS {
+        uuid id PK
+        uuid employee_id FK
+        uuid leave_type_id FK
+        date start_date
+        date end_date
+        text reason
+        string status "menunggu|disetujui|ditolak"
+        uuid approved_by "ref SSO users.id"
+        timestamp approved_at
+        timestamp requested_at
+    }
+
+    LEAVE_BALANCES {
+        uuid id PK
+        uuid employee_id FK
+        uuid leave_type_id FK
+        int year
+        int quota_days
+        int used_days
+    }
+
+    MUTATION_LETTERS {
+        uuid id PK
+        string letter_number UK "SK/MUT/2026/0014"
+        uuid employee_id FK
+        string type "mutasi_unit|promosi_fungsional|promosi_struktural"
+        uuid from_organization_unit_id
+        uuid to_organization_unit_id
+        uuid target_position_id FK
+        int required_credit_point
+        int actual_credit_point
+        date effective_date "TMT"
+        string status "pending_approval|disetujui|ditolak"
+        uuid approved_by "ref SSO users.id"
+        timestamp created_at
+    }
+
+    CREDIT_POINT_RECORDS {
+        uuid id PK
+        uuid employee_id FK
+        string source "pendidikan|penelitian|pengabdian|penunjang"
+        decimal points
+        string description
+        date recorded_date
+    }
+
+    PAYROLL_RUNS {
+        uuid id PK
+        string period "2026-05"
+        date cutoff_date
+        date disburse_target_date
+        string status "berjalan|selesai"
+        int eligible_employee_count
+        bigint total_gross
+        bigint total_net
+        timestamp created_at
+    }
+
+    PAYROLL_RUN_STEPS {
+        uuid id PK
+        uuid payroll_run_id FK
+        string step_name "persiapan_data|validasi_absensi_bkd|kalkulasi|persetujuan|disburse_slip"
+        string status "pending|berjalan|selesai"
+        text anomaly_note
+        uuid processed_by "ref SSO users.id"
+        timestamp completed_at
+    }
+
+    PAYROLL_COMPONENTS {
+        uuid id PK
+        string name
+        string category "pendapatan|potongan|tunjangan|sertifikasi|skema_khusus"
+        string calculation_type "tetap|variabel"
+        text calculation_rule
+        boolean is_taxable
+        boolean is_active
+    }
+
+    EMPLOYEE_PAYROLL_ITEMS {
+        uuid id PK
+        uuid payroll_run_id FK
+        uuid employee_id FK
+        uuid payroll_component_id FK
+        bigint amount
+        string review_status "ok|butuh_review"
+    }
+
+    PAYSLIPS {
+        uuid id PK
+        uuid payroll_run_id FK
+        uuid employee_id FK
+        string payslip_number UK "SLIP/2026/05/0142"
+        bigint gross_amount
+        bigint deduction_amount
+        bigint net_amount
+        string payment_status "pending|dibayar"
+        timestamp sent_at
+    }
+
+    TAX_BRACKETS {
+        uuid id PK
+        decimal rate_percent
+        bigint lower_bound
+        bigint upper_bound
+        date effective_from
+        date effective_to
+    }
+
+    TAX_CALCULATIONS {
+        uuid id PK
+        uuid payroll_run_id FK
+        uuid employee_id FK
+        uuid tax_bracket_id FK
+        bigint taxable_income
+        bigint tax_amount
+        string ebupot_status "belum|siap|terkirim"
+    }
+
+    BPJS_CONTRIBUTIONS {
+        uuid id PK
+        uuid payroll_run_id FK
+        uuid employee_id FK
+        string bpjs_type "kesehatan|jht|jp|jkk|jkm"
+        bigint amount
+    }
+
+    TAX_FILINGS {
+        uuid id PK
+        string period "2026-04"
+        bigint total_amount
+        string status "belum_disetor|disetor"
+        date filed_date
+    }
+
+    LECTURER_WORKLOADS {
+        uuid id PK
+        uuid employee_id FK
+        string period
+        decimal pendidikan_pengajaran_sks "P&P"
+        decimal penelitian_sks "PNL"
+        decimal pengabdian_sks "PkM"
+        decimal penunjang_sks "PNJ"
+        decimal total_sks
+        string serdos_status "aktif|tidak_aktif|proses"
+        string approval_status "menunggu|disetujui"
+        uuid siakad_class_ref "ref SIAKAD, bukan FK"
+    }
+
+    PERFORMANCE_EVALUATIONS {
+        uuid id PK
+        uuid employee_id FK
+        string evaluation_type "skp_tendik|penilaian_dosen|survei_360"
+        string period
+        decimal sasaran_score "60%"
+        decimal perilaku_score "40%"
+        decimal final_score
+        string predicate "sangat_baik|baik|cukup|kurang"
+        uuid evaluated_by "ref SSO users.id"
+        timestamp evaluated_at
+    }
+
+    TRAINING_PROGRAMS {
+        uuid id PK
+        string name
+        string type "internal|sertifikasi"
+        date start_date
+        date end_date
+        int quota
+        string status "berjalan|pendaftaran|selesai"
+    }
+
+    TRAINING_ENROLLMENTS {
+        uuid id PK
+        uuid training_program_id FK
+        uuid employee_id FK
+        string status "terdaftar|selesai|batal"
+        timestamp enrolled_at
+    }
+
+    CERTIFICATIONS {
+        uuid id PK
+        uuid employee_id FK
+        uuid training_program_id FK
+        string certificate_name
+        date issued_date
+        date expiry_date
+        string status "aktif|kadaluarsa"
+    }

@@ -1,0 +1,123 @@
+flowchart TD
+
+    Start([Mulai]) --> A1
+
+    subgraph L1["👤 Calon Mahasiswa"]
+        A1[Buka Portal PMB Publik]
+        A2[Pilih Gelombang]
+        A3[Pilih Jalur Masuk]
+        A4[Pilih Program Studi]
+        A5[Isi Data Diri]
+        A6[Submit Pendaftaran]
+        B1[Login ke Dashboard Pendaftar]
+        B2[Pilih Metode Pembayaran]
+        B3[Lakukan Pembayaran]
+        C1[Lengkapi Biodata]
+        C2[Unggah Berkas Persyaratan]
+        D1{Diminta Revisi?}
+        D2[Unggah Ulang Berkas]
+        E1[Baca Briefing Modul Ujian]
+        E2[Kerjakan Ujian per Modul dgn Timer]
+        E3[Submit Modul Ujian]
+        F1[Lihat Hasil Akhir di Dashboard]
+    end
+
+    subgraph L2["⚙️ Sistem SI-PMB"]
+        S1[Validasi Input Real-time]
+        S2[Generate No. Pendaftaran & Buat Akun]
+        S3[Kirim Welcome Email - Trigger Otomasi]
+        S4[Terbitkan Tagihan Formulir]
+        S5[Terima Webhook Payment Gateway]
+        S6[Update Status: Pembayaran Lunas]
+        S7[Set Status: Unggah Berkas -> Antrean Verifikasi]
+        S8{Berkas Lengkap & Terverifikasi Semua + Lunas?}
+        S9[Buka Akses Ujian CBT Otomatis - Status: Siap Ujian]
+        S10[Auto-save Jawaban Berkala]
+        S11{Waktu Modul Habis?}
+        S12[Auto-submit Modul]
+        S13[Set Status: Selesai Ujian]
+        S14{Reminder: 3 Hari Tanpa Bayar?}
+        S15[Kirim Reminder Email/WA]
+        S16[Set Status: Diterima + Kirim Acceptance Letter]
+        S17[Set Status: Tidak Lulus + Kirim Notifikasi]
+    end
+
+    subgraph L3["🧑‍💼 Panitia Verifikator Berkas"]
+        V1[Buka Antrean Verifikasi Berkas]
+        V2[Review Dokumen di Panel Preview]
+        V3{Dokumen Valid?}
+        V4[Approve Dokumen]
+        V5[Minta Revisi + Catat Alasan]
+    end
+
+    subgraph L4["🧑‍💼 Panitia Akademik / Super Admin"]
+        G1[Nilai / Evaluasi Hasil Ujian]
+        G2{Lulus Seleksi?}
+    end
+
+    subgraph L5["💳 Payment Gateway (Eksternal)"]
+        P1[Proses Pembayaran]
+        P2[Kirim Webhook Status Bayar]
+    end
+
+    %% ---- Alur Pendaftaran ----
+    A1 --> A2 --> A3 --> A4 --> A5 --> A6
+    A6 --> S1
+    S1 -- valid --> S2
+    S1 -- tidak valid --> A5
+    S2 --> S3
+    S2 --> S4
+    S3 -.notifikasi.-> B1
+    S4 --> B1
+    B1 --> B2 --> B3
+    B3 --> P1
+    P1 --> P2
+    P2 --> S5
+    S5 --> S6
+    S6 --> S14
+    S14 -- ya, belum bayar --> S15 -.reminder.-> B2
+    S14 -- lunas --> C1
+
+    %% ---- Alur Biodata & Berkas ----
+    S6 --> C1
+    C1 --> C2
+    C2 --> S7
+    S7 --> V1
+    V1 --> V2
+    V2 --> V3
+    V3 -- valid --> V4
+    V3 -- tidak valid --> V5
+    V5 -.notifikasi revisi.-> D1
+    D1 -- ya --> D2
+    D2 --> V1
+    V4 --> S8
+    D1 -- tidak, menunggu --> D1
+    S8 -- belum lengkap --> C2
+    S8 -- lengkap & lunas --> S9
+    S9 -.akses terbuka.-> E1
+
+    %% ---- Alur Ujian CBT ----
+    E1 --> E2
+    E2 --> S10
+    S10 --> S11
+    S11 -- ya --> S12
+    S11 -- belum & user submit manual --> E3
+    S12 --> S13
+    E3 --> S13
+
+    %% ---- Alur Kelulusan ----
+    S13 --> G1
+    G1 --> G2
+    G2 -- lulus --> S16
+    G2 -- tidak lulus --> S17
+    S16 -.notifikasi.-> F1
+    S17 -.notifikasi.-> F1
+
+    F1 --> End([Selesai])
+
+    classDef decision fill:#FFF3CD,stroke:#B8860B,color:#000
+    classDef system fill:#DCEAF7,stroke:#2C6FAA,color:#000
+    classDef external fill:#E8E8E8,stroke:#666,color:#000
+    class D1,S8,S11,S14,V3,G2 decision
+    class S1,S2,S3,S4,S5,S6,S7,S9,S10,S12,S13,S15,S16,S17 system
+    class P1,P2 external

@@ -1,0 +1,271 @@
+erDiagram
+
+    %% ================= KELAS =================
+    LMS_CLASSES ||--o{ CLASS_ENROLLMENTS : "punya_peserta"
+    LMS_CLASSES ||--o{ SESSIONS : "punya_sesi"
+    LMS_CLASSES ||--o{ GROUPS : "punya_kelompok"
+    LMS_CLASSES ||--o{ DISCUSSION_POSTS : "punya_linimasa"
+    LMS_CLASSES ||--o{ GRADES : "menghasilkan_nilai"
+
+    LMS_CLASSES {
+        uuid id PK
+        enum class_type "akademik|personal"
+        uuid siakad_class_id "ref logis ke SIAKAD classes.id, NULLABLE utk personal, BUKAN FK (beda DB)"
+        string course_code
+        string course_name
+        int sks
+        string academic_period_label
+        string schedule_text
+        enum learning_mode "sync|async|hybrid"
+        uuid dosen_user_id "ref ke SSO_USERS, bukan FK"
+        text rps_description
+        json cpmk_list
+        json pustaka_acuan
+        timestamp last_synced_at "null jika personal"
+        enum personal_access_type "undang|kode_akses|publik - hanya utk personal"
+        string personal_access_code
+    }
+
+    CLASS_ENROLLMENTS {
+        uuid id PK
+        uuid class_id FK
+        uuid user_id "ref SSO_USERS, bukan FK"
+        enum role "mahasiswa|observer|asisten"
+        uuid krs_item_ref "ref logis ke SIAKAD krs_items.id, null jika manual invite"
+        timestamp enrolled_at
+    }
+
+    %% ================= SESI & KONTEN =================
+    SESSIONS ||--o{ MATERIALS : "punya_materi"
+    SESSIONS ||--o{ ASSIGNMENTS : "punya_tugas"
+    SESSIONS ||--o{ QUIZZES : "punya_kuis"
+    SESSIONS ||--o{ INTERACTIVE_VIDEOS : "punya_video_interaktif"
+    SESSIONS ||--o{ VIDEO_CONFERENCES : "punya_live_conference"
+    SESSIONS ||--o{ DISCUSSION_POSTS : "memicu_post"
+
+    SESSIONS {
+        uuid id PK
+        uuid class_id FK
+        int session_number
+        string topic
+        text description
+        date session_date
+        time start_time
+        time end_time
+        enum method "daring_sinkronus|daring_asinkronus|hybrid"
+        enum status "belum_dimulai|berlangsung|selesai"
+    }
+
+    MATERIALS {
+        uuid id PK
+        uuid session_id FK
+        enum material_type "dokumen|video|tautan"
+        string title
+        string file_url
+        int duration_seconds "utk video"
+        enum publish_mode "sekarang|terjadwal"
+        timestamp scheduled_at
+        enum verification_status "menunggu_prodi|menunggu_bpm|terbit|revisi"
+        uuid verified_by_prodi_user_id
+        timestamp verified_by_prodi_at
+        uuid verified_by_bpm_user_id
+        timestamp verified_by_bpm_at
+        string revision_note
+        int view_count
+    }
+
+    ASSIGNMENTS {
+        uuid id PK
+        uuid session_id FK
+        string title
+        text instructions
+        string attachment_url
+        timestamp deadline
+        decimal weight_percent
+    }
+
+    ASSIGNMENT_SUBMISSIONS {
+        uuid id PK
+        uuid assignment_id FK
+        uuid student_user_id "ref SSO_USERS"
+        text answer_text
+        string attachment_url
+        enum status "belum_dikerjakan|draft|terkirim|dinilai"
+        timestamp submitted_at
+        decimal score
+        text feedback
+        uuid graded_by_user_id
+        timestamp graded_at
+    }
+
+    ASSIGNMENTS ||--o{ ASSIGNMENT_SUBMISSIONS : "menerima"
+
+    SUBMISSION_ANNOTATIONS {
+        uuid id PK
+        uuid submission_id FK
+        int page_number
+        json position "koordinat anotasi pada berkas"
+        text note
+        uuid created_by_user_id
+    }
+
+    ASSIGNMENT_SUBMISSIONS ||--o{ SUBMISSION_ANNOTATIONS : "punya_anotasi"
+
+    QUIZZES {
+        uuid id PK
+        uuid session_id FK
+        string title
+        int question_count
+        int duration_minutes
+        decimal weight_percent
+        timestamp open_at
+        timestamp close_at
+    }
+
+    QUIZ_QUESTIONS {
+        uuid id PK
+        uuid quiz_id FK
+        text question_text
+        enum question_type "pilihan_ganda|esai"
+        json options
+        string correct_answer
+    }
+
+    QUIZ_ATTEMPTS {
+        uuid id PK
+        uuid quiz_id FK
+        uuid student_user_id
+        enum status "belum_mulai|sedang_mengerjakan|selesai"
+        timestamp started_at
+        timestamp submitted_at
+        decimal score
+    }
+
+    QUIZZES ||--o{ QUIZ_QUESTIONS : "berisi"
+    QUIZZES ||--o{ QUIZ_ATTEMPTS : "dikerjakan_dalam"
+
+    INTERACTIVE_VIDEOS {
+        uuid id PK
+        uuid session_id FK
+        string title
+        enum source_type "upload_mp4|youtube_url"
+        string video_url
+        int duration_seconds
+    }
+
+    VIDEO_MARKERS {
+        uuid id PK
+        uuid interactive_video_id FK
+        int timestamp_seconds
+        text question_text
+        enum question_type "pilihan_ganda|esai"
+        json options
+    }
+
+    VIDEO_MARKER_ANSWERS {
+        uuid id PK
+        uuid marker_id FK
+        uuid student_user_id
+        text answer_text
+        timestamp answered_at
+    }
+
+    INTERACTIVE_VIDEOS ||--o{ VIDEO_MARKERS : "punya_penanda"
+    VIDEO_MARKERS ||--o{ VIDEO_MARKER_ANSWERS : "dijawab_pada"
+
+    VIDEO_CONFERENCES {
+        uuid id PK
+        uuid session_id FK
+        string title
+        enum provider "jitsi_internal|zoom|google_meet|custom_link"
+        string meeting_link
+        timestamp scheduled_at
+        int duration_minutes
+        boolean auto_attendance_enabled
+        enum status "terjadwal|berlangsung|selesai"
+        string recording_url
+    }
+
+    VC_ATTENDANCES {
+        uuid id PK
+        uuid video_conference_id FK
+        uuid user_id "ref SSO_USERS"
+        timestamp joined_at
+        timestamp left_at
+        boolean counted_as_present
+    }
+
+    VIDEO_CONFERENCES ||--o{ VC_ATTENDANCES : "mencatat_presensi"
+
+    %% ================= KOLABORASI =================
+    DISCUSSION_POSTS ||--o{ DISCUSSION_COMMENTS : "menerima"
+
+    DISCUSSION_POSTS {
+        uuid id PK
+        uuid class_id FK
+        uuid session_id "nullable, jika post terkait sesi tertentu"
+        uuid author_user_id
+        enum post_type "materi|tugas|live_conf|video_interaktif|kuis|survei|info|diskusi_bebas"
+        text content
+        int like_count
+        timestamp created_at
+    }
+
+    DISCUSSION_COMMENTS {
+        uuid id PK
+        uuid post_id FK
+        uuid author_user_id
+        text content
+        json mentions "daftar user_id yang di-mention"
+        timestamp created_at
+    }
+
+    GROUPS {
+        uuid id PK
+        uuid class_id FK
+        string activity_name
+        enum formation_mode "otomatis_acak|otomatis_ipk|otomatis_angkatan|manual"
+        int group_count
+        int members_per_group
+    }
+
+    GROUP_MEMBERS {
+        uuid id PK
+        uuid group_id FK
+        uuid student_user_id
+    }
+
+    GROUPS ||--o{ GROUP_MEMBERS : "beranggotakan"
+
+    %% ================= PENILAIAN =================
+    GRADES {
+        uuid id PK
+        uuid class_id FK
+        uuid student_user_id
+        decimal attendance_score
+        decimal assignment_score
+        decimal uts_score
+        decimal uas_score
+        decimal final_score
+        string letter_grade
+        boolean published_to_siakad
+        timestamp published_at
+    }
+
+    %% ================= GOVERNANCE =================
+    SYNC_LOGS {
+        uuid id PK
+        string entity_synced "periode|dosen|mk|jadwal|peserta"
+        int row_count
+        enum status "sukses|gagal|sebagian"
+        timestamp synced_at
+    }
+
+    NOTIFICATION_LOGS {
+        uuid id PK
+        uuid user_id
+        enum channel "lms|email|whatsapp"
+        string event_type
+        enum status "terkirim|gagal"
+        timestamp sent_at
+    }

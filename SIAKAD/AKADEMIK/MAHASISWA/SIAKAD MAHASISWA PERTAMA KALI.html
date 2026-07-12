@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIAKAD Reguler - UNSIA</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts: Inter & Urbanist -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Urbanist:wght@700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Urbanist', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            500: '#00719f', // Warna Gradasi Primer
+                            600: '#0f487b', // Warna Primer Utama UNSIA
+                            accent: '#FED524', // Warna Kuning Aksen UNSIA
+                            dark: '#1e293b'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(16, 42, 67, 0.05)',
+                        'card': '0 10px 40px -10px rgba(0,0,0,0.08)',
+                        'inner-soft': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.03)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f4f7f9; -webkit-font-smoothing: antialiased; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        
+        /* Menghilangkan scrollbar secara visual namun tetap bisa discroll */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; opacity: 0; }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
+        .pop-in { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; transform: scale(0.9); }
+        
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { to { opacity: 1; transform: scale(1); } }
+
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+
+        /* Custom Checkbox */
+        .krs-checkbox:checked + div {
+            border-color: #0f487b;
+            background-color: #f0f4f8;
+        }
+        .krs-checkbox:checked + div .check-icon { opacity: 1; transform: scale(1); }
+        .check-icon { opacity: 0; transform: scale(0.5); transition: all 0.2s; }
+    </style>
+</head>
+<body class="text-slate-800 flex h-screen overflow-hidden selection:bg-brand-accent/30 selection:text-brand-600">
+
+    <!-- OVERLAY LOADING INTUITIF -->
+    <div id="interactive-loading" class="fixed inset-0 z-[100] bg-brand-600/95 backdrop-blur-md hidden flex-col items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-2xl w-[90%] max-w-md transform scale-95 opacity-0 transition-all duration-500 text-center" id="loading-box">
+            <div class="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+                <i id="loading-main-icon" class="ph-fill ph-arrows-clockwise text-4xl animate-spin"></i>
+            </div>
+            <h3 id="loading-title" class="font-display text-2xl font-bold text-slate-800 mb-1">Memproses...</h3>
+            <p id="loading-desc" class="text-sm text-slate-500 mb-8">Sistem sedang melakukan sinkronisasi data akademik.</p>
+            
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                <div id="loading-progress" class="h-full bg-brand-600 w-0 transition-all duration-500 ease-out rounded-full relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar - TEMA WARNA PRIMER GRADASI -->
+    <!-- Transisi margin dan transform halus untuk efek slide-out -->
+    <aside id="sidebar" class="w-72 bg-gradient-to-b from-brand-600 to-brand-500 flex-col flex z-40 shadow-xl shrink-0 h-full fixed lg:relative inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 transition-all duration-300 ease-in-out">
+        <div class="h-16 flex items-center px-6 border-b border-white/10 shrink-0">
+            <img src="https://unsia.ac.id/wp-content/uploads/2022/11/LOGO-UNSIA-1.png" alt="Logo UNSIA" class="h-8 object-contain brightness-0 invert">
+        </div>
+
+        <div class="px-6 py-5 border-b border-white/10 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="relative shrink-0">
+                    <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=FED524&color=0f487b&rounded=true&bold=true" alt="User" class="w-11 h-11 rounded-full border-2 border-white/20 shadow-md">
+                    <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-brand-600 rounded-full"></div>
+                </div>
+                <div class="overflow-hidden">
+                    <h3 class="font-bold text-white truncate text-sm">Budi Santoso</h3>
+                    <p class="text-[10px] text-brand-accent font-bold mt-0.5 tracking-wider uppercase font-mono">26090182</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto no-scrollbar py-4 px-3 space-y-1" id="sidebar-nav">
+            <p class="px-3 text-[9px] font-bold text-white/50 uppercase tracking-widest mb-2">Akademik & Perkuliahan</p>
+            
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-white/15 text-white font-bold transition-all text-left shadow-md border border-white/20">
+                <i class="ph-fill ph-squares-four text-lg text-brand-accent"></i>
+                <span class="text-sm">Beranda</span>
+            </button>
+            
+            <button onclick="switchTab('kurikulum')" id="nav-kurikulum" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-list-dashes text-lg"></i>
+                <span class="text-sm">Data Kurikulum</span>
+            </button>
+
+            <button onclick="switchTab('krs')" id="nav-krs" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-books text-lg"></i>
+                <span class="text-sm">Isi KRS</span>
+                <span class="ml-auto px-2 py-0.5 bg-brand-accent text-brand-600 text-[9px] font-bold rounded uppercase">Aktif</span>
+            </button>
+
+            <button onclick="switchTab('jadwal')" id="nav-jadwal" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-calendar-check text-lg"></i>
+                <span class="text-sm">Jadwal & Kehadiran</span>
+            </button>
+
+            <button onclick="switchTab('khs')" id="nav-khs" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-file-text text-lg"></i>
+                <span class="text-sm">KHS & Transkrip</span>
+            </button>
+
+            <p class="px-3 text-[9px] font-bold text-white/50 uppercase tracking-widest mb-2 mt-5 pt-3 border-t border-white/10">Prestasi & Layanan</p>
+
+            <button onclick="switchTab('prestasi')" id="nav-prestasi" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-trophy text-lg"></i>
+                <span class="text-sm">Aktivitas & Prestasi</span>
+            </button>
+
+            <button onclick="switchTab('layanan')" id="nav-layanan" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-envelope-simple text-lg"></i>
+                <span class="text-sm">Layanan Persuratan</span>
+            </button>
+
+            <button onclick="alert('Anda akan diarahkan ke portal LMS UNSIA secara SSO.')" class="btn-no-tab w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-brand-accent hover:bg-white/10 font-bold transition-colors text-left group mt-3 border border-brand-accent/30 bg-white/5 shadow-sm">
+                <i class="ph-fill ph-monitor-play text-lg"></i>
+                <span class="text-sm">Masuk LMS Class</span>
+                <i class="ph-bold ph-arrow-up-right ml-auto text-xs opacity-70 group-hover:opacity-100"></i>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-white/10 shrink-0">
+            <button class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-500/10 text-rose-300 font-bold rounded-lg hover:bg-rose-500 hover:text-white transition-colors text-sm border border-rose-500/20">
+                <i class="ph-bold ph-sign-out text-lg"></i> Keluar Akun
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-[#f4f7f9] relative w-full h-full">
+        
+        <!-- Header Atas -->
+        <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 lg:px-10 z-10 sticky top-0 shrink-0 w-full transition-all">
+            <div class="flex items-center gap-4 lg:gap-6">
+                <!-- Hamburger Button (Animasi Soft & Presisi) -->
+                <button onclick="toggleSidebar()" class="text-slate-500 hover:text-brand-600 transition-colors p-2 -ml-2 rounded-lg focus:outline-none">
+                    <i class="ph-bold ph-list text-2xl"></i>
+                </button>
+                <img src="https://unsia.ac.id/wp-content/uploads/2022/11/LOGO-UNSIA-1.png" alt="Logo UNSIA" class="h-7 object-contain lg:hidden">
+                
+                <!-- Title Header Digeser ke Kiri -->
+                <div class="hidden lg:flex flex-col border-l border-slate-200 pl-4">
+                    <h2 id="header-title" class="text-sm font-bold text-slate-800 tracking-tight">Sistem Informasi Akademik Terpadu</h2>
+                    <p class="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-0.5">Semester Ganjil 2026/2027</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 sm:gap-6">
+                <button class="relative text-slate-400 hover:text-brand-600 transition-colors">
+                    <i class="ph-fill ph-bell-ringing text-2xl"></i>
+                    <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full"></span>
+                </button>
+                <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+                <div class="flex items-center gap-3 cursor-pointer group">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-xs font-bold text-slate-800 group-hover:text-brand-600 transition-colors">Budi Santoso</p>
+                        <p class="text-[10px] text-slate-500">S1 Informatika</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=f0f4f8&color=0f487b&rounded=true&bold=true" class="w-9 h-9 rounded-full border border-slate-200 group-hover:border-brand-300 transition-colors">
+                </div>
+            </div>
+        </header>
+
+        <!-- Area Konten Scrollable -->
+        <div class="flex-1 overflow-y-auto custom-scroll p-4 sm:p-6 lg:p-10 pb-24 w-full" id="main-scroll-area">
+            
+            <!-- ============================================== -->
+            <!-- PANEL 1: DASHBOARD (REGULER MAHASISWA)         -->
+            <!-- ============================================== -->
+            <div id="panel-dashboard" class="block fade-in max-w-7xl mx-auto space-y-6">
+                
+                <!-- Profil & Metrik Utama -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Kartu Profil -->
+                    <div class="lg:col-span-2 bg-gradient-to-r from-brand-600 to-brand-500 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-card text-white flex flex-col justify-center slide-up">
+                        <div class="absolute top-0 right-0 w-full h-full pointer-events-none opacity-10">
+                            <div class="absolute -top-24 -right-10 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+                        </div>
+                        <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                            <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=FED524&color=0f487b&rounded=true&bold=true" class="w-24 h-24 rounded-full border-4 border-white/20 shadow-lg shrink-0">
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold uppercase rounded-md tracking-wider"><i class="ph-fill ph-check-circle"></i> Status: Aktif</span>
+                                    <span class="px-2.5 py-1 bg-white/10 text-white/80 border border-white/20 text-[9px] font-bold uppercase rounded-md tracking-wider">Semester 3</span>
+                                </div>
+                                <h1 class="font-display text-2xl sm:text-3xl font-bold mb-1">Budi Santoso</h1>
+                                <p class="text-brand-100 text-sm font-medium mb-3">Program Studi S1 Informatika (PJJ)</p>
+                                <div class="flex items-center gap-2 text-xs text-white/80 bg-black/20 w-max px-3 py-1.5 rounded-lg border border-white/10">
+                                    <i class="ph-fill ph-chalkboard-teacher text-brand-accent"></i> Dosen PA: Dr. Hendra Setiawan, M.Kom.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metrik Akademik (IPK/IPS) -->
+                    <div class="grid grid-cols-2 gap-4 slide-up delay-100">
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">IPK Kumulatif</p>
+                            <h3 class="font-display font-black text-4xl text-brand-600 mb-1">3.85</h3>
+                            <p class="text-[10px] font-medium text-emerald-500 flex items-center gap-1"><i class="ph-bold ph-trend-up"></i> Naik 0.15</p>
+                        </div>
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">IPS Terakhir</p>
+                            <h3 class="font-display font-black text-4xl text-brand-600 mb-1">3.90</h3>
+                            <p class="text-[10px] font-medium text-slate-500">Semester Genap</p>
+                        </div>
+                        <div class="col-span-2 bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total SKS Lulus</p>
+                                <div class="flex items-end gap-2">
+                                    <h3 class="font-display font-black text-3xl text-slate-800 leading-none">45</h3>
+                                    <span class="text-xs font-bold text-slate-400 mb-1">/ 144 SKS</span>
+                                </div>
+                            </div>
+                            <div class="w-12 h-12 rounded-full border-4 border-brand-100 flex items-center justify-center relative">
+                                <svg class="absolute inset-0 w-full h-full transform -rotate-90">
+                                    <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="4" fill="transparent" class="text-slate-100" />
+                                    <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="4" fill="transparent" stroke-dasharray="113" stroke-dashoffset="78" class="text-brand-500" />
+                                </svg>
+                                <span class="text-xs font-bold text-brand-600 relative z-10">31%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Jadwal Kuliah Hari Ini & Pengumuman -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 slide-up delay-200">
+                    
+                    <!-- Jadwal Timeline -->
+                    <div class="lg:col-span-2 bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-soft">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <i class="ph-fill ph-calendar-check text-brand-500"></i> Jadwal Kuliah Hari Ini
+                            </h3>
+                            <span class="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-lg">Rabu, 16 Sep</span>
+                        </div>
+
+                        <div class="space-y-4">
+                            <!-- Kelas 1 -->
+                            <div class="flex gap-4 group">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-3 h-3 rounded-full bg-brand-500 ring-4 ring-brand-50 mt-1.5"></div>
+                                    <div class="w-0.5 h-full bg-slate-100 mt-2"></div>
+                                </div>
+                                <div class="flex-1 bg-slate-50 border border-slate-200 p-4 rounded-2xl group-hover:border-brand-300 transition-colors">
+                                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
+                                        <p class="text-xs font-bold text-brand-600 uppercase tracking-wider">08:00 - 10:30 WIB</p>
+                                        <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded border border-emerald-200">Sedang Berlangsung</span>
+                                    </div>
+                                    <h4 class="font-bold text-slate-800 mb-1">Struktur Data & Algoritma (Kelas A)</h4>
+                                    <p class="text-xs text-slate-500 mb-4"><i class="ph-fill ph-user"></i> Dosen: Dr. Budi Setiawan</p>
+                                    
+                                    <div class="flex gap-2">
+                                        <button class="px-4 py-2 bg-[#0f487b] text-white text-xs font-bold rounded-lg hover:bg-slate-800 flex items-center gap-2 shadow-md">
+                                            <i class="ph-bold ph-video-camera"></i> Buka Link Zoom/LMS
+                                        </button>
+                                        <!-- Menghilangkan tombol absensi manual sesuai arahan -->
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Kelas 2 -->
+                            <div class="flex gap-4 group">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-3 h-3 rounded-full bg-slate-300 ring-4 ring-slate-50 mt-1.5"></div>
+                                </div>
+                                <div class="flex-1 bg-white border border-slate-200 p-4 rounded-2xl opacity-60 group-hover:opacity-100 transition-opacity">
+                                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
+                                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">13:00 - 14:40 WIB</p>
+                                        <span class="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded border border-slate-200">Akan Datang</span>
+                                    </div>
+                                    <h4 class="font-bold text-slate-800 mb-1">Kecerdasan Buatan (Kelas B PJJ)</h4>
+                                    <p class="text-xs text-slate-500"><i class="ph-fill ph-user"></i> Dosen: Prof. Rina Kumala</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pengumuman & Akses Cepat -->
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-soft">
+                            <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                <i class="ph-fill ph-megaphone text-rose-500"></i> Pengumuman Akademik
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl">
+                                    <span class="text-[9px] font-bold text-rose-500 uppercase tracking-widest">Penting • Hari ini</span>
+                                    <h4 class="text-xs font-bold text-slate-800 mt-1">Batas Akhir Pengisian KRS</h4>
+                                    <p class="text-[10px] text-slate-600 mt-1">Harap segera ajukan KRS Anda sebelum tanggal 20 Sep 2026 pukul 23:59 WIB.</p>
+                                </div>
+                                <div class="p-3 hover:bg-slate-50 border border-transparent border-b-slate-100 rounded-xl transition-colors cursor-pointer">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Akademik • Kemarin</span>
+                                    <h4 class="text-xs font-bold text-slate-800 mt-1">Jadwal Ujian Tengah Semester (UTS)</h4>
+                                </div>
+                                <button class="text-xs font-bold text-brand-600 w-full text-center hover:underline pt-2">Lihat Semua Pengumuman</button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="switchTab('kurikulum')" class="p-4 bg-white border border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-brand-400 hover:shadow-md transition-all group">
+                                <div class="w-10 h-10 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                                    <i class="ph-fill ph-list-dashes text-xl"></i>
+                                </div>
+                                <span class="text-xs font-bold text-slate-700">Kurikulum</span>
+                            </button>
+                            <button onclick="switchTab('layanan')" class="p-4 bg-white border border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-brand-400 hover:shadow-md transition-all group">
+                                <div class="w-10 h-10 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                                    <i class="ph-fill ph-envelope-simple text-xl"></i>
+                                </div>
+                                <span class="text-xs font-bold text-slate-700">Persuratan</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PANEL BARU: KURIKULUM                          -->
+            <!-- ============================================== -->
+            <div id="panel-kurikulum" class="hidden max-w-7xl mx-auto fade-in">
+                <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-slate-800">Kurikulum Program Studi</h2>
+                        <p class="text-sm text-slate-500">Daftar distribusi mata kuliah S1 Informatika (144 SKS).</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-soft overflow-hidden p-6 sm:p-8">
+                    <div class="space-y-6">
+                        
+                        <!-- Semester 1 Group -->
+                        <div>
+                            <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-4">
+                                <h3 class="font-bold text-brand-600 text-lg">Semester 1</h3>
+                                <span class="text-xs font-bold text-slate-500">Total: 22 SKS</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm whitespace-nowrap">
+                                    <thead class="bg-slate-50 text-slate-500">
+                                        <tr>
+                                            <th class="p-3 rounded-l-lg">Kode MK</th>
+                                            <th class="p-3">Nama Mata Kuliah</th>
+                                            <th class="p-3 text-center">SKS</th>
+                                            <th class="p-3 text-center rounded-r-lg">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <tr>
+                                            <td class="p-3 font-mono text-slate-500">INF101</td>
+                                            <td class="p-3 font-bold text-slate-800">Pemrograman Dasar</td>
+                                            <td class="p-3 text-center">4</td>
+                                            <td class="p-3 text-center"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase">Sudah Diambil</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-3 font-mono text-slate-500">INF102</td>
+                                            <td class="p-3 font-bold text-slate-800">Kalkulus I</td>
+                                            <td class="p-3 text-center">3</td>
+                                            <td class="p-3 text-center"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase">Sudah Diambil</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Semester 3 Group (Sedang Berjalan) -->
+                        <div>
+                            <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-4">
+                                <h3 class="font-bold text-brand-600 text-lg">Semester 3 (Saat Ini)</h3>
+                                <span class="text-xs font-bold text-slate-500">Total: 14 SKS</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm whitespace-nowrap">
+                                    <thead class="bg-slate-50 text-slate-500">
+                                        <tr>
+                                            <th class="p-3 rounded-l-lg">Kode MK</th>
+                                            <th class="p-3">Nama Mata Kuliah</th>
+                                            <th class="p-3 text-center">SKS</th>
+                                            <th class="p-3 text-center rounded-r-lg">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <tr>
+                                            <td class="p-3 font-mono text-slate-500">INF301</td>
+                                            <td class="p-3 font-bold text-slate-800">Struktur Data & Algoritma</td>
+                                            <td class="p-3 text-center">3</td>
+                                            <td class="p-3 text-center"><span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded uppercase">Sedang Diambil</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-3 font-mono text-slate-500">INF302</td>
+                                            <td class="p-3 font-bold text-slate-800">Kecerdasan Buatan</td>
+                                            <td class="p-3 text-center">3</td>
+                                            <td class="p-3 text-center"><span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded uppercase">Sedang Diambil</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-3 font-mono text-slate-500">INF303</td>
+                                            <td class="p-3 font-bold text-slate-800">Sistem Basis Data Terdistribusi</td>
+                                            <td class="p-3 text-center">4</td>
+                                            <td class="p-3 text-center"><span class="px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase">Belum Diambil</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PANEL 2: KRS (KARTU RENCANA STUDI)             -->
+            <!-- ============================================== -->
+            <div id="panel-krs" class="hidden max-w-7xl mx-auto fade-in">
+                <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-slate-800">Kartu Rencana Studi (KRS)</h2>
+                        <p class="text-sm text-slate-500">Pilih mata kuliah yang akan diambil pada Semester Ganjil 2026/2027.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="px-3 py-1.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-lg border border-amber-200 flex items-center gap-1.5">
+                            <i class="ph-fill ph-clock"></i> Masa Pengisian Aktif
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-soft overflow-hidden">
+                    <!-- Info Mhs di KRS -->
+                    <div class="bg-brand-50 p-6 sm:px-8 border-b border-brand-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-white rounded-full border-2 border-brand-200 flex items-center justify-center text-brand-600 shrink-0">
+                                <i class="ph-fill ph-student text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-base">Budi Santoso</h3>
+                                <p class="text-xs text-brand-600 font-bold tracking-widest font-mono mt-0.5">S1 Informatika • PA: Dr. Hendra S.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 w-full sm:w-auto">
+                            <div class="bg-white px-4 py-2 rounded-xl border border-brand-100 shadow-sm flex-1 text-center">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">IPS Terakhir</p>
+                                <p class="font-black text-slate-700 text-lg">3.90</p>
+                            </div>
+                            <div class="bg-white px-4 py-2 rounded-xl border border-brand-100 shadow-sm flex-1 text-center">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Max SKS</p>
+                                <p class="font-black text-brand-600 text-lg">24</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 sm:p-8">
+                        <div class="mb-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                            <h4 class="font-bold text-slate-800">Daftar Mata Kuliah Ditawarkan</h4>
+                            <div class="relative w-full sm:w-auto">
+                                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" placeholder="Cari mata kuliah..." class="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-500 w-full sm:w-64">
+                            </div>
+                        </div>
+
+                        <!-- Tabel Checklist KRS (Modern Design) -->
+                        <div class="space-y-3 mb-8">
+                            <!-- Course Item 1 -->
+                            <label class="cursor-pointer group flex items-center">
+                                <input type="checkbox" class="krs-checkbox hidden" value="3" onchange="calculateSKS()">
+                                <div class="flex-1 flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border-2 border-slate-200 bg-white group-hover:border-brand-300 transition-colors relative overflow-hidden">
+                                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                                        <div class="w-6 h-6 rounded border-2 border-slate-300 flex items-center justify-center shrink-0 transition-colors checkbox-visual">
+                                            <i class="ph-bold ph-check text-white text-xs check-icon"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] font-bold text-slate-400 font-mono mb-0.5">INF301 • Semester 3</p>
+                                            <h5 class="font-bold text-slate-800 text-sm">Struktur Data & Algoritma</h5>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 sm:mt-0 ml-10 sm:ml-0 flex items-center justify-between w-full sm:w-auto gap-4">
+                                        <span class="text-[10px] sm:text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded"><i class="ph-fill ph-users"></i> Kls A (PJJ)</span>
+                                        <span class="font-black text-brand-600 bg-brand-50 border border-brand-100 px-3 py-1 rounded-lg shrink-0">3 SKS</span>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <!-- Course Item 2 -->
+                            <label class="cursor-pointer group flex items-center">
+                                <input type="checkbox" class="krs-checkbox hidden" value="3" onchange="calculateSKS()">
+                                <div class="flex-1 flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border-2 border-slate-200 bg-white group-hover:border-brand-300 transition-colors relative overflow-hidden">
+                                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                                        <div class="w-6 h-6 rounded border-2 border-slate-300 flex items-center justify-center shrink-0 transition-colors checkbox-visual">
+                                            <i class="ph-bold ph-check text-white text-xs check-icon"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] font-bold text-slate-400 font-mono mb-0.5">INF302 • Semester 3</p>
+                                            <h5 class="font-bold text-slate-800 text-sm">Kecerdasan Buatan</h5>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 sm:mt-0 ml-10 sm:ml-0 flex items-center justify-between w-full sm:w-auto gap-4">
+                                        <span class="text-[10px] sm:text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded"><i class="ph-fill ph-users"></i> Kls B (PJJ)</span>
+                                        <span class="font-black text-brand-600 bg-brand-50 border border-brand-100 px-3 py-1 rounded-lg shrink-0">3 SKS</span>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <!-- Course Item 3 -->
+                            <label class="cursor-pointer group flex items-center">
+                                <input type="checkbox" class="krs-checkbox hidden" value="4" onchange="calculateSKS()">
+                                <div class="flex-1 flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border-2 border-slate-200 bg-white group-hover:border-brand-300 transition-colors relative overflow-hidden">
+                                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                                        <div class="w-6 h-6 rounded border-2 border-slate-300 flex items-center justify-center shrink-0 transition-colors checkbox-visual">
+                                            <i class="ph-bold ph-check text-white text-xs check-icon"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] font-bold text-slate-400 font-mono mb-0.5">INF303 • Semester 3</p>
+                                            <h5 class="font-bold text-slate-800 text-sm">Sistem Basis Data Terdistribusi</h5>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 sm:mt-0 ml-10 sm:ml-0 flex items-center justify-between w-full sm:w-auto gap-4">
+                                        <span class="text-[10px] sm:text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded"><i class="ph-fill ph-users"></i> Kls A (PJJ)</span>
+                                        <span class="font-black text-brand-600 bg-brand-50 border border-brand-100 px-3 py-1 rounded-lg shrink-0">4 SKS</span>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <!-- Course Item 4 -->
+                            <label class="cursor-pointer group flex items-center">
+                                <input type="checkbox" class="krs-checkbox hidden" value="2" onchange="calculateSKS()">
+                                <div class="flex-1 flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border-2 border-slate-200 bg-white group-hover:border-brand-300 transition-colors relative overflow-hidden">
+                                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                                        <div class="w-6 h-6 rounded border-2 border-slate-300 flex items-center justify-center shrink-0 transition-colors checkbox-visual">
+                                            <i class="ph-bold ph-check text-white text-xs check-icon"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] font-bold text-slate-400 font-mono mb-0.5">UNS301 • Semester 3</p>
+                                            <h5 class="font-bold text-slate-800 text-sm">Kewirausahaan Digital</h5>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 sm:mt-0 ml-10 sm:ml-0 flex items-center justify-between w-full sm:w-auto gap-4">
+                                        <span class="text-[10px] sm:text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded"><i class="ph-fill ph-users"></i> Kls Umum</span>
+                                        <span class="font-black text-brand-600 bg-brand-50 border border-brand-100 px-3 py-1 rounded-lg shrink-0">2 SKS</span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Summary Action Bar -->
+                        <div class="bg-gradient-to-r from-brand-600 to-brand-500 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl sticky bottom-4 z-20">
+                            <div class="flex items-center gap-4 text-white">
+                                <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center border border-white/20 shrink-0">
+                                    <i class="ph-bold ph-calculator text-2xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-slate-300 font-bold uppercase tracking-widest">Total Dipilih</p>
+                                    <h4 class="font-display text-2xl font-black"><span id="total-sks">0</span> <span class="text-base font-medium font-sans opacity-80">/ 24 SKS</span></h4>
+                                </div>
+                            </div>
+                            <button id="btn-submit-krs" onclick="actionSubmitKRS()" disabled class="w-full sm:w-auto px-8 py-3.5 bg-slate-600/50 text-white/50 cursor-not-allowed font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+                                Pilih SKS Dahulu <i class="ph-bold ph-paper-plane-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PANEL 4: KHS & TRANSKRIP                       -->
+            <!-- ============================================== -->
+            <div id="panel-khs" class="hidden max-w-7xl mx-auto fade-in">
+                <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-slate-800">Kartu Hasil Studi (KHS)</h2>
+                        <p class="text-sm text-slate-500">Riwayat nilai akademik Anda per semester.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="w-full sm:w-auto px-4 py-2 bg-white border border-slate-300 text-slate-700 text-sm font-bold rounded-lg hover:bg-slate-50 flex items-center justify-center gap-2 shadow-sm">
+                            <i class="ph-bold ph-printer"></i> Cetak KHS
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-soft overflow-hidden">
+                    <div class="p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <label class="text-sm font-bold text-slate-600 shrink-0">Pilih Semester:</label>
+                            <select class="flex-1 sm:flex-none px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-brand-600 focus:outline-none">
+                                <option>Semester 2 (Genap 25/26)</option>
+                                <option>Semester 1 (Ganjil 25/26)</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-4 w-full sm:w-auto justify-between sm:justify-start">
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">IPS</p>
+                                <p class="font-black text-brand-600 text-xl">3.90</p>
+                            </div>
+                            <div class="w-px bg-slate-300"></div>
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SKS</p>
+                                <p class="font-black text-slate-700 text-xl">22</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto w-full">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white border-b border-slate-200">
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Kode MK</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Mata Kuliah</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">SKS</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Nilai Huruf</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Bobot</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-6 py-4 font-mono text-sm text-slate-500">INF201</td>
+                                    <td class="px-6 py-4 font-bold text-slate-800 text-sm">Pemrograman Web Berbasis Komponen</td>
+                                    <td class="px-6 py-4 text-center font-bold text-slate-600">4</td>
+                                    <td class="px-6 py-4 text-center"><span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 font-black rounded">A</span></td>
+                                    <td class="px-6 py-4 text-center font-mono text-sm text-slate-600">16.00</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-6 py-4 font-mono text-sm text-slate-500">INF202</td>
+                                    <td class="px-6 py-4 font-bold text-slate-800 text-sm">Sistem Operasi</td>
+                                    <td class="px-6 py-4 text-center font-bold text-slate-600">3</td>
+                                    <td class="px-6 py-4 text-center"><span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 font-black rounded">A</span></td>
+                                    <td class="px-6 py-4 text-center font-mono text-sm text-slate-600">12.00</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-6 py-4 font-mono text-sm text-slate-500">INF203</td>
+                                    <td class="px-6 py-4 font-bold text-slate-800 text-sm">Basis Data Relasional</td>
+                                    <td class="px-6 py-4 text-center font-bold text-slate-600">3</td>
+                                    <td class="px-6 py-4 text-center"><span class="px-2.5 py-1 bg-blue-100 text-blue-700 font-black rounded">A-</span></td>
+                                    <td class="px-6 py-4 text-center font-mono text-sm text-slate-600">11.10</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-6 py-4 font-mono text-sm text-slate-500">UNS201</td>
+                                    <td class="px-6 py-4 font-bold text-slate-800 text-sm">Komunikasi Bisnis Digital</td>
+                                    <td class="px-6 py-4 text-center font-bold text-slate-600">2</td>
+                                    <td class="px-6 py-4 text-center"><span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 font-black rounded">A</span></td>
+                                    <td class="px-6 py-4 text-center font-mono text-sm text-slate-600">8.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PANEL 5: JADWAL & PRESENSI                     -->
+            <!-- ============================================== -->
+            <div id="panel-jadwal" class="hidden max-w-7xl mx-auto fade-in space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-slate-800">Jadwal & Kehadiran</h2>
+                        <p class="text-sm text-slate-500">Pantau kelas mingguan dan persentase absensi Anda. (Absensi otomatis ditarik dari LMS)</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Kalender List -->
+                    <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-soft overflow-hidden">
+                        <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                            <h3 class="font-bold text-slate-800">Jadwal Kuliah Mingguan</h3>
+                            <button class="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-600"><i class="ph-bold ph-caret-left"></i></button>
+                            <span class="text-sm font-bold text-brand-600">Minggu Ini</span>
+                            <button class="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-600"><i class="ph-bold ph-caret-right"></i></button>
+                        </div>
+                        
+                        <div class="p-0">
+                            <!-- Hari Rabu (Aktif) -->
+                            <div class="bg-brand-50/50 p-4 border-l-4 border-l-brand-500 border-b border-slate-100">
+                                <h4 class="text-xs font-bold text-brand-600 uppercase tracking-widest mb-3">Rabu, 16 Sep</h4>
+                                <div class="space-y-3">
+                                    <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                        <div class="flex items-center gap-4">
+                                            <div class="text-center shrink-0 border-r border-slate-200 pr-4">
+                                                <p class="text-sm font-black text-slate-700">08:00</p>
+                                                <p class="text-[10px] text-slate-400 font-bold">10:30</p>
+                                            </div>
+                                            <div>
+                                                <h5 class="font-bold text-slate-800">Struktur Data & Algoritma</h5>
+                                                <p class="text-xs text-slate-500 mt-0.5"><i class="ph-fill ph-monitor-play"></i> Zoom PJJ (Kelas A)</p>
+                                            </div>
+                                        </div>
+                                        <!-- Tombol absensi manual dihilangkan sesuai instruksi -->
+                                        <button class="w-full sm:w-auto px-4 py-2 bg-[#0f487b] text-white text-xs font-bold rounded-lg hover:bg-slate-800 flex items-center justify-center gap-2 shadow-md">
+                                            <i class="ph-bold ph-video-camera"></i> Gabung Zoom
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Hari Kamis -->
+                            <div class="p-4 border-l-4 border-l-transparent border-b border-slate-100">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Kamis, 17 Sep</h4>
+                                <div class="space-y-3">
+                                    <div class="bg-white border border-slate-200 p-4 rounded-xl flex flex-col sm:flex-row justify-between sm:items-center gap-4 opacity-70 hover:opacity-100 transition-opacity">
+                                        <div class="flex items-center gap-4">
+                                            <div class="text-center shrink-0 border-r border-slate-200 pr-4">
+                                                <p class="text-sm font-black text-slate-700">13:00</p>
+                                                <p class="text-[10px] text-slate-400 font-bold">14:40</p>
+                                            </div>
+                                            <div>
+                                                <h5 class="font-bold text-slate-800">Kecerdasan Buatan</h5>
+                                                <p class="text-xs text-slate-500 mt-0.5"><i class="ph-fill ph-monitor-play"></i> LMS Async (Kelas B)</p>
+                                            </div>
+                                        </div>
+                                        <span class="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase w-max text-center">Belum Mulai</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rekap Presensi -->
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-soft p-6">
+                        <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <i class="ph-fill ph-chart-pie-slice text-emerald-500"></i> Rekap Kehadiran
+                        </h3>
+                        <div class="space-y-5">
+                            <!-- Progress 1 -->
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1.5">
+                                    <span class="text-slate-700">Struktur Data & Algoritma</span>
+                                    <span class="text-emerald-600">85%</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-emerald-500 rounded-full" style="width: 85%"></div>
+                                </div>
+                                <p class="text-[9px] text-slate-400 mt-1">Hadir 6 dari 7 Pertemuan</p>
+                            </div>
+                            <!-- Progress 2 -->
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1.5">
+                                    <span class="text-slate-700">Kecerdasan Buatan</span>
+                                    <span class="text-brand-600">100%</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-brand-500 rounded-full" style="width: 100%"></div>
+                                </div>
+                                <p class="text-[9px] text-slate-400 mt-1">Hadir 7 dari 7 Pertemuan</p>
+                            </div>
+                            <!-- Progress 3 (Warning) -->
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1.5">
+                                    <span class="text-slate-700">Sistem Basis Data</span>
+                                    <span class="text-amber-600">60%</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-amber-500 rounded-full" style="width: 60%"></div>
+                                </div>
+                                <p class="text-[9px] text-rose-500 font-bold mt-1">Awas! Hampir di bawah batas minimal (75%)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PANEL BARU: PRESTASI & AKTIVITAS               -->
+            <!-- ============================================== -->
+            <div id="panel-prestasi" class="hidden max-w-7xl mx-auto fade-in space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-slate-800">Aktivitas & Prestasi Mahasiswa</h2>
+                        <p class="text-sm text-slate-500">Catat dan laporkan prestasi atau keaktifan organisasi Anda untuk SKPI.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Form Input Prestasi (Kiri) -->
+                    <div class="lg:col-span-1 bg-white rounded-3xl border border-slate-200 shadow-soft p-6 h-max">
+                        <h3 class="font-bold text-slate-800 mb-5 border-b border-slate-100 pb-3">Input Data Baru</h3>
+                        <form onsubmit="event.preventDefault(); showToast('Prestasi berhasil disubmit untuk diverifikasi!', 'ph-check-circle', 'text-emerald-400');" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Kategori / Jenis</label>
+                                <select required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                                    <option value="">Pilih Kategori</option>
+                                    <option>Prestasi Lomba / Kejuaraan</option>
+                                    <option>Organisasi Mahasiswa</option>
+                                    <option>Sertifikasi Keahlian</option>
+                                    <option>Publikasi Ilmiah</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Nama Kegiatan / Prestasi</label>
+                                <input type="text" required placeholder="Juara 1 Hackathon Nasional..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1.5">Tingkat</label>
+                                    <select required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                                        <option>Lokal</option>
+                                        <option>Nasional</option>
+                                        <option>Internasional</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1.5">Tahun</label>
+                                    <input type="number" required value="2026" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Bukti Dokumen/Sertifikat (PDF)</label>
+                                <input type="file" required accept=".pdf" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-600 hover:file:bg-brand-100">
+                            </div>
+                            <button type="submit" class="w-full py-2.5 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-500 transition-colors mt-2 text-sm">
+                                Ajukan Prestasi
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- List Prestasi (Kanan) -->
+                    <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-soft overflow-hidden">
+                        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <h3 class="font-bold text-slate-800">Riwayat Prestasi & Aktivitas</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <!-- Item 1 -->
+                                <div class="border border-slate-200 p-4 rounded-xl flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                                            <i class="ph-fill ph-certificate"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-slate-800 text-sm">Sertifikasi AWS Cloud Practitioner</h4>
+                                            <p class="text-xs text-slate-500 mt-0.5">Sertifikasi Keahlian • Tingkat Internasional • 2025</p>
+                                        </div>
+                                    </div>
+                                    <span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase w-max text-center">Tervalidasi</span>
+                                </div>
+                                <!-- Item 2 -->
+                                <div class="border border-slate-200 p-4 rounded-xl flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
+                                            <i class="ph-fill ph-trophy"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-slate-800 text-sm">Finalis Gemastik Nasional</h4>
+                                            <p class="text-xs text-slate-500 mt-0.5">Lomba Nasional • Tingkat Nasional • 2026</p>
+                                        </div>
+                                    </div>
+                                    <span class="px-2.5 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded uppercase w-max text-center">Menunggu Validasi</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PANEL 7: LAYANAN AKADEMIK & PERSURATAN         -->
+            <!-- ============================================== -->
+            <div id="panel-layanan" class="hidden max-w-7xl mx-auto fade-in">
+                <div class="mb-6">
+                    <h2 class="font-display text-2xl font-bold text-slate-800">Layanan Persuratan Akademik</h2>
+                    <p class="text-sm text-slate-500">Ajukan surat permohonan resmi kampus secara mandiri dan digital.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Item Layanan 1 -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col items-start hover:border-brand-400 transition-colors group">
+                        <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            <i class="ph-fill ph-file-text"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800 mb-1">Surat Aktif Kuliah</h3>
+                        <p class="text-xs text-slate-500 mb-6 flex-1">Pengajuan surat keterangan berstatus mahasiswa aktif untuk keperluan beasiswa/instansi.</p>
+                        <button onclick="simulasiAjukanSurat(this)" class="w-full py-2 bg-slate-50 border border-slate-200 text-brand-600 font-bold text-sm rounded-lg hover:bg-brand-50 hover:border-brand-200 transition-colors">Ajukan Surat</button>
+                    </div>
+
+                    <!-- Item Layanan 2 -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col items-start hover:border-brand-400 transition-colors group">
+                        <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-2xl mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                            <i class="ph-fill ph-certificate"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800 mb-1">Transkrip Nilai Resmi</h3>
+                        <p class="text-xs text-slate-500 mb-6 flex-1">Pengajuan pencetakan transkrip nilai akademik sementara berstempel/barcode digital.</p>
+                        <button onclick="simulasiAjukanSurat(this)" class="w-full py-2 bg-slate-50 border border-slate-200 text-brand-600 font-bold text-sm rounded-lg hover:bg-brand-50 hover:border-brand-200 transition-colors">Ajukan Surat</button>
+                    </div>
+
+                    <!-- Item Layanan 3 -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col items-start hover:border-amber-400 transition-colors group">
+                        <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mb-4 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                            <i class="ph-fill ph-pause-circle"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800 mb-1">Pengajuan Cuti Akademik</h3>
+                        <p class="text-xs text-slate-500 mb-6 flex-1">Formulir untuk mengajukan status cuti kuliah (BSS) untuk semester berikutnya.</p>
+                        <button class="w-full py-2 bg-slate-100 text-slate-400 font-bold text-sm rounded-lg cursor-not-allowed" title="Masa pengajuan cuti ditutup">Ditutup</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Notifikasi Toast -->
+    <div id="toast" class="fixed bottom-6 right-10 bg-slate-800 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-[150%] opacity-0 transition-all duration-300 z-50">
+        <i id="toast-icon" class="ph-fill ph-check-circle text-emerald-400 text-2xl"></i>
+        <div id="toast-text" class="text-sm font-medium">Berhasil!</div>
+    </div>
+
+    <script>
+        // Logika Hamburger Menu Toggle (Soft Animation Desktop & Mobile)
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            // Toggle untuk Mobile: Buka overlay dan slide sidebar
+            if(window.innerWidth < 1024) {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            } 
+            // Toggle untuk Desktop: Geser sidebar keluar layar (margin negatif)
+            else {
+                // 18rem = 72 tailwind spacing unit (lebar sidebar)
+                if(sidebar.style.marginLeft === '-18rem') {
+                    sidebar.style.marginLeft = '0px';
+                } else {
+                    sidebar.style.marginLeft = '-18rem';
+                }
+            }
+        }
+
+        // Routing Logic
+        function switchTab(tabId) {
+            const panels = ['panel-dashboard', 'panel-krs', 'panel-khs', 'panel-jadwal', 'panel-kurikulum', 'panel-prestasi', 'panel-layanan'];
+            panels.forEach(p => {
+                const el = document.getElementById(p);
+                if(el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('block', 'fade-in');
+                }
+            });
+            
+            const navs = document.querySelectorAll('#sidebar-nav button:not(.btn-no-tab)');
+            navs.forEach(n => {
+                if(!n.disabled && !n.classList.contains('opacity-50')) {
+                    n.className = "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent";
+                    const icon = n.querySelector('i:not(.ph-arrow-up-right)');
+                    if(icon) { 
+                        icon.classList.replace('ph-fill', 'ph-bold'); 
+                        icon.classList.remove('text-brand-accent');
+                    }
+                }
+            });
+
+            const targetPanel = document.getElementById(`panel-${tabId}`);
+            if(targetPanel) {
+                targetPanel.classList.remove('hidden');
+                targetPanel.classList.add('block', 'fade-in');
+            }
+
+            const targetNav = document.getElementById(`nav-${tabId}`);
+            if(targetNav) {
+                targetNav.className = "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-white/15 text-white font-bold transition-all text-left shadow-md border border-white/20";
+                const icon = targetNav.querySelector('i:not(.ph-arrow-up-right)');
+                if(icon) { 
+                    icon.classList.replace('ph-bold', 'ph-fill');
+                    icon.classList.add('text-brand-accent');
+                }
+            }
+
+            document.getElementById('main-scroll-area').scrollTop = 0;
+            
+            // Perbarui Judul Header
+            const titleMap = {
+                'dashboard': 'Beranda SIAKAD Reguler',
+                'kurikulum': 'Data Kurikulum Akademik',
+                'krs': 'Pengisian Kartu Rencana Studi (KRS)',
+                'khs': 'Riwayat Nilai & Transkrip',
+                'jadwal': 'Jadwal Kelas & Presensi',
+                'prestasi': 'Pusat Aktivitas & Prestasi',
+                'layanan': 'Pusat Persuratan Akademik'
+            };
+            document.getElementById('header-title').innerText = titleMap[tabId] || 'Sistem Informasi Akademik';
+
+            // Auto-close sidebar on mobile after clicking a link
+            if(window.innerWidth < 1024) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                if(!sidebar.classList.contains('-translate-x-full')) {
+                    sidebar.classList.add('-translate-x-full');
+                    overlay.classList.add('hidden');
+                }
+            }
+        }
+
+        function runLoadingOverlay(title, desc, duration, callback) {
+            const overlay = document.getElementById('interactive-loading');
+            const box = document.getElementById('loading-box');
+            
+            document.getElementById('loading-title').innerText = title;
+            document.getElementById('loading-desc').innerText = desc;
+            const progress = document.getElementById('loading-progress').firstElementChild; 
+            
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            
+            setTimeout(() => { 
+                overlay.classList.remove('opacity-0'); 
+                box.classList.remove('scale-95', 'opacity-0');
+                box.classList.add('scale-100', 'opacity-100');
+            }, 10);
+
+            progress.style.width = "0%";
+            setTimeout(() => { progress.style.width = "50%"; }, duration * 0.4);
+            setTimeout(() => { progress.style.width = "90%"; }, duration * 0.8);
+            
+            setTimeout(() => {
+                progress.style.width = "100%";
+                setTimeout(() => {
+                    overlay.classList.add('opacity-0');
+                    box.classList.remove('scale-100');
+                    box.classList.add('scale-95');
+                    setTimeout(() => {
+                        overlay.classList.remove('flex');
+                        overlay.classList.add('hidden');
+                        if(callback) callback();
+                    }, 300);
+                }, 400);
+            }, duration);
+        }
+
+        // FUNGSI SIMULASI SIAKAD REGULER
+        function calculateSKS() {
+            const checkboxes = document.querySelectorAll('.krs-checkbox');
+            let totalSks = 0;
+            let countSelected = 0;
+            
+            checkboxes.forEach(box => {
+                const parentDiv = box.nextElementSibling;
+                const checkIconDiv = parentDiv.querySelector('.checkbox-visual');
+                
+                if (box.checked) {
+                    totalSks += parseInt(box.value);
+                    countSelected++;
+                    checkIconDiv.classList.replace('border-slate-300', 'border-brand-600');
+                    checkIconDiv.classList.add('bg-brand-600');
+                } else {
+                    checkIconDiv.classList.replace('border-brand-600', 'border-slate-300');
+                    checkIconDiv.classList.remove('bg-brand-600');
+                }
+            });
+
+            document.getElementById('total-sks').innerText = totalSks;
+            
+            const btnSubmit = document.getElementById('btn-submit-krs');
+            if(totalSks > 0) {
+                btnSubmit.disabled = false;
+                btnSubmit.className = "w-full sm:w-auto px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2";
+                btnSubmit.innerHTML = `Ajukan ${totalSks} SKS ke Dosen PA <i class="ph-bold ph-paper-plane-right"></i>`;
+            } else {
+                btnSubmit.disabled = true;
+                btnSubmit.className = "w-full sm:w-auto px-8 py-3.5 bg-slate-600/50 text-white/50 cursor-not-allowed font-bold rounded-xl transition-all flex items-center justify-center gap-2";
+                btnSubmit.innerHTML = `Pilih SKS Dahulu <i class="ph-bold ph-paper-plane-right"></i>`;
+            }
+        }
+
+        function actionSubmitKRS() {
+            const totalSks = document.getElementById('total-sks').innerText;
+            runLoadingOverlay("Mengajukan KRS...", "Menyinkronkan data mata kuliah pilihan Anda dengan sistem Dosen PA.", 2000, () => {
+                const btn = document.getElementById('btn-submit-krs');
+                btn.className = "w-full sm:w-auto px-8 py-3.5 bg-brand-50 text-brand-600 font-bold rounded-xl cursor-not-allowed flex items-center justify-center gap-2";
+                btn.innerHTML = `<i class="ph-bold ph-clock"></i> ${totalSks} SKS Menunggu Approval`;
+                btn.disabled = true;
+
+                // Disable checkboxes
+                document.querySelectorAll('.krs-checkbox').forEach(b => b.disabled = true);
+
+                showToast("KRS berhasil diajukan! Menunggu persetujuan.", "ph-check-circle", "text-emerald-400");
+            });
+        }
+
+        function simulasiAjukanSurat(btn) {
+            runLoadingOverlay("Membuat Pengajuan...", "Meneruskan request persuratan Anda ke loket BAAK.", 2000, () => {
+                btn.className = "w-full py-2 bg-amber-50 border border-amber-200 text-amber-600 font-bold text-sm rounded-lg flex justify-center gap-1 cursor-not-allowed";
+                btn.innerHTML = `<i class="ph-fill ph-clock"></i> Sedang Diproses`;
+                btn.disabled = true;
+                showToast("Request persuratan berhasil diajukan.", "ph-envelope-simple-open", "text-brand-400");
+            });
+        }
+
+        // Utility: Toast Notification
+        function showToast(message, iconClass, iconColor) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = message;
+            document.getElementById('toast-icon').className = `ph-fill ${iconClass} ${iconColor} text-2xl`;
+            
+            toast.classList.remove('translate-y-[150%]', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-[150%]', 'opacity-0');
+            }, 3000);
+        }
+
+        // Init
+        switchTab('dashboard');
+    </script>
+</body>
+</html>

@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Ujian CBT - Universitas Siber Asia</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts: Inter & Urbanist -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Urbanist:wght@700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Urbanist', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f4f8', 100: '#d9e2ec', 500: '#243b53',
+                            600: '#102a43', // Navy UNSIA
+                            accent: '#ecc94b', // Gold UNSIA
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f4f7f9; }
+        
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .slide-up { animation: slideUp 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Styling Opsi Jawaban */
+        .option-label input:checked + div {
+            background-color: #f0f4f8; /* brand-50 */
+            border-color: #102a43; /* brand-600 */
+            box-shadow: 0 4px 6px -1px rgba(16, 42, 67, 0.1);
+        }
+        .option-label input:checked + div .option-letter {
+            background-color: #102a43;
+            color: #ffffff;
+            border-color: #102a43;
+        }
+
+        /* Styling Navigasi Kotak Soal Dinamis */
+        .q-box { transition: all 0.2s; }
+        .q-box.active { box-shadow: 0 0 0 3px rgba(16,42,67,0.3); border-color: #102a43; transform: scale(1.05); }
+        .q-box.answered { background-color: #102a43; color: white; border-color: #102a43; } /* Navy 600 - Terjawab tapi belum evaluasi */
+        .q-box.correct { background-color: #10b981; color: white; border-color: #10b981; } /* Emerald 500 - Bersih */
+        .q-box.incorrect { background-color: #f43f5e; color: white; border-color: #f43f5e; } /* Rose 500 - Bersih */
+        .q-box.ragu { background-color: #f59e0b; color: white; border-color: #f59e0b; } /* Amber 500 */
+        
+        /* Timer Bar untuk Tes Buta Warna */
+        @keyframes shrink { from { width: 100%; } to { width: 0%; } }
+        .timer-run { animation: shrink linear forwards; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased h-screen flex flex-col overflow-hidden selection:bg-brand-accent/30 selection:text-brand-600">
+
+    <!-- Modal Konfirmasi Selesai Ujian -->
+    <div id="modal-confirm" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 transform scale-95 opacity-0 transition-all duration-300" id="modal-confirm-box">
+            <div class="w-16 h-16 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-3xl mx-auto mb-4">
+                <i class="ph-fill ph-warning-circle"></i>
+            </div>
+            <h3 class="text-xl font-bold text-center text-slate-800 mb-2">Akhiri Modul Ujian?</h3>
+            <p id="confirm-desc" class="text-slate-500 text-center mb-6">Anda telah menjawab semua soal. Modul yang diakhiri secara permanen tidak dapat diakses kembali untuk diubah jawabannya.</p>
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()" class="flex-1 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors">Batal</button>
+                <button onclick="executeFinishModule()" class="flex-1 py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-500 transition-colors shadow-lg shadow-brand-600/30">Ya, Akhiri Ujian</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header CBT -->
+    <header class="h-16 md:h-20 bg-brand-600 text-white flex items-center justify-between px-4 sm:px-6 lg:px-8 z-20 shrink-0 shadow-md">
+        <div class="flex items-center gap-3 md:gap-4">
+            <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-brand-600 font-bold text-xl shadow-inner">
+                <i class="ph-bold ph-exam"></i>
+            </div>
+            <div>
+                <h1 class="font-display font-bold text-lg md:text-xl leading-tight">CBT PMB UNSIA</h1>
+                <p id="header-module-name" class="text-[10px] md:text-xs text-brand-100 font-medium tracking-wide uppercase">Lobi Pemilihan Modul</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4 md:gap-6">
+            <!-- Timer Display -->
+            <div id="timer-container" class="hidden items-center gap-2 bg-brand-700/50 border border-brand-500/50 px-3 md:px-5 py-1.5 md:py-2 rounded-xl text-brand-accent font-bold font-mono text-base md:text-xl shadow-inner transition-colors">
+                <i class="ph-fill ph-timer text-lg"></i>
+                <span id="timer-display">00:00:00</span>
+            </div>
+
+            <div class="h-8 w-px bg-brand-500 hidden sm:block"></div>
+            
+            <div class="flex items-center gap-3">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold text-white leading-tight">Budi Santoso</p>
+                    <p class="text-[10px] text-brand-100 font-medium">PMB26-09812</p>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=f0f4f8&color=102a43&rounded=true&bold=true" class="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 border-brand-400">
+            </div>
+        </div>
+    </header>
+
+    <!-- KONTEN UTAMA -->
+    <main class="flex-1 overflow-hidden relative" id="main-area">
+
+        <!-- ========================================================= -->
+        <!-- VIEW 1: LOBI UJIAN -->
+        <!-- ========================================================= -->
+        <div id="view-lobby" class="absolute inset-0 overflow-y-auto custom-scroll p-4 sm:p-8 lg:p-12 fade-in">
+            <div class="max-w-5xl mx-auto">
+                <div class="mb-8">
+                    <h2 class="font-display text-2xl md:text-4xl font-extrabold text-slate-800 mb-2">Modul Ujian Seleksi</h2>
+                    <p class="text-slate-500 text-sm md:text-base max-w-2xl">Kerjakan kelima modul ujian di bawah ini. Anda dapat mengerjakan modul dalam urutan acak, namun setiap modul memiliki batas waktunya masing-masing.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="module-cards-container">
+                    <!-- Kartu Modul Dihasilkan oleh JS -->
+                </div>
+
+                <div id="finish-all-container" class="mt-10 p-8 bg-green-50 border border-green-200 rounded-3xl text-center hidden slide-up">
+                    <div class="w-20 h-20 bg-green-500 text-white rounded-full flex items-center justify-center text-4xl mx-auto mb-4 shadow-xl shadow-green-500/30">
+                        <i class="ph-bold ph-check-circle"></i>
+                    </div>
+                    <h2 class="font-display text-2xl font-bold text-slate-800 mb-2">Seluruh Ujian Selesai!</h2>
+                    <p class="text-slate-600 mb-6">Terima kasih, jawaban Anda telah terenkripsi dan dikirim ke server CBT Pusat. Anda dapat menutup halaman ini.</p>
+                    <button onclick="alert('Kembali ke Dashboard Utama PMB...')" class="px-8 py-3.5 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-500 transition-colors shadow-lg shadow-brand-600/20">
+                        Kembali ke Dashboard Utama
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- VIEW BRIEFING / PERSIAPAN UJIAN -->
+        <!-- ========================================================= -->
+        <div id="view-briefing" class="w-full h-full flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto custom-scroll hidden absolute inset-0 bg-slate-50 z-30">
+            <div class="max-w-3xl w-full bg-white rounded-[2rem] border border-slate-200 shadow-xl p-6 sm:p-10 slide-up my-auto">
+                <div class="text-center mb-8">
+                    <div id="brief-icon" class="w-20 h-20 rounded-3xl bg-brand-50 text-brand-600 flex items-center justify-center text-4xl mx-auto mb-5">
+                        <i class="ph-fill ph-brain"></i>
+                    </div>
+                    <h2 id="brief-title" class="font-display text-2xl md:text-3xl font-extrabold text-slate-800 mb-2">Tes Potensi Akademik</h2>
+                    <p class="text-slate-500">Persiapan Ujian Computer Based Test (CBT)</p>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-8">
+                    <div class="flex flex-col">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Durasi Pengerjaan</span>
+                        <span id="brief-time" class="text-lg font-extrabold text-brand-600">60 Menit</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Jumlah Soal</span>
+                        <span id="brief-count" class="text-lg font-extrabold text-brand-600">50 Butir</span>
+                    </div>
+                    <div class="flex flex-col col-span-2 md:col-span-1">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sifat Ujian</span>
+                        <span class="text-sm font-bold text-red-600 bg-red-50 px-3 py-1 rounded-lg w-max border border-red-100">Close Book</span>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-6 mb-10">
+                    <h3 class="text-sm font-bold text-blue-800 mb-4 flex items-center gap-2">
+                        <i class="ph-fill ph-info"></i> Tata Tertib & Pelaksanaan Ujian
+                    </h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <i class="ph-fill ph-webcam text-blue-600 text-xl shrink-0 mt-0.5"></i>
+                            <p class="text-sm text-blue-900 leading-relaxed">
+                                <strong class="font-bold">Kamera Wajib Aktif:</strong> Selama pengerjaan ujian berlangsung, kamera perangkat harus tetap menyala. Sistem AI Proctoring akan memantau aktivitas Anda.
+                            </p>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="ph-fill ph-browser text-blue-600 text-xl shrink-0 mt-0.5"></i>
+                            <p class="text-sm text-blue-900 leading-relaxed">
+                                <strong class="font-bold">Browser Terkunci:</strong> Browser tidak dapat ditutup, diperkecil (*minimize*), atau berpindah tab.
+                            </p>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="ph-fill ph-wifi-high text-blue-600 text-xl shrink-0 mt-0.5"></i>
+                            <p class="text-sm text-blue-900 leading-relaxed">
+                                <strong class="font-bold">Koneksi Stabil:</strong> Pastikan internet stabil. Jika belum selesai, Anda dapat menyimpannya sebagai Draf untuk dilanjutkan nanti.
+                            </p>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="ph-fill ph-calendar-check text-blue-600 text-xl shrink-0 mt-0.5"></i>
+                            <p class="text-sm text-blue-900 leading-relaxed">
+                                <strong class="font-bold">Batas Waktu:</strong> Pengerjaan dan submit akhir dapat dilakukan sebelum <span class="bg-white px-2 py-0.5 rounded font-bold border border-blue-200">14 Mei 2026, 23:59 WIB</span>.
+                            </p>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="backToLobby()" class="w-full sm:w-1/3 py-4 bg-white border-2 border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors">
+                        Batal
+                    </button>
+                    <button onclick="executeStartExam()" class="w-full sm:w-2/3 py-4 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/20 hover:bg-brand-500 transition-all flex items-center justify-center gap-2 text-lg group">
+                        Saya Mengerti, Mulai Ujian <i class="ph-bold ph-play-circle text-2xl group-hover:scale-110 transition-transform"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 2: CBT EXAM TEXT (TPA, TPU, PKN, INGGRIS) -->
+        <!-- ========================================================= -->
+        <div id="view-exam-text" class="absolute inset-0 flex flex-col md:flex-row hidden bg-white">
+            
+            <!-- Kiri: Area Soal -->
+            <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+                
+                <!-- Fast Info Toast untuk Konfirmasi Instan -->
+                <div id="fast-toast" class="absolute top-6 left-1/2 -translate-x-1/2 bg-white border border-slate-200 text-slate-800 px-6 py-2.5 rounded-full shadow-xl flex items-center gap-2.5 transform -translate-y-[200%] opacity-0 transition-all duration-300 z-40">
+                    <i id="fast-toast-icon" class="ph-fill ph-info text-xl"></i>
+                    <div id="fast-toast-text" class="text-sm font-bold tracking-wide"></div>
+                </div>
+
+                <!-- Navigasi Atas Soal -->
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 bg-brand-100 text-brand-700 rounded-lg text-xs font-bold uppercase tracking-wider">SOAL NOMOR</span>
+                        <span id="q-text-num" class="font-display text-2xl md:text-3xl font-extrabold text-brand-600">1</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-xs font-bold text-slate-400 hidden sm:block">Ukuran Font:</div>
+                        <div class="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                            <button onclick="changeFontSize(-1)" class="px-3 py-1 hover:bg-slate-50 text-slate-600 border-r border-slate-200">A-</button>
+                            <button onclick="changeFontSize(1)" class="px-3 py-1 hover:bg-slate-50 text-slate-600 font-bold">A+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Konten Soal & Opsi -->
+                <div class="flex-1 overflow-y-auto custom-scroll p-6 md:p-10 lg:px-16" id="q-text-area">
+                    <p id="q-text-content" class="text-lg md:text-xl text-slate-800 leading-relaxed font-medium mb-10 transition-all">
+                        <!-- Teks Soal -->
+                    </p>
+
+                    <div class="space-y-4" id="q-text-options">
+                        <!-- Opsi Jawaban (JS) -->
+                    </div>
+                </div>
+
+                <!-- Navigasi Bawah Soal -->
+                <div class="px-4 sm:px-6 py-5 border-t border-slate-200 bg-white flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.02)]">
+                    <button onclick="prevTextQuestion()" id="btn-prev" class="px-4 sm:px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="ph-bold ph-arrow-left"></i> <span class="hidden sm:inline">Sebelumnya</span>
+                    </button>
+                    
+                    <label class="cursor-pointer flex items-center gap-2 px-4 sm:px-6 py-3 border-2 border-yellow-400 bg-yellow-50 text-yellow-700 font-bold rounded-xl hover:bg-yellow-100 transition-colors">
+                        <input type="checkbox" id="checkbox-ragu" onchange="toggleRagu(this)" class="w-5 h-5 text-yellow-500 rounded focus:ring-yellow-500 cursor-pointer">
+                        Ragu-ragu
+                    </label>
+
+                    <button onclick="nextTextQuestion()" id="btn-next" class="px-4 sm:px-8 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/20 hover:bg-brand-500 transition-colors flex items-center gap-2">
+                        <span class="hidden sm:inline">Selanjutnya</span> <i id="btn-next-icon" class="ph-bold ph-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kanan: Grid Navigasi Panel -->
+            <div class="w-full md:w-80 lg:w-96 bg-slate-50 border-l border-slate-200 flex flex-col h-full shrink-0 shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.02)] z-10 hidden md:flex">
+                <div class="p-5 border-b border-slate-200 bg-white flex justify-between items-center shrink-0">
+                    <h3 class="font-bold text-slate-800">Daftar Soal</h3>
+                    <span id="nav-answered-count" class="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded-md">0/0 Terjawab</span>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto custom-scroll p-4 sm:p-5">
+                    <div id="q-nav-grid" class="grid grid-cols-5 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
+                        <!-- Kotak Navigasi (JS) -->
+                    </div>
+                </div>
+
+                <div class="p-5 border-t border-slate-200 bg-white shrink-0 space-y-4">
+                    <div class="flex flex-wrap items-center gap-x-2 lg:gap-x-3 gap-y-2 px-1">
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-emerald-500 rounded-sm"></div><span class="text-[10px] text-slate-500 font-medium">Benar</span></div>
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-rose-500 rounded-sm"></div><span class="text-[10px] text-slate-500 font-medium">Salah</span></div>
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-brand-600 rounded-sm"></div><span class="text-[10px] text-slate-500 font-medium">Terjawab</span></div>
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-yellow-500 rounded-sm"></div><span class="text-[10px] text-slate-500 font-medium">Ragu</span></div>
+                    </div>
+                    <button id="btn-sidebar-finish" class="w-full py-3.5 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-sm hover:bg-slate-300 transition-colors flex justify-center items-center gap-2">
+                        <!-- Draf/Finish button logic managed via JS -->
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Grid Toggle Button -->
+            <button onclick="toggleMobileGrid()" class="md:hidden fixed bottom-24 right-4 w-12 h-12 bg-slate-800 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl z-40">
+                <i class="ph-fill ph-squares-four"></i>
+            </button>
+            
+            <!-- Mobile Grid Drawer (Hidden by default) -->
+            <div id="mobile-grid-drawer" class="md:hidden fixed inset-0 bg-slate-900/50 z-50 hidden flex flex-col justify-end">
+                <div class="bg-white rounded-t-3xl h-[70vh] flex flex-col slide-up">
+                    <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800">Daftar Soal</h3>
+                        <button onclick="toggleMobileGrid()" class="p-2 bg-slate-100 rounded-full text-slate-600"><i class="ph-bold ph-x"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-4 custom-scroll" id="mobile-q-nav-grid-container">
+                        <!-- Cloned Grid -->
+                    </div>
+                    <div class="p-4 border-t border-slate-200 space-y-3">
+                        <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 px-1 mb-2">
+                            <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-emerald-500 rounded-sm"></div><span class="text-[10px] text-slate-500 font-medium">Benar</span></div>
+                            <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-rose-500 rounded-sm"></div><span class="text-[10px] text-slate-500 font-medium">Salah</span></div>
+                            <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-brand-600 rounded-sm"></div><span class="text-[10px] text-slate-500 font-medium">Terjawab</span></div>
+                            <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-yellow-500 rounded-sm"></div><span class="text-[10px] text-slate-500 font-medium">Ragu</span></div>
+                        </div>
+                        <button id="btn-mobile-finish" class="w-full py-3 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-sm">Simpan Draf</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 3: CBT EXAM IMAGE (TES BUTA WARNA / ISHIHARA) -->
+        <!-- ========================================================= -->
+        <div id="view-exam-image" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 hidden p-4 sm:p-6">
+            
+            <div class="w-full max-w-4xl flex items-center justify-between mb-6 px-4">
+                <div>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-800">Tes Buta Warna</h2>
+                    <p class="text-sm text-slate-500">Ketik angka yang Anda lihat. Biarkan kosong jika tidak melihat angka.</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Soal Plat Ke</span>
+                    <span class="font-display text-2xl sm:text-3xl font-extrabold text-brand-600"><span id="q-img-num">1</span>/<span id="q-img-total">10</span></span>
+                </div>
+            </div>
+
+            <div class="w-full max-w-4xl bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden flex flex-col items-center p-6 sm:p-10 relative">
+                
+                <!-- Fast Progress Timer Bar (10 Seconds) -->
+                <div class="absolute top-0 left-0 w-full h-2.5 bg-slate-100">
+                    <div id="img-timer-bar" class="h-full bg-red-500 w-full"></div>
+                </div>
+
+                <div class="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-slate-100 rounded-full overflow-hidden border-[6px] border-slate-100 mb-8 shadow-inner relative flex justify-center items-center select-none pointer-events-none">
+                    <img id="q-img-src" src="" alt="Ishihara Plate" class="w-full h-full object-cover">
+                    <!-- Overlay Anti-cheat visual -->
+                    <div class="absolute inset-0 bg-transparent z-10"></div>
+                </div>
+
+                <div class="w-full max-w-xs mb-6 relative">
+                    <input type="number" id="q-img-input" placeholder="Masukkan angka..." class="w-full text-center text-3xl font-display font-bold py-4 rounded-2xl border-2 border-slate-200 focus:border-brand-600 focus:ring-0 focus:outline-none transition-colors shadow-inner" autocomplete="off" onkeypress="if(event.key === 'Enter') submitImageQuestion()">
+                </div>
+
+                <button onclick="submitImageQuestion()" class="w-full max-w-xs py-4 bg-brand-600 text-white font-bold rounded-xl shadow-lg hover:bg-brand-500 transition-colors text-lg flex items-center justify-center gap-2">
+                    Lanjut <i class="ph-bold ph-paper-plane-right"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-400 mt-6 font-medium text-center"><i class="ph-fill ph-warning-circle text-brand-accent"></i> Sistem akan memajukan soal secara otomatis dalam 10 detik jika Anda tidak merespons.</p>
+        </div>
+
+        <!-- OVERLAY LOADING INTUITIF -->
+        <div id="interactive-loading" class="fixed inset-0 z-[100] bg-brand-600/95 backdrop-blur-md hidden flex-col items-center justify-center opacity-0 transition-opacity duration-300">
+            <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-2xl w-[90%] max-w-md transform scale-95 opacity-0 transition-all duration-500" id="loading-box">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                        <i id="loading-icon" class="ph-bold ph-spinner-gap animate-spin text-3xl"></i>
+                    </div>
+                    <h3 id="loading-title" class="font-display text-2xl font-bold text-slate-800">Menyiapkan Ujian...</h3>
+                    <p id="loading-desc" class="text-sm text-slate-500 mt-1">Mengunduh paket soal terenkripsi dari server.</p>
+                </div>
+                <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                    <div id="loading-progress" class="h-full bg-brand-600 w-0 transition-all duration-300 ease-out rounded-full relative overflow-hidden"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast Umum (Pojok Bawah) -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-800 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-[150%] opacity-0 transition-all duration-300 z-[60]">
+        <i id="toast-icon" class="ph-fill ph-info text-2xl"></i>
+        <div id="toast-text" class="text-sm font-medium">Informasi disimpan.</div>
+    </div>
+
+    <script>
+        // --- DATA & STATE MANAGEMENT ---
+        
+        // Master Modules
+        const modules = [
+            { id: 'tpa', name: 'Tes Potensi Akademik', duration: 60, icon: 'ph-brain', color: 'blue', type: 'text', done: false, draft: false,
+              desc: 'Numerik, Verbal, dan Penalaran Logika Dasar.' },
+            { id: 'tpu', name: 'Pengetahuan Umum', duration: 45, icon: 'ph-globe-hemisphere-west', color: 'amber', type: 'text', done: false, draft: false,
+              desc: 'Sejarah kebangsaan, Geografi, dan Sosial.' },
+            { id: 'pkn', name: 'Kewarganegaraan', duration: 30, icon: 'ph-flag', color: 'red', type: 'text', done: false, draft: false,
+              desc: 'Pancasila, UUD 1945, dan Hukum Ketatanegaraan.' },
+            { id: 'ing', name: 'Bahasa Inggris', duration: 60, icon: 'ph-translate', color: 'teal', type: 'text', done: false, draft: false,
+              desc: 'Grammar, Structure, dan Reading Comprehension.' },
+            { id: 'bw', name: 'Tes Buta Warna', duration: 2, icon: 'ph-palette', color: 'purple', type: 'image', done: false, draft: false,
+              desc: 'Evaluasi klinis visual warna menggunakan plat Ishihara digital.' }
+        ];
+
+        // Mempersiapkan Dummy Soal dengan tracking "evaluated" dan "correctAnswer"
+        const dummyTextQuestions = Array.from({length: 15}, (_, i) => ({
+            id: i,
+            q: `Pertanyaan simulasi nomor ${i+1}. Jika premis A adalah benar dan B adalah salah, maka kesimpulan deduktif yang paling rasional berdasarkan teori himpunan adalah...`,
+            options: [
+                "Kesimpulan A dan B saling mengikat dalam satu himpunan.",
+                "Tidak ada irisan antara premis A dan B.",
+                "Himpunan A adalah subset dari himpunan B.",
+                "Himpunan semesta menolak keberadaan premis B.",
+                "Pernyataan tidak dapat ditarik kesimpulannya secara logis."
+            ],
+            answer: null,
+            ragu: false,
+            evaluated: false, // Untuk evaluasi saat pindah soal
+            correctAnswer: Math.floor(Math.random() * 5) // Simulasi random jawaban yang benar (0-4)
+        }));
+
+        const dummyImageQuestions = [
+            { id: 1, img: 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Ishihara_9.png', answer: null },
+            { id: 2, img: 'https://upload.wikimedia.org/wikipedia/commons/b/b3/Ishihara_11.PNG', answer: null },
+            { id: 3, img: 'https://upload.wikimedia.org/wikipedia/commons/8/87/Ishihara_1.png', answer: null },
+            { id: 4, img: 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Ishihara_9.png', answer: null },
+            { id: 5, img: 'https://upload.wikimedia.org/wikipedia/commons/b/b3/Ishihara_11.PNG', answer: null } 
+        ];
+
+        let activeModule = null;
+        let activeQuestions = [];
+        let currentIndex = 0;
+        
+        let globalTimerInterval = null;
+        let currentTimerSeconds = 0;
+        let ishiharaTimerTimeout = null;
+
+        let fontSizeBase = 18; 
+        
+        // Simpan State Ujian dalam Variabel
+        const savedDrafts = {};
+
+        // --- INISIALISASI ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderLobby();
+        });
+
+        // Toast Umum (Bawah)
+        function showToast(message, iconClass, textColor) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = message;
+            document.getElementById('toast-icon').className = `ph-fill ${iconClass} ${textColor} text-2xl`;
+            
+            toast.classList.remove('translate-y-[150%]', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-[150%]', 'opacity-0');
+            }, 3000);
+        }
+
+        // Fast Toast Konfirmasi (Atas Tengah)
+        function showFastToast(message, iconClass, textColor) {
+            const toast = document.getElementById('fast-toast');
+            document.getElementById('fast-toast-text').innerText = message;
+            document.getElementById('fast-toast-icon').className = `ph-fill ${iconClass} ${textColor} text-xl`;
+            
+            toast.classList.remove('-translate-y-[200%]', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('-translate-y-[200%]', 'opacity-0');
+            }, 1500); // Tampil singkat 1.5 detik
+        }
+
+        function switchView(viewId) {
+            ['view-lobby', 'view-briefing', 'view-exam-text', 'view-exam-image'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+        }
+
+        // --- LOBI UJIAN ---
+        function renderLobby() {
+            const container = document.getElementById('module-cards-container');
+            container.innerHTML = '';
+            
+            let allDone = true;
+
+            modules.forEach(mod => {
+                if(!mod.done) allDone = false;
+
+                const bgColors = {
+                    blue: 'bg-blue-50 text-blue-600', amber: 'bg-amber-50 text-amber-600',
+                    red: 'bg-red-50 text-red-600', teal: 'bg-teal-50 text-teal-600', purple: 'bg-purple-50 text-purple-600'
+                };
+                
+                const cardState = mod.done 
+                    ? `opacity-60 border-slate-200 cursor-not-allowed` 
+                    : `border-slate-200 hover:border-brand-400 hover:shadow-lg cursor-pointer transform hover:-translate-y-1 transition-all`;
+
+                // Badge Status
+                const badgeState = mod.done 
+                    ? `<span class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded-full tracking-wider border border-green-200">Selesai</span>` 
+                    : mod.draft 
+                        ? `<span class="px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-full tracking-wider border border-blue-200">Draf / Belum Selesai</span>`
+                        : `<span class="px-3 py-1 bg-brand-50 text-brand-600 text-[10px] font-bold uppercase rounded-full tracking-wider border border-brand-100">Tersedia</span>`;
+
+                // Tombol Aksi
+                const btnState = mod.done
+                    ? `<button disabled class="w-full py-3 bg-green-100 text-green-700 font-bold rounded-xl flex items-center justify-center gap-2"><i class="ph-bold ph-check-circle text-lg"></i> Selesai Dikumpulkan</button>`
+                    : mod.draft
+                        ? `<button onclick="startBriefing('${mod.id}')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 shadow-md transition-colors flex items-center justify-center gap-2">Lanjutkan Draf <i class="ph-bold ph-arrow-right"></i></button>`
+                        : `<button onclick="startBriefing('${mod.id}')" class="w-full py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-500 shadow-md shadow-brand-600/20 transition-colors flex items-center justify-center gap-2 group-hover:bg-brand-500">Persiapan Ujian <i class="ph-bold ph-arrow-right"></i></button>`;
+
+                const cardHTML = `
+                    <div class="bg-white rounded-3xl border shadow-sm p-6 sm:p-8 flex flex-col h-full group ${cardState}">
+                        <div class="flex items-start justify-between mb-5">
+                            <div class="w-14 h-14 rounded-2xl ${bgColors[mod.color]} flex items-center justify-center text-3xl shrink-0 ${!mod.done ? 'group-hover:scale-110 transition-transform' : ''}">
+                                <i class="ph-fill ${mod.icon}"></i>
+                            </div>
+                            ${badgeState}
+                        </div>
+                        <h3 class="font-bold text-lg text-slate-800 mb-2">${mod.name}</h3>
+                        <p class="text-sm text-slate-500 mb-6 flex-1 leading-relaxed">${mod.desc}</p>
+                        <div class="flex items-center gap-4 text-xs font-bold text-slate-400 mb-6">
+                            <span class="flex items-center gap-1.5"><i class="ph-bold ph-clock"></i> ${mod.duration} Menit</span>
+                            <span class="flex items-center gap-1.5"><i class="ph-bold ph-list-numbers"></i> ${mod.type === 'text' ? dummyTextQuestions.length + ' Soal' : dummyImageQuestions.length + ' Plat'}</span>
+                        </div>
+                        ${btnState}
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHTML);
+            });
+
+            if(allDone) {
+                document.getElementById('finish-all-container').classList.remove('hidden');
+            }
+            
+            document.getElementById('header-module-name').innerText = "Lobi Pemilihan Modul";
+            document.getElementById('timer-container').classList.add('hidden');
+            document.getElementById('timer-container').classList.remove('flex');
+            switchView('view-lobby');
+        }
+
+        // --- LOBBY TO BRIEFING ---
+        function startBriefing(moduleId) {
+            activeModule = modules.find(m => m.id === moduleId);
+            
+            document.getElementById('brief-title').innerText = activeModule.name;
+            
+            if (savedDrafts[moduleId]) {
+                const sisaMenit = Math.ceil(savedDrafts[moduleId].timer / 60);
+                document.getElementById('brief-time').innerText = sisaMenit + " Menit (Sisa Waktu)";
+            } else {
+                document.getElementById('brief-time').innerText = activeModule.duration + " Menit";
+            }
+
+            document.getElementById('brief-count').innerText = (activeModule.type === 'text' ? dummyTextQuestions.length : dummyImageQuestions.length) + " Butir";
+            
+            const icon = document.getElementById('brief-icon');
+            if(activeModule.type === 'image') { 
+                icon.innerHTML = '<i class="ph-fill ph-palette"></i>'; 
+                icon.className = "w-20 h-20 rounded-3xl bg-purple-50 text-purple-600 flex items-center justify-center text-4xl mx-auto mb-5"; 
+            } else { 
+                icon.innerHTML = `<i class="ph-fill ${activeModule.icon}"></i>`; 
+                icon.className = "w-20 h-20 rounded-3xl bg-brand-50 text-brand-600 flex items-center justify-center text-4xl mx-auto mb-5"; 
+            }
+            
+            switchView('view-briefing');
+        }
+
+        function backToLobby() { switchView('view-lobby'); }
+
+        // --- START EXAM ---
+        function executeStartExam() {
+            runLoading("Menyiapkan Sistem CBT...", "Memuat soal terenkripsi dan memulai pengawasan latar belakang.", () => {
+                document.getElementById('global-timer-container')?.classList.remove('hidden');
+                document.getElementById('timer-container').classList.remove('hidden');
+                document.getElementById('timer-container').classList.add('flex');
+
+                if (savedDrafts[activeModule.id]) {
+                    activeQuestions = JSON.parse(JSON.stringify(savedDrafts[activeModule.id].questions));
+                    startGlobalTimer(savedDrafts[activeModule.id].timer); 
+                } else {
+                    if (activeModule.type === 'text') {
+                        activeQuestions = JSON.parse(JSON.stringify(dummyTextQuestions));
+                    } else {
+                        activeQuestions = JSON.parse(JSON.stringify(dummyImageQuestions));
+                    }
+                    startGlobalTimer(activeModule.duration * 60);
+                }
+
+                currentIndex = 0;
+                document.getElementById('header-module-name').innerText = activeModule.name;
+
+                if(activeModule.type === 'text') {
+                    renderTextGrid();
+                    renderTextQuestion();
+                    switchView('view-exam-text');
+                } else {
+                    renderImageQuestion();
+                    switchView('view-exam-image');
+                }
+            });
+        }
+
+        // --- TIMER GLOBAL ---
+        function startGlobalTimer(totalSeconds) {
+            clearInterval(globalTimerInterval);
+            currentTimerSeconds = totalSeconds;
+            
+            const display = document.getElementById('timer-display');
+            const container = document.getElementById('timer-container');
+
+            globalTimerInterval = setInterval(() => {
+                currentTimerSeconds--;
+                
+                let h = Math.floor(currentTimerSeconds / 3600);
+                let m = Math.floor((currentTimerSeconds % 3600) / 60);
+                let s = currentTimerSeconds % 60;
+
+                h = h < 10 ? '0'+h : h;
+                m = m < 10 ? '0'+m : m;
+                s = s < 10 ? '0'+s : s;
+
+                display.innerText = `${h}:${m}:${s}`;
+
+                if(currentTimerSeconds < 300) {
+                    container.classList.replace('bg-brand-700/50', 'bg-red-500/90');
+                    container.classList.replace('border-brand-500/50', 'border-red-400');
+                    container.classList.replace('text-brand-accent', 'text-white');
+                    container.classList.add('animate-pulse');
+                }
+
+                if(currentTimerSeconds <= 0) {
+                    clearInterval(globalTimerInterval);
+                    autoSubmitModule();
+                }
+            }, 1000);
+        }
+
+        // --- LOADING MODAL ---
+        function runLoading(title, desc, callback) {
+            const overlay = document.getElementById('interactive-loading');
+            const box = document.getElementById('loading-box');
+            document.getElementById('loading-title').innerText = title;
+            document.getElementById('loading-desc').innerText = desc;
+            const progress = document.getElementById('loading-progress');
+            
+            overlay.classList.remove('hidden'); overlay.classList.add('flex');
+            setTimeout(() => { 
+                overlay.classList.remove('opacity-0'); 
+                box.classList.remove('scale-95', 'opacity-0'); box.classList.add('scale-100', 'opacity-100');
+            }, 10);
+
+            progress.style.transitionDuration = '1.5s';
+            progress.style.width = '0%';
+            setTimeout(() => progress.style.width = '100%', 100);
+
+            setTimeout(() => {
+                overlay.classList.add('opacity-0');
+                box.classList.remove('scale-100'); box.classList.add('scale-95');
+                setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); callback(); }, 300);
+            }, 1800);
+        }
+
+        // --- EVALUASI JAWABAN (DIPANGGIL SAAT PINDAH SOAL) ---
+        function evaluateCurrentQuestion() {
+            const q = activeQuestions[currentIndex];
+            if (q.answer !== null && !q.evaluated) {
+                q.evaluated = true; // Tandai telah dievaluasi
+                const isCorrect = q.answer === q.correctAnswer;
+                if (isCorrect) {
+                    showFastToast("Jawaban Disimpan: Benar", "ph-check-circle", "text-emerald-500");
+                } else {
+                    showFastToast("Jawaban Disimpan: Salah", "ph-x-circle", "text-rose-500");
+                }
+            }
+        }
+
+        // --- MANAJEMEN TOMBOL DRAF & SELESAI ---
+        function updateFinishButtons() {
+            const unanswered = activeQuestions.filter(q => q.answer === null).length;
+            const btnSidebar = document.getElementById('btn-sidebar-finish');
+            const btnMobile = document.getElementById('btn-mobile-finish');
+            const btnNext = document.getElementById('btn-next');
+
+            const draftBtnHTML = 'Simpan Draf <i class="ph-bold ph-floppy-disk text-lg"></i>';
+            const finishBtnHTML = 'Selesai Ujian <i class="ph-bold ph-check-circle text-lg"></i>';
+
+            const draftClass = "w-full py-3.5 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-sm hover:bg-slate-300 transition-colors flex justify-center items-center gap-2";
+            const finishClass = "w-full py-3.5 bg-brand-600 text-white font-bold rounded-xl shadow-md hover:bg-brand-500 transition-colors flex justify-center items-center gap-2";
+
+            // Jika masih ada soal kosong -> Simpan Draf
+            if (unanswered > 0) {
+                if(btnSidebar) { btnSidebar.innerHTML = draftBtnHTML; btnSidebar.className = draftClass; btnSidebar.onclick = () => { evaluateCurrentQuestion(); saveDraftModule(); }; }
+                if(btnMobile) { btnMobile.innerHTML = draftBtnHTML; btnMobile.className = draftClass; btnMobile.onclick = () => { evaluateCurrentQuestion(); saveDraftModule(); }; }
+                
+                if (currentIndex === activeQuestions.length - 1 && btnNext) {
+                    btnNext.innerHTML = '<span class="hidden sm:inline">Simpan Draf</span> <i class="ph-bold ph-floppy-disk"></i>';
+                    btnNext.className = "px-4 sm:px-8 py-3 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-sm hover:bg-slate-300 transition-colors flex items-center gap-2";
+                    btnNext.onclick = () => { evaluateCurrentQuestion(); saveDraftModule(); };
+                }
+            } 
+            // Jika semua soal sudah dijawab -> Selesai Ujian
+            else {
+                if(btnSidebar) { btnSidebar.innerHTML = finishBtnHTML; btnSidebar.className = finishClass; btnSidebar.onclick = () => { evaluateCurrentQuestion(); requestFinishModule(); }; }
+                if(btnMobile) { btnMobile.innerHTML = finishBtnHTML; btnMobile.className = finishClass; btnMobile.onclick = () => { evaluateCurrentQuestion(); requestFinishModule(); }; }
+                
+                if (currentIndex === activeQuestions.length - 1 && btnNext) {
+                    btnNext.innerHTML = '<span class="hidden sm:inline">Selesai Ujian</span> <i class="ph-bold ph-check-circle"></i>';
+                    btnNext.className = "px-4 sm:px-8 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/20 hover:bg-brand-500 transition-colors flex items-center gap-2";
+                    btnNext.onclick = () => { evaluateCurrentQuestion(); requestFinishModule(); };
+                }
+            }
+        }
+
+        // --- SIMPAN DRAF KE LOBI ---
+        function saveDraftModule() {
+            clearInterval(globalTimerInterval);
+            clearTimeout(ishiharaTimerTimeout);
+
+            const container = document.getElementById('timer-container');
+            container.classList.replace('bg-red-500/90', 'bg-brand-700/50');
+            container.classList.replace('border-red-400', 'border-brand-500/50');
+            container.classList.replace('text-white', 'text-brand-accent');
+            container.classList.remove('animate-pulse');
+
+            runLoading("Menyimpan Draf...", "Data pengerjaan Anda disimpan secara aman.", () => {
+                activeModule.draft = true; 
+                savedDrafts[activeModule.id] = {
+                    questions: JSON.parse(JSON.stringify(activeQuestions)),
+                    timer: currentTimerSeconds
+                };
+                
+                document.getElementById('mobile-grid-drawer').classList.add('hidden');
+                renderLobby();
+                showToast("Draf berhasil disimpan!", "ph-floppy-disk", "text-blue-400");
+            });
+        }
+
+        // --- TEKS EXAM: RENDER & LOGIC ---
+        function renderTextGrid() {
+            const grid = document.getElementById('q-nav-grid');
+            grid.innerHTML = '';
+            
+            let answeredCount = 0;
+
+            activeQuestions.forEach((q, idx) => {
+                if(q.answer !== null) answeredCount++;
+
+                let stateClass = "bg-white border-slate-300 text-slate-600 hover:border-brand-400"; // Kosong default
+                
+                if (q.answer !== null) {
+                    if (q.evaluated) {
+                        // Telah dinilai saat pindah (Hijau/Merah)
+                        stateClass = (q.answer === q.correctAnswer) ? "correct" : "incorrect";
+                    } else {
+                        // Baru dipilih tapi belum pindah kotak
+                        stateClass = "answered";
+                    }
+                }
+                
+                // Ragu menimpa semua indikator
+                if (q.ragu) stateClass = "ragu"; 
+                
+                let activeClass = (idx === currentIndex) ? "active" : "";
+
+                const btnHTML = `<button onclick="jumpToTextQuestion(${idx})" class="q-box w-full aspect-square rounded-xl border-2 flex items-center justify-center font-bold text-sm sm:text-base cursor-pointer ${stateClass} ${activeClass}">${idx + 1}</button>`;
+                grid.insertAdjacentHTML('beforeend', btnHTML);
+            });
+
+            document.getElementById('nav-answered-count').innerText = `${answeredCount}/${activeQuestions.length} Terjawab`;
+
+            const mobileGrid = document.getElementById('mobile-q-nav-grid-container');
+            if(mobileGrid) {
+                mobileGrid.innerHTML = `<div class="grid grid-cols-5 sm:grid-cols-6 gap-2 sm:gap-3">${grid.innerHTML}</div>`;
+            }
+            
+            updateFinishButtons();
+        }
+
+        function renderTextQuestion() {
+            const q = activeQuestions[currentIndex];
+            
+            document.getElementById('q-text-num').innerText = currentIndex + 1;
+            
+            const qContent = document.getElementById('q-text-content');
+            qContent.innerText = q.q;
+            qContent.style.fontSize = `${fontSizeBase}px`;
+
+            document.getElementById('checkbox-ragu').checked = q.ragu;
+
+            const optContainer = document.getElementById('q-text-options');
+            optContainer.innerHTML = '';
+            
+            const letters = ['A', 'B', 'C', 'D', 'E'];
+            q.options.forEach((optText, idx) => {
+                const checked = (q.answer === idx) ? 'checked' : '';
+                const html = `
+                    <label class="option-label block relative cursor-pointer group">
+                        <input type="radio" name="text-answer" value="${idx}" class="peer sr-only" onchange="selectTextAnswer(${idx})" ${checked}>
+                        <div class="flex items-center gap-4 p-4 md:p-5 rounded-2xl border-2 border-slate-100 bg-white hover:border-brand-200 transition-all">
+                            <div class="option-letter w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 border-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm md:text-base shrink-0 transition-colors">
+                                ${letters[idx]}
+                            </div>
+                            <span class="text-slate-700 font-medium text-sm md:text-base">${optText}</span>
+                        </div>
+                    </label>
+                `;
+                optContainer.insertAdjacentHTML('beforeend', html);
+            });
+
+            document.getElementById('btn-prev').disabled = (currentIndex === 0);
+            
+            const btnNext = document.getElementById('btn-next');
+            if(currentIndex !== activeQuestions.length - 1) {
+                btnNext.innerHTML = '<span class="hidden sm:inline">Selanjutnya</span> <i id="btn-next-icon" class="ph-bold ph-arrow-right"></i>';
+                btnNext.className = "px-4 sm:px-8 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/20 hover:bg-brand-500 transition-colors flex items-center gap-2";
+                btnNext.onclick = nextTextQuestion;
+            }
+
+            document.getElementById('q-text-area').scrollTop = 0;
+            updateFinishButtons(); // Panggil ulang untuk menyesuaikan tombol bawah
+        }
+
+        function changeFontSize(val) {
+            fontSizeBase += (val * 2);
+            if(fontSizeBase < 14) fontSizeBase = 14;
+            if(fontSizeBase > 28) fontSizeBase = 28;
+            document.getElementById('q-text-content').style.fontSize = `${fontSizeBase}px`;
+        }
+
+        function selectTextAnswer(optIdx) {
+            activeQuestions[currentIndex].answer = optIdx;
+            renderTextGrid(); // Grid akan menjadi Navy (Terjawab)
+        }
+
+        function toggleRagu(cb) {
+            activeQuestions[currentIndex].ragu = cb.checked;
+            renderTextGrid();
+        }
+
+        function prevTextQuestion() {
+            if(currentIndex > 0) { 
+                evaluateCurrentQuestion();
+                currentIndex--; 
+                renderTextQuestion(); 
+                renderTextGrid(); 
+            }
+        }
+
+        function nextTextQuestion() {
+            if(currentIndex < activeQuestions.length - 1) { 
+                evaluateCurrentQuestion();
+                currentIndex++; 
+                renderTextQuestion(); 
+                renderTextGrid(); 
+            }
+        }
+
+        function jumpToTextQuestion(idx) {
+            if (currentIndex !== idx) {
+                evaluateCurrentQuestion();
+                currentIndex = idx;
+                renderTextQuestion();
+                renderTextGrid();
+            }
+            document.getElementById('mobile-grid-drawer').classList.add('hidden');
+        }
+
+        function toggleMobileGrid() {
+            const drawer = document.getElementById('mobile-grid-drawer');
+            if(drawer.classList.contains('hidden')) {
+                renderTextGrid(); 
+                drawer.classList.remove('hidden');
+            } else {
+                drawer.classList.add('hidden');
+            }
+        }
+
+
+        // --- GAMBAR EXAM (ISHIHARA): RENDER & LOGIC ---
+        function renderImageQuestion() {
+            if(currentIndex >= activeQuestions.length) {
+                autoSubmitModule();
+                return;
+            }
+
+            const q = activeQuestions[currentIndex];
+            document.getElementById('q-img-num').innerText = currentIndex + 1;
+            document.getElementById('q-img-total').innerText = activeQuestions.length;
+            document.getElementById('q-img-src').src = q.img;
+            
+            const inputEl = document.getElementById('q-img-input');
+            inputEl.value = '';
+            setTimeout(() => inputEl.focus(), 100);
+
+            const bar = document.getElementById('img-timer-bar');
+            bar.classList.remove('timer-run');
+            void bar.offsetWidth; 
+            bar.style.animationDuration = '10s';
+            bar.classList.add('timer-run');
+
+            clearTimeout(ishiharaTimerTimeout);
+            ishiharaTimerTimeout = setTimeout(() => {
+                submitImageQuestion(true); 
+            }, 10000);
+        }
+
+        function submitImageQuestion(isAuto = false) {
+            clearTimeout(ishiharaTimerTimeout);
+            
+            const inputVal = document.getElementById('q-img-input').value;
+            activeQuestions[currentIndex].answer = inputVal;
+            
+            // Konfirmasi Cepat untuk Ishihara
+            if (inputVal.trim() !== '') {
+                showFastToast("Jawaban Disimpan", "ph-check-circle", "text-emerald-500");
+            } else {
+                showFastToast("Waktu Habis", "ph-clock", "text-rose-500");
+            }
+
+            currentIndex++;
+            renderImageQuestion();
+        }
+
+        // --- FINISHING MODULE ---
+        function requestFinishModule() {
+            // Karena ini dipanggil hanya jika semua terjawab (berkat tombol Selesai Ujian), kita bisa langsung peringatkan
+            document.getElementById('confirm-desc').innerHTML = "Anda telah menjawab semua soal. Modul yang diakhiri secara permanen tidak dapat diakses kembali untuk diubah jawabannya.";
+            
+            const modal = document.getElementById('modal-confirm');
+            const box = document.getElementById('modal-confirm-box');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('bg-slate-900/50');
+                box.classList.remove('scale-95', 'opacity-0');
+            }, 10);
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('modal-confirm');
+            const box = document.getElementById('modal-confirm-box');
+            box.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('bg-slate-900/50'); }, 300);
+        }
+
+        function autoSubmitModule() {
+            executeFinishModule();
+        }
+
+        function executeFinishModule() {
+            closeConfirmModal();
+            clearInterval(globalTimerInterval);
+            clearTimeout(ishiharaTimerTimeout);
+
+            const container = document.getElementById('timer-container');
+            container.classList.replace('bg-red-500/90', 'bg-brand-700/50');
+            container.classList.replace('border-red-400', 'border-brand-500/50');
+            container.classList.replace('text-white', 'text-brand-accent');
+            container.classList.remove('animate-pulse');
+
+            runLoading("Menyimpan & Menilai...", "Sistem mengevaluasi jawaban Anda.", () => {
+                activeModule.done = true;
+                activeModule.draft = false;
+                delete savedDrafts[activeModule.id];
+
+                document.getElementById('mobile-grid-drawer').classList.add('hidden');
+
+                renderLobby();
+                showToast("Modul Ujian berhasil diselesaikan!", "ph-check-circle", "text-green-400");
+            });
+        }
+
+    </script>
+</body>
+</html>

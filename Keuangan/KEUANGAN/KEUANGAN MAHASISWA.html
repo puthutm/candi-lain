@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Keuangan Mahasiswa - UNSIA</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts: Inter & Urbanist -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Urbanist:wght@700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Urbanist', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            500: '#00719f', // Warna Gradasi Primer
+                            600: '#0f487b', // Warna Primer Utama UNSIA
+                            accent: '#FED524', // Warna Kuning Aksen UNSIA
+                            dark: '#1e293b'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(16, 42, 67, 0.05)',
+                        'card': '0 10px 40px -10px rgba(0,0,0,0.08)',
+                        'inner-soft': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.03)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f4f7f9; -webkit-font-smoothing: antialiased; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; opacity: 0; }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
+        .pop-in { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; transform: scale(0.9); }
+        
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { to { opacity: 1; transform: scale(1); } }
+
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+
+        /* Receipt Edge for Bill Card */
+        .receipt-divider {
+            background-image: linear-gradient(to right, #cbd5e1 50%, rgba(255,255,255,0) 0%);
+            background-position: top;
+            background-size: 10px 2px;
+            background-repeat: repeat-x;
+        }
+        @media (min-width: 1024px) {
+            .receipt-divider-vertical {
+                background-image: linear-gradient(to bottom, #cbd5e1 50%, rgba(255,255,255,0) 0%);
+                background-position: left;
+                background-size: 2px 10px;
+                background-repeat: repeat-y;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex h-screen overflow-hidden selection:bg-brand-accent/30 selection:text-brand-600">
+
+    <!-- OVERLAY LOADING INTUITIF -->
+    <div id="interactive-loading" class="fixed inset-0 z-[100] bg-brand-600/95 backdrop-blur-md hidden flex-col items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-2xl w-[90%] max-w-md transform scale-95 opacity-0 transition-all duration-500 text-center" id="loading-box">
+            <div class="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+                <i id="loading-main-icon" class="ph-fill ph-arrows-clockwise text-4xl animate-spin"></i>
+            </div>
+            <h3 id="loading-title" class="font-display text-2xl font-bold text-slate-800 mb-1">Memproses...</h3>
+            <p id="loading-desc" class="text-sm text-slate-500 mb-8">Sistem sedang melakukan sinkronisasi data.</p>
+            
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                <div id="loading-progress" class="h-full bg-brand-600 w-0 transition-all duration-500 ease-out rounded-full relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar - TEMA WARNA PRIMER GRADASI -->
+    <aside id="sidebar" class="w-72 bg-gradient-to-b from-brand-600 to-brand-500 flex-col flex z-40 shadow-xl shrink-0 h-full fixed lg:relative inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 transition-all duration-300 ease-in-out">
+        <div class="h-16 flex items-center px-6 border-b border-white/10 shrink-0">
+            <img src="https://unsia.ac.id/wp-content/uploads/2022/11/LOGO-UNSIA-1.png" alt="Logo UNSIA" class="h-8 object-contain brightness-0 invert">
+        </div>
+
+        <div class="px-6 py-5 border-b border-white/10 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="relative shrink-0">
+                    <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=FED524&color=0f487b&rounded=true&bold=true" alt="User" class="w-11 h-11 rounded-full border-2 border-white/20 shadow-md">
+                    <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-brand-600 rounded-full"></div>
+                </div>
+                <div class="overflow-hidden">
+                    <h3 class="font-bold text-white truncate text-sm">Budi Santoso</h3>
+                    <p class="text-[10px] text-brand-accent font-bold mt-0.5 tracking-wider uppercase font-mono">26090182</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Navigasi Modul Keuangan -->
+        <nav class="flex-1 overflow-y-auto no-scrollbar py-4 px-3 space-y-1" id="sidebar-nav">
+            <p class="px-3 text-[9px] font-bold text-white/50 uppercase tracking-widest mb-2">Portal Keuangan (SKEUM)</p>
+            
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-white/15 text-white font-bold transition-all text-left shadow-md border border-white/20">
+                <i class="ph-fill ph-squares-four text-lg text-brand-accent"></i>
+                <span class="text-sm">Beranda Keuangan</span>
+            </button>
+            
+            <button onclick="switchTab('tagihan')" id="nav-tagihan" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent group">
+                <i class="ph-bold ph-receipt text-lg"></i>
+                <span class="text-sm">Tagihan Aktif</span>
+                <span id="nav-badge-tagihan" class="ml-auto px-2 py-0.5 bg-rose-500 text-white text-[9px] font-bold rounded-full animate-pulse shadow-sm">1</span>
+            </button>
+
+            <button onclick="switchTab('riwayat')" id="nav-riwayat" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-clock-counter-clockwise text-lg"></i>
+                <span class="text-sm">Riwayat Transaksi</span>
+            </button>
+
+            <p class="px-3 text-[9px] font-bold text-white/50 uppercase tracking-widest mb-2 mt-5 pt-3 border-t border-white/10">Layanan Finansial</p>
+
+            <button onclick="switchTab('cicilan')" id="nav-cicilan" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent">
+                <i class="ph-bold ph-hand-coins text-lg"></i>
+                <span class="text-sm">Pengajuan Keringanan / Cicilan</span>
+            </button>
+
+            <button onclick="alert('Anda akan dikembalikan ke Portal Utama SSO.')" class="btn-no-tab w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-brand-accent hover:bg-white/10 font-bold transition-colors text-left group mt-3 border border-brand-accent/30 bg-white/5 shadow-sm">
+                <i class="ph-fill ph-house text-lg"></i>
+                <span class="text-sm">Kembali ke SSO Induk</span>
+                <i class="ph-bold ph-arrow-left ml-auto text-xs opacity-70 group-hover:opacity-100"></i>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-white/10 shrink-0">
+            <button class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-500/10 text-rose-300 font-bold rounded-lg hover:bg-rose-500 hover:text-white transition-colors text-sm border border-rose-500/20">
+                <i class="ph-bold ph-sign-out text-lg"></i> Keluar Akun
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-[#f4f7f9] relative w-full h-full">
+        
+        <!-- Header Atas -->
+        <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 lg:px-10 z-10 sticky top-0 shrink-0 w-full transition-all">
+            <div class="flex items-center gap-4 lg:gap-6">
+                <!-- Hamburger Button -->
+                <button onclick="toggleSidebar()" class="text-slate-500 hover:text-brand-600 transition-colors p-2 -ml-2 rounded-lg focus:outline-none">
+                    <i class="ph-bold ph-list text-2xl"></i>
+                </button>
+                <img src="https://unsia.ac.id/wp-content/uploads/2022/11/LOGO-UNSIA-1.png" alt="Logo UNSIA" class="h-7 object-contain lg:hidden">
+                
+                <div class="hidden lg:flex flex-col border-l border-slate-200 pl-4">
+                    <h2 id="header-title" class="text-sm font-bold text-slate-800 tracking-tight">Portal Keuangan Mahasiswa</h2>
+                    <p class="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-0.5">T.A 2026/2027 Ganjil</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 sm:gap-6">
+                <button class="relative text-slate-400 hover:text-brand-600 transition-colors">
+                    <i class="ph-fill ph-bell-ringing text-2xl"></i>
+                </button>
+                <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+                <div class="flex items-center gap-3 cursor-pointer group">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-xs font-bold text-slate-800 group-hover:text-brand-600 transition-colors">Budi Santoso</p>
+                        <p class="text-[10px] text-slate-500">S1 Informatika</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=f0f4f8&color=0f487b&rounded=true&bold=true" class="w-9 h-9 rounded-full border border-slate-200 group-hover:border-brand-300 transition-colors">
+                </div>
+            </div>
+        </header>
+
+        <!-- Area Konten Scrollable -->
+        <div class="flex-1 overflow-y-auto custom-scroll p-4 sm:p-6 lg:p-10 pb-24 w-full" id="main-scroll-area">
+            
+            <!-- ============================================== -->
+            <!-- PANEL 1: DASHBOARD KEUANGAN                    -->
+            <!-- ============================================== -->
+            <div id="panel-dashboard" class="block fade-in max-w-7xl mx-auto space-y-6">
+                
+                <!-- Overview Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 slide-up">
+                    
+                    <!-- Card 1: Total Tagihan Unpaid -->
+                    <div id="dash-tagihan-card" class="bg-rose-600 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-lg shadow-rose-600/20">
+                        <div class="absolute -right-4 -bottom-4 opacity-20 text-8xl pointer-events-none"><i class="ph-fill ph-receipt"></i></div>
+                        <div class="relative z-10">
+                            <p class="text-[10px] font-bold text-rose-200 uppercase tracking-widest mb-2">Total Tagihan Aktif</p>
+                            <h3 id="dash-total-tagihan" class="font-display font-black text-3xl sm:text-4xl mb-1 tracking-tight">Rp 3.500.000</h3>
+                            <p class="text-xs text-rose-100 font-medium mb-6">Jatuh tempo terdekat: 14 Okt 2026</p>
+                            <button onclick="switchTab('tagihan')" class="px-5 py-2.5 bg-white text-rose-600 hover:bg-rose-50 rounded-xl text-sm font-bold transition-colors w-max flex items-center gap-2 shadow-sm">
+                                Bayar Sekarang <i class="ph-bold ph-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Status Clearance -->
+                    <div id="dash-clearance-card" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-soft relative overflow-hidden flex flex-col justify-center group">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                <i class="ph-fill ph-lock-key"></i>
+                            </div>
+                            <span class="px-2.5 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-lg uppercase tracking-wider">Tertahan</span>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-lg mb-1">Status Clearance Ujian</h4>
+                        <p class="text-xs text-slate-500 font-medium">Anda belum bisa mengikuti UTS/UAS karena terdapat tunggakan UKT aktif.</p>
+                    </div>
+
+                    <!-- Card 3: Transaksi Terakhir -->
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-soft relative overflow-hidden flex flex-col justify-center group">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                <i class="ph-fill ph-check-circle"></i>
+                            </div>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pembayaran Terakhir</p>
+                        <h4 class="font-bold text-slate-800 text-lg mb-1">Rp 250.000</h4>
+                        <p class="text-xs text-slate-500 font-medium truncate">Biaya Formulir PMB (14 Ags 2026)</p>
+                    </div>
+
+                </div>
+
+                <!-- Info Akademik & Aksi Cepat -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 slide-up delay-100">
+                    
+                    <!-- Rincian Tagihan Terdekat -->
+                    <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-soft p-6 sm:p-8">
+                        <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <i class="ph-fill ph-clock text-rose-500"></i> Tagihan Mendatang
+                            </h3>
+                            <button onclick="switchTab('tagihan')" class="text-xs font-bold text-brand-600 hover:underline">Lihat Semua</button>
+                        </div>
+                        
+                        <div class="space-y-4" id="dashboard-tagihan-list">
+                            <!-- Tagihan Item -->
+                            <div class="p-4 rounded-2xl border-2 border-rose-100 bg-rose-50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-rose-500 shrink-0 shadow-sm">
+                                        <i class="ph-fill ph-receipt text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold text-rose-500 uppercase tracking-widest mb-0.5">INV/UKT/26G/0182</p>
+                                        <h4 class="font-bold text-slate-800 text-sm">UKT Semester Ganjil 2026/2027</h4>
+                                        <p class="text-xs text-slate-500 font-medium mt-0.5">Jatuh Tempo: 14 Oktober 2026</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-display font-black text-xl text-rose-600">Rp 3.500.000</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Akses Cepat Finansial -->
+                    <div class="space-y-4">
+                        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-soft">
+                            <h3 class="font-bold text-slate-800 mb-4">Akses Cepat</h3>
+                            <div class="space-y-3">
+                                <button onclick="switchTab('riwayat')" class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-colors group">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors"><i class="ph-fill ph-file-pdf"></i></div>
+                                        <span class="text-sm font-semibold text-slate-700">Unduh e-Kuitansi Terakhir</span>
+                                    </div>
+                                    <i class="ph-bold ph-caret-right text-slate-400"></i>
+                                </button>
+                                <button onclick="switchTab('cicilan')" class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-colors group">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-colors"><i class="ph-fill ph-hand-coins"></i></div>
+                                        <span class="text-sm font-semibold text-slate-700">Ajukan Keringanan UKT</span>
+                                    </div>
+                                    <i class="ph-bold ph-caret-right text-slate-400"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PANEL 2: TAGIHAN AKTIF                         -->
+            <!-- ============================================== -->
+            <div id="panel-tagihan" class="hidden max-w-6xl mx-auto fade-in">
+                <div class="mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-slate-800">Tagihan Aktif</h2>
+                        <p class="text-sm text-slate-500">Rincian seluruh kewajiban finansial akademik Anda yang belum dilunasi.</p>
+                    </div>
+                </div>
+
+                <div id="tagihan-list" class="space-y-6">
+                    
+                    <!-- Kartu Tagihan UKT (Highlighted) -->
+                    <div id="invoice-card-main" class="relative bg-white rounded-[2rem] border-2 border-rose-400 shadow-glow-rose overflow-hidden flex flex-col transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl group">
+                        <!-- Pita Urgent Absolute -->
+                        <div class="absolute top-0 right-0 bg-rose-500 text-white text-[10px] font-black px-5 py-1.5 rounded-bl-2xl z-10 uppercase tracking-widest shadow-md flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-white animate-ping"></span> Belum Bayar
+                        </div>
+
+                        <!-- Header Status Tagihan -->
+                        <div class="bg-rose-50 border-b border-rose-100 px-6 sm:px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors duration-500">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-rose-200/50 text-rose-600 flex items-center justify-center shrink-0">
+                                    <i class="ph-bold ph-warning-circle text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-black text-rose-700 text-lg tracking-tight leading-tight">Uang Kuliah Tunggal (UKT)</h3>
+                                    <p class="text-xs text-rose-600/80 font-medium mt-0.5">Mempengaruhi status KRS dan Ujian</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col sm:items-end mt-2 sm:mt-0">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Batas Akhir Pelunasan</span>
+                                <span class="text-sm font-bold text-slate-800 bg-white px-3 py-1 rounded-lg border border-slate-200 mt-1 inline-block shadow-sm">14 Okt 2026, 23:59</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Body Grid: Info Studi & Rincian Tagihan -->
+                        <div class="grid grid-cols-1 lg:grid-cols-12 relative bg-white">
+                            
+                            <!-- Kiri: Detail Deskripsi -->
+                            <div class="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-center">
+                                <div class="mb-5 pb-5 border-b border-slate-100">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Nomor Invoice</p>
+                                    </div>
+                                    <p class="font-mono text-lg font-bold text-slate-800 tracking-wider">INV/UKT/26G/0182</p>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <div>
+                                        <p class="text-[10px] text-slate-500 font-medium mb-1">Periode Akademik</p>
+                                        <div class="flex items-center gap-2">
+                                            <i class="ph-fill ph-calendar text-brand-500"></i>
+                                            <p class="font-bold text-slate-800 text-sm">Ganjil 2026/2027</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] text-slate-500 font-medium mb-1">Komponen Biaya</p>
+                                        <div class="flex items-center gap-2">
+                                            <i class="ph-fill ph-books text-brand-500"></i>
+                                            <p class="font-bold text-slate-800 text-sm">SPP & BPP Reguler</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Garis Pemisah (Receipt Style) -->
+                            <div class="hidden lg:block absolute left-[58.333%] top-6 bottom-6 w-px receipt-divider-vertical z-10"></div>
+                            <div class="block lg:hidden h-px w-[calc(100%-3rem)] mx-auto receipt-divider z-10"></div>
+                            
+                            <!-- Kanan: Rincian Biaya & Tombol Aksi -->
+                            <div class="lg:col-span-5 bg-slate-50/50 p-6 sm:p-8 flex flex-col justify-center">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4">Rincian Perhitungan</p>
+                                
+                                <div class="space-y-3 mb-6">
+                                    <div class="flex justify-between items-center text-sm">
+                                        <span class="text-slate-600 font-medium">UKT Pokok</span>
+                                        <span class="font-bold text-slate-800">Rp 3.500.000</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-sm pb-3 border-b border-dashed border-slate-300">
+                                        <span class="text-slate-500 text-xs">Potongan / Beasiswa</span>
+                                        <span class="font-bold text-emerald-600 text-xs">- Rp 0</span>
+                                    </div>
+                                    <div class="flex justify-between items-end pt-1">
+                                        <span class="font-bold text-slate-500 uppercase text-[10px] tracking-wider mb-1">Total Tagihan</span>
+                                        <span class="font-display font-black text-3xl sm:text-4xl text-brand-600 tracking-tight">Rp 3.500.000</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-auto">
+                                    <button onclick="switchTab('payment')" class="w-full py-4 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 active:scale-95 text-sm sm:text-base">
+                                        Lanjutkan Pembayaran <i class="ph-bold ph-arrow-right text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Placeholder if No Bills -->
+                    <div id="no-bills-placeholder" class="hidden bg-white rounded-3xl p-10 border border-slate-200 shadow-soft text-center flex-col items-center justify-center min-h-[400px]">
+                        <div class="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-5xl mb-6 mx-auto">
+                            <i class="ph-fill ph-check-circle"></i>
+                        </div>
+                        <h3 class="font-display text-2xl font-bold text-slate-800 mb-2">Semua Tagihan Lunas!</h3>
+                        <p class="text-slate-500">Anda tidak memiliki tunggakan biaya administrasi saat ini. Terima kasih.</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PANEL 3: PAYMENT GATEWAY (SIMULASI)            -->
+            <!-- ============================================== -->
+            <div id="panel-payment" class="hidden max-w-5xl mx-auto fade-in">
+                <div class="mb-6 flex items-center gap-4">
+                    <button onclick="switchTab('tagihan')" class="w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-brand-600 shadow-sm transition-colors shrink-0">
+                        <i class="ph-bold ph-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-slate-800">Checkout Pembayaran</h2>
+                        <p class="text-sm text-slate-500">Pilih metode pembayaran untuk melunasi tagihan akademik.</p>
+                    </div>
+                </div>
+
+                <div id="payment-gateway-wrapper" class="bg-white rounded-[2rem] border border-slate-100 shadow-soft overflow-hidden transition-all duration-500 relative flex flex-col md:flex-row min-h-[500px]">
+                    
+                    <!-- Kiri: Detail Tagihan Statis -->
+                    <div class="w-full md:w-1/3 bg-slate-50 border-b md:border-b-0 md:border-r border-slate-200 p-6 flex flex-col justify-between relative overflow-hidden shrink-0">
+                        <!-- Latar Hiasan -->
+                        <div id="invoice-accent" class="absolute top-0 right-0 w-32 h-32 bg-brand-100 rounded-bl-full opacity-50 pointer-events-none transition-opacity duration-500"></div>
+
+                        <div id="invoice-content" class="relative z-10 w-full h-full flex flex-col">
+                            <div class="mb-5">
+                                <span class="px-3 py-1 bg-rose-100 text-rose-700 text-[10px] font-bold uppercase rounded-lg border border-rose-200 tracking-wider">Menunggu Pembayaran</span>
+                            </div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Invoice UKT</p>
+                            <h3 class="text-slate-800 font-bold text-base mb-1">INV/UKT/26G/0182</h3>
+                            <p class="text-xs text-slate-500 mb-5 font-medium">Batas: 14 Okt 2026</p>
+                            
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-slate-500">UKT Semester Ganjil</span>
+                                    <span class="font-bold text-slate-800">Rp 3.500.000</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm pb-3 border-b border-slate-200 border-dashed">
+                                    <span class="text-slate-500">Admin Gateway</span>
+                                    <span class="font-bold text-slate-800">Rp 0</span>
+                                </div>
+                                <div class="flex justify-between items-end pt-1">
+                                    <span class="font-bold text-slate-600 uppercase text-[10px] tracking-wider mb-1">Total Bayar</span>
+                                    <span class="font-display font-black text-2xl text-brand-600 tracking-tight">Rp 3.500.000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kanan: Dynamic Gateway Area -->
+                    <div class="w-full md:w-2/3 relative overflow-hidden bg-white flex flex-col">
+                        
+                        <!-- View A: Daftar Metode Pembayaran -->
+                        <div id="pg-methods-view" class="absolute inset-0 w-full h-full flex flex-col p-5 sm:p-6 transition-transform duration-300">
+                            <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2 shrink-0">
+                                <i class="ph-fill ph-wallet text-brand-500"></i> Pilih Saluran Pembayaran
+                            </h3>
+                            
+                            <div class="space-y-5 overflow-y-auto custom-scroll pr-2 pb-2 flex-1">
+                                <!-- Virtual Account Group -->
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Transfer Bank (Virtual Account)</p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <button onclick="showPaymentInstructions('BCA Virtual Account', 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg', 'VA BCA', '8902 0812 3456 7890')" class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl hover:border-brand-400 hover:bg-slate-50 transition-colors text-left group">
+                                            <div class="w-12 h-8 bg-white border border-slate-100 rounded flex items-center justify-center p-1.5 shrink-0 shadow-sm"><img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg" class="max-h-full object-contain"></div>
+                                            <span class="font-bold text-sm text-slate-700 group-hover:text-brand-600">BCA VA</span>
+                                        </button>
+                                        <button onclick="showPaymentInstructions('Mandiri Virtual Account', 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Bank_Mandiri_logo_2016.svg', 'VA Mandiri', '8902 0812 3456 7890')" class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl hover:border-brand-400 hover:bg-slate-50 transition-colors text-left group">
+                                            <div class="w-12 h-8 bg-white border border-slate-100 rounded flex items-center justify-center p-1.5 shrink-0 shadow-sm"><img src="https://upload.wikimedia.org/wikipedia/commons/a/ad/Bank_Mandiri_logo_2016.svg" class="max-h-full object-contain"></div>
+                                            <span class="font-bold text-sm text-slate-700 group-hover:text-brand-600">Mandiri VA</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- QRIS Group -->
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">E-Wallet & QRIS</p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <button onclick="showPaymentInstructions('QRIS (Gopay, OVO, Dana)', 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg', 'QRIS', 'QR_CODE_DUMMY')" class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl hover:border-brand-400 hover:bg-slate-50 transition-colors text-left group">
+                                            <div class="w-12 h-8 bg-white border border-slate-100 rounded flex items-center justify-center p-1.5 shrink-0 shadow-sm"><img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg" class="max-h-full object-contain"></div>
+                                            <span class="font-bold text-sm text-slate-700 group-hover:text-brand-600">QRIS All Payment</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- View B: Detail Instruksi & Simulasi Pembayaran -->
+                        <div id="pg-instruction-view" class="absolute inset-0 w-full h-full bg-white flex flex-col transform translate-x-full transition-transform duration-300 z-10 hidden">
+                            <div class="p-5 sm:p-6 pb-2 shrink-0">
+                                <button onclick="backToPaymentMethods()" class="text-xs font-bold text-slate-500 hover:text-brand-600 flex items-center gap-1.5 w-max px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">
+                                    <i class="ph-bold ph-arrow-left"></i> Kembali
+                                </button>
+                            </div>
+
+                            <div class="flex-1 overflow-y-auto custom-scroll px-5 sm:px-6 flex flex-col items-center justify-center">
+                                <div class="bg-white p-2 rounded-xl border border-slate-100 shadow-sm mb-2 h-12 flex items-center justify-center min-w-[80px]">
+                                    <img id="pg-selected-logo" src="" alt="Logo" class="max-h-full object-contain">
+                                </div>
+                                <h3 id="pg-selected-title" class="font-bold text-slate-800 text-lg mb-0.5 text-center">Metode Terpilih</h3>
+                                <p class="text-[10px] text-slate-500 mb-4 font-medium text-center">Selesaikan pembayaran sesuai detail di bawah ini.</p>
+
+                                <div class="w-full max-w-sm bg-slate-50 border border-slate-200 rounded-xl p-4 text-left relative overflow-hidden shadow-inner shrink-0">
+                                    <div class="absolute left-0 top-0 h-full w-1.5 bg-brand-600"></div>
+                                    <p id="pg-type-label" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 pl-2">Nomor Virtual Account</p>
+                                    
+                                    <div id="pg-code-area" class="flex items-center justify-between gap-3 bg-white p-3 rounded-lg border border-slate-200 ml-2">
+                                        <span id="pg-code-number" class="font-mono text-lg font-black text-brand-600 tracking-widest">0000 0000</span>
+                                        <button onclick="copyPGCode()" class="text-brand-600 hover:text-brand-800 p-2 rounded-md bg-brand-50 hover:bg-brand-100 transition-colors border border-brand-100 active:scale-95" title="Salin Kode">
+                                            <i class="ph-bold ph-copy text-lg"></i>
+                                        </button>
+                                    </div>
+                                    <div id="pg-qris-area" class="hidden w-full flex-col items-center py-1 ml-2">
+                                        <div class="bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                                            <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QR Dummy" class="w-28 h-28">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-5 sm:p-6 border-t border-slate-100 bg-white w-full text-center shrink-0">
+                                <button onclick="actionSimulasiPayUKT()" class="w-full py-3.5 bg-emerald-600 text-white font-bold rounded-xl shadow-md shadow-emerald-600/20 hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 group active:scale-95 text-sm">
+                                    <i class="ph-bold ph-check-circle text-lg group-hover:scale-110 transition-transform"></i>
+                                    SIMULASI: BAYAR LUNAS SEKARANG
+                                </button>
+                                <p class="text-[9px] text-slate-400 mt-2 font-medium">Klik tombol hijau untuk Callback Gateway sukses.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PANEL 4: RIWAYAT TRANSAKSI                     -->
+            <!-- ============================================== -->
+            <div id="panel-riwayat" class="hidden max-w-6xl mx-auto fade-in">
+                <div class="mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-slate-800">Riwayat Transaksi</h2>
+                        <p class="text-sm text-slate-500">Catatan seluruh pembayaran akademik yang pernah Anda lakukan.</p>
+                    </div>
+                    <button class="px-4 py-2 border border-slate-300 bg-white text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 shadow-sm flex items-center gap-2">
+                        <i class="ph-bold ph-funnel"></i> Filter
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-soft overflow-hidden">
+                    <div class="overflow-x-auto w-full">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-widest border-b border-slate-200">
+                                <tr>
+                                    <th class="p-4 pl-6">ID Transaksi</th>
+                                    <th class="p-4">Deskripsi Tagihan</th>
+                                    <th class="p-4">Tanggal Pembayaran</th>
+                                    <th class="p-4 text-right">Nominal</th>
+                                    <th class="p-4 text-center">Status</th>
+                                    <th class="p-4 text-center pr-6">Bukti</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm">
+                                <!-- Data Statis Historis Sebelum Pembayaran Saat Ini -->
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 pl-6 font-mono text-xs text-slate-500">TRX-2025-112</td>
+                                    <td class="p-4 font-bold text-slate-800">UKT Semester 2 (Genap)</td>
+                                    <td class="p-4 text-slate-600">10 Feb 2026, 14:20</td>
+                                    <td class="p-4 text-right font-mono font-bold text-slate-700">Rp 3.500.000</td>
+                                    <td class="p-4 text-center"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase">Lunas</span></td>
+                                    <td class="p-4 text-center pr-6"><button class="p-2 text-brand-600 hover:bg-brand-50 rounded" title="Download PDF"><i class="ph-bold ph-download-simple"></i></button></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 pl-6 font-mono text-xs text-slate-500">TRX-2025-001</td>
+                                    <td class="p-4 font-bold text-slate-800">UKT Semester 1 (Ganjil)</td>
+                                    <td class="p-4 text-slate-600">12 Ags 2025, 09:15</td>
+                                    <td class="p-4 text-right font-mono font-bold text-slate-700">Rp 3.500.000</td>
+                                    <td class="p-4 text-center"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase">Lunas</span></td>
+                                    <td class="p-4 text-center pr-6"><button class="p-2 text-brand-600 hover:bg-brand-50 rounded" title="Download PDF"><i class="ph-bold ph-download-simple"></i></button></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 pl-6 font-mono text-xs text-slate-500">TRX-2025-PMB</td>
+                                    <td class="p-4 font-bold text-slate-800">Pendaftaran & Tes CBT</td>
+                                    <td class="p-4 text-slate-600">10 Ags 2025, 11:00</td>
+                                    <td class="p-4 text-right font-mono font-bold text-slate-700">Rp 250.000</td>
+                                    <td class="p-4 text-center"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase">Lunas</span></td>
+                                    <td class="p-4 text-center pr-6"><button class="p-2 text-brand-600 hover:bg-brand-50 rounded" title="Download PDF"><i class="ph-bold ph-download-simple"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PANEL 5: PENGAJUAN KERINGANAN / CICILAN        -->
+            <!-- ============================================== -->
+            <div id="panel-cicilan" class="hidden max-w-4xl mx-auto fade-in">
+                <div class="mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-slate-800">Pengajuan Keringanan UKT</h2>
+                        <p class="text-sm text-slate-500">Fasilitas pengajuan cicilan atau penundaan pembayaran akademik.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-soft p-6 sm:p-8">
+                    
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-6 flex gap-3">
+                        <i class="ph-fill ph-warning-circle text-amber-500 text-xl shrink-0 mt-0.5"></i>
+                        <div>
+                            <h4 class="font-bold text-amber-800 text-sm">Informasi Penting</h4>
+                            <p class="text-xs text-amber-700 mt-1 leading-relaxed">Pengajuan cicilan maksimal dapat dibagi menjadi 3x termin pembayaran. Dokumen pendukung seperti Surat Keterangan Tidak Mampu (SKTM) atau Surat Pemutusan Hubungan Kerja (PHK) orang tua wajib dilampirkan.</p>
+                        </div>
+                    </div>
+
+                    <form id="form-cicilan" onsubmit="event.preventDefault(); submitCicilan();" class="space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pilih Tagihan <span class="text-red-500">*</span></label>
+                                <select required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-500 bg-white text-sm">
+                                    <option value="">-- Pilih Tagihan Aktif --</option>
+                                    <option>UKT Semester Ganjil 2026/2027 (Rp 3.500.000)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Skema Pengajuan <span class="text-red-500">*</span></label>
+                                <select required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-500 bg-white text-sm">
+                                    <option value="">-- Pilih Skema --</option>
+                                    <option>Cicilan 2x (50% - 50%)</option>
+                                    <option>Cicilan 3x (40% - 30% - 30%)</option>
+                                    <option>Penundaan Pembayaran (Mundur 1 Bulan)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Alasan Pengajuan <span class="text-red-500">*</span></label>
+                            <textarea required rows="3" placeholder="Jelaskan alasan pengajuan keringanan secara detail..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-500 bg-white text-sm"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Unggah Dokumen Pendukung (PDF/JPG) <span class="text-red-500">*</span></label>
+                            <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:bg-slate-50 transition-colors cursor-pointer group">
+                                <i class="ph-fill ph-upload-simple text-3xl text-slate-400 group-hover:text-brand-500 mb-2 transition-colors"></i>
+                                <p class="text-sm font-bold text-slate-700">Klik untuk upload file</p>
+                                <p class="text-[10px] text-slate-400 mt-1">Maksimal 2 MB per file</p>
+                                <input type="file" required accept=".pdf,.jpg,.png" class="hidden">
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-100 flex items-center justify-end">
+                            <button type="submit" id="btn-submit-cicilan" class="px-8 py-3.5 bg-brand-600 text-white font-bold rounded-xl shadow-md hover:bg-brand-700 transition-all flex items-center gap-2 text-sm active:scale-95">
+                                Ajukan Permohonan <i class="ph-bold ph-paper-plane-right"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Notifikasi Toast -->
+    <div id="toast" class="fixed bottom-6 right-10 bg-slate-800 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-[150%] opacity-0 transition-all duration-300 z-50">
+        <i id="toast-icon" class="ph-fill ph-check-circle text-emerald-400 text-2xl"></i>
+        <div id="toast-text" class="text-sm font-medium">Berhasil!</div>
+    </div>
+
+    <script>
+        // Logika Hamburger Menu Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            if(window.innerWidth < 1024) {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            } else {
+                if(sidebar.style.marginLeft === '-18rem') {
+                    sidebar.style.marginLeft = '0px';
+                } else {
+                    sidebar.style.marginLeft = '-18rem';
+                }
+            }
+        }
+
+        // Routing Logic
+        function switchTab(tabId) {
+            const panels = ['panel-dashboard', 'panel-tagihan', 'panel-payment', 'panel-riwayat', 'panel-cicilan'];
+            panels.forEach(p => {
+                const el = document.getElementById(p);
+                if(el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('block', 'fade-in');
+                }
+            });
+            
+            const navs = document.querySelectorAll('#sidebar-nav button:not(.btn-no-tab)');
+            navs.forEach(n => {
+                if(!n.disabled && !n.classList.contains('opacity-50')) {
+                    n.className = "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/10 hover:text-white font-medium transition-colors text-left border border-transparent";
+                    const icon = n.querySelector('i:not(.ph-arrow-up-right)');
+                    if(icon) { 
+                        icon.classList.replace('ph-fill', 'ph-bold'); 
+                        icon.classList.remove('text-brand-accent');
+                    }
+                }
+            });
+
+            // If navigating to payment gateway, highlight 'tagihan' in sidebar
+            const activeNavId = tabId === 'payment' ? 'tagihan' : tabId;
+            const targetNav = document.getElementById(`nav-${activeNavId}`);
+            if(targetNav) {
+                targetNav.className = "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-white/15 text-white font-bold transition-all text-left shadow-md border border-white/20 group";
+                const icon = targetNav.querySelector('i:not(.ph-arrow-up-right)');
+                if(icon) { 
+                    icon.classList.replace('ph-bold', 'ph-fill');
+                    icon.classList.add('text-brand-accent');
+                }
+            }
+
+            const targetPanel = document.getElementById(`panel-${tabId}`);
+            if(targetPanel) {
+                targetPanel.classList.remove('hidden');
+                targetPanel.classList.add('block', 'fade-in');
+            }
+
+            document.getElementById('main-scroll-area').scrollTop = 0;
+            
+            const titleMap = {
+                'dashboard': 'Portal Keuangan (SKEUM)',
+                'tagihan': 'Tagihan Aktif Mahasiswa',
+                'payment': 'Checkout & Gateway',
+                'riwayat': 'Riwayat Transaksi Keuangan',
+                'cicilan': 'Pengajuan Keringanan UKT'
+            };
+            document.getElementById('header-title').innerText = titleMap[tabId] || 'Portal Keuangan';
+
+            if(window.innerWidth < 1024) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                if(!sidebar.classList.contains('-translate-x-full')) {
+                    sidebar.classList.add('-translate-x-full');
+                    overlay.classList.add('hidden');
+                }
+            }
+        }
+
+        // Helper UI Loading Overlay
+        function runLoadingOverlay(title, desc, duration, callback) {
+            const overlay = document.getElementById('interactive-loading');
+            const box = document.getElementById('loading-box');
+            
+            document.getElementById('loading-title').innerText = title;
+            document.getElementById('loading-desc').innerText = desc;
+            const progress = document.getElementById('loading-progress').firstElementChild; 
+            
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            
+            setTimeout(() => { 
+                overlay.classList.remove('opacity-0'); 
+                box.classList.remove('scale-95', 'opacity-0');
+                box.classList.add('scale-100', 'opacity-100');
+            }, 10);
+
+            progress.style.width = "0%";
+            setTimeout(() => { progress.style.width = "50%"; }, duration * 0.4);
+            setTimeout(() => { progress.style.width = "90%"; }, duration * 0.8);
+            
+            setTimeout(() => {
+                progress.style.width = "100%";
+                setTimeout(() => {
+                    overlay.classList.add('opacity-0');
+                    box.classList.remove('scale-100');
+                    box.classList.add('scale-95');
+                    setTimeout(() => {
+                        overlay.classList.remove('flex');
+                        overlay.classList.add('hidden');
+                        if(callback) callback();
+                    }, 300);
+                }, 400);
+            }, duration);
+        }
+
+        function showToast(message, iconClass, iconColor) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = message;
+            document.getElementById('toast-icon').className = `ph-fill ${iconClass} ${iconColor} text-2xl`;
+            
+            toast.classList.remove('translate-y-[150%]', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-[150%]', 'opacity-0');
+            }, 3000);
+        }
+
+        // --- SIMULASI PEMBAYARAN KEUANGAN ---
+        function showPaymentInstructions(title, logo, label, code) {
+            document.getElementById('pg-methods-view').classList.add('-translate-x-full', 'hidden');
+            document.getElementById('pg-instruction-view').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('pg-instruction-view').classList.remove('translate-x-full');
+            }, 50);
+
+            document.getElementById('pg-selected-title').innerText = title;
+            document.getElementById('pg-selected-logo').src = logo;
+            document.getElementById('pg-type-label').innerText = `Nomor ${label}`;
+            
+            if(label === 'QRIS') {
+                document.getElementById('pg-code-area').classList.add('hidden');
+                document.getElementById('pg-qris-area').classList.remove('hidden');
+                document.getElementById('pg-qris-area').classList.add('flex');
+            } else {
+                document.getElementById('pg-qris-area').classList.add('hidden');
+                document.getElementById('pg-qris-area').classList.remove('flex');
+                document.getElementById('pg-code-area').classList.remove('hidden');
+                document.getElementById('pg-code-number').innerText = code;
+            }
+        }
+
+        function backToPaymentMethods() {
+            document.getElementById('pg-instruction-view').classList.add('translate-x-full');
+            setTimeout(() => {
+                document.getElementById('pg-instruction-view').classList.add('hidden');
+                document.getElementById('pg-methods-view').classList.remove('hidden', '-translate-x-full');
+            }, 300);
+        }
+
+        function copyPGCode() {
+            const code = document.getElementById('pg-code-number').innerText.replace(/\s/g, ''); 
+            navigator.clipboard.writeText(code).then(() => {
+                showToast("Kode berhasil disalin!", "ph-check-circle", "text-emerald-400");
+            });
+        }
+
+        // Aksi Pembayaran Simulasi Lunas
+        function actionSimulasiPayUKT() {
+            runLoadingOverlay("Memverifikasi Pembayaran...", "Menghubungkan ke API Bank dan Payment Gateway.", 2500, () => {
+                
+                // 1. Ubah Kartu Dashboard Tagihan Aktif menjadi Lunas/0
+                document.getElementById('dash-tagihan-card').className = "bg-emerald-600 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-lg shadow-emerald-600/20";
+                document.getElementById('dash-total-tagihan').innerText = "Rp 0";
+                document.getElementById('dash-tagihan-card').innerHTML = `
+                    <div class="absolute -right-4 -bottom-4 opacity-20 text-8xl pointer-events-none"><i class="ph-fill ph-check-circle"></i></div>
+                    <div class="relative z-10">
+                        <p class="text-[10px] font-bold text-emerald-200 uppercase tracking-widest mb-2">Total Tagihan Aktif</p>
+                        <h3 class="font-display font-black text-3xl sm:text-4xl mb-1 tracking-tight">Rp 0</h3>
+                        <p class="text-xs text-emerald-100 font-medium mb-6">Tidak ada tunggakan pembayaran.</p>
+                        <button onclick="switchTab('riwayat')" class="px-5 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-sm font-bold transition-colors w-max flex items-center gap-2 shadow-sm">
+                            Lihat Riwayat <i class="ph-bold ph-arrow-right"></i>
+                        </button>
+                    </div>
+                `;
+
+                // 2. Ubah Clearance Status (Bisa Ikut Ujian)
+                document.getElementById('dash-clearance-card').innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-2xl transition-transform">
+                            <i class="ph-fill ph-lock-key-open"></i>
+                        </div>
+                        <span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-lg uppercase tracking-wider">Aman</span>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-lg mb-1">Status Clearance Ujian</h4>
+                    <p class="text-xs text-slate-500 font-medium">Clearance finansial sukses. Anda berhak mengikuti UTS/UAS semester ini.</p>
+                `;
+
+                // 3. Sembunyikan List Tagihan dan Tampilkan "Semua Lunas"
+                document.getElementById('dashboard-tagihan-list').classList.add('hidden');
+                document.getElementById('invoice-card-main').classList.add('hidden');
+                document.getElementById('no-bills-placeholder').classList.remove('hidden');
+                document.getElementById('no-bills-placeholder').classList.add('flex');
+
+                // 4. Hilangkan Badge Notification di Sidebar
+                const badgeTagihan = document.getElementById('nav-badge-tagihan');
+                if(badgeTagihan) badgeTagihan.classList.add('hidden');
+
+                // 5. Tambahkan Riwayat Baru di Tabel Riwayat Transaksi (Di posisi teratas)
+                const tbody = document.querySelector('#panel-riwayat tbody');
+                const today = new Date();
+                const formattedDate = `${today.getDate()} Okt ${today.getFullYear()}, ${today.getHours().toString().padStart(2,'0')}:${today.getMinutes().toString().padStart(2,'0')}`;
+                
+                const newRow = document.createElement('tr');
+                newRow.className = "bg-emerald-50/50 hover:bg-emerald-50 transition-colors";
+                newRow.innerHTML = `
+                    <td class="p-4 pl-6 font-mono text-xs text-brand-600 font-bold">TRX-2026-082</td>
+                    <td class="p-4 font-bold text-slate-800">UKT Semester Ganjil 2026/2027 <span class="ml-2 text-[9px] bg-brand-500 text-white px-2 py-0.5 rounded uppercase">Baru</span></td>
+                    <td class="p-4 text-slate-600">${formattedDate}</td>
+                    <td class="p-4 text-right font-mono font-bold text-slate-700">Rp 3.500.000</td>
+                    <td class="p-4 text-center"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase">Lunas</span></td>
+                    <td class="p-4 text-center pr-6"><button class="p-2 text-brand-600 hover:bg-brand-50 rounded" title="Download PDF"><i class="ph-bold ph-download-simple"></i></button></td>
+                `;
+                tbody.insertBefore(newRow, tbody.firstChild);
+
+                // Arahkan kembali ke Dashboard
+                switchTab('dashboard');
+                showToast("Pembayaran UKT berhasil dilunasi!", "ph-check-circle", "text-emerald-400");
+            });
+        }
+
+        // --- SIMULASI PENGAJUAN CICILAN ---
+        function submitCicilan() {
+            runLoadingOverlay("Mengajukan Keringanan...", "Meneruskan dokumen ke Biro Keuangan Akademik.", 2500, () => {
+                const btn = document.getElementById('btn-submit-cicilan');
+                btn.disabled = true;
+                btn.className = "px-8 py-3.5 bg-slate-100 text-amber-600 font-bold rounded-xl flex items-center gap-2 text-sm cursor-not-allowed border border-amber-200";
+                btn.innerHTML = `<i class="ph-bold ph-clock"></i> Sedang Direview (1-3 Hari Kerja)`;
+
+                showToast("Pengajuan berhasil direkam dan menunggu proses review.", "ph-info", "text-blue-400");
+            });
+        }
+
+        // Init
+        switchTab('dashboard');
+    </script>
+</body>
+</html>

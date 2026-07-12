@@ -1,0 +1,116 @@
+flowchart TD
+
+    Start([Mulai]) --> P1
+
+    subgraph L0["📥 Dari SI-PMB"]
+        P1[Status Pendaftar = 'Diterima' di PMB]
+    end
+
+    subgraph L1["🎓 Mahasiswa Baru (Onboarding)"]
+        O1[Login Portal Onboarding]
+        O2[Lihat Tagihan Daftar Ulang UKT Sem. 1]
+        O3[Pilih Metode Bayar & Bayar]
+        O4[Terima Notifikasi NIM Terbit]
+        O5[Isi KRS Perdana - Paket Wajib Sem. 1]
+        O6[Cetak KTM Digital]
+        O7[Akses SSO ke LMS & Portal Reguler]
+    end
+
+    subgraph L2["🏛️ Admin BAAK"]
+        B1[Setup Periode Akademik & Tahapan]
+        B2[Kelola Kurikulum Pusat]
+        B3[Generate NIM Batch - Inbox Pendaftaran]
+        B4[Monitoring Nilai & Kunci Nilai Akhir]
+        B5[Sinkron PDDikti]
+    end
+
+    subgraph L3["🏢 Kaprodi"]
+        K1[Tentukan Penawaran MK - Offering]
+        K2[Plot Dosen Pengampu]
+        K3{Jadwal Bentrok?}
+        K4[Publikasikan Jadwal Kelas]
+        K5[Monitoring Kelas: Kuota/Waitlist]
+        K6{Waitlist Capai Ambang?}
+        K7[Buka Kelas Paralel]
+        K8[Evaluasi Efisiensi Kelas - Akhir Periode]
+        K9[Inbox Approval Terpusat]
+    end
+
+    subgraph L4["🙋 Mahasiswa (Reguler)"]
+        M1[Buka Modul KRS]
+        M2[Pilih Mata Kuliah Ditawarkan]
+        M3[Submit KRS]
+        M4{Perlu Revisi?}
+        M5[Edit Pilihan MK]
+        M6[Terima Kartu Studi Mahasiswa - KSM]
+    end
+
+    subgraph L5["👨‍🏫 Dosen PA"]
+        D1[Terima Pengajuan KRS Bimbingan]
+        D2[Review Kesesuaian Rencana Studi]
+        D3{Setujui?}
+        D4[Approve KRS]
+        D5[Reject + Catatan Wajib]
+    end
+
+    subgraph L6["⚙️ Sistem SIAKAD"]
+        S1[Konfirmasi Pembayaran via Webhook]
+        S2[Generate NIM Otomatis sesuai Format]
+        S3[Buat Record Mahasiswa Aktif]
+        S4[Validasi Prasyarat MK & Batas SKS]
+        S5{Valid?}
+        S6[Update Kuota/Waitlist Kelas]
+        S7[Generate KSM]
+        S8[Hitung Ulang IPK/IPS - derived]
+        S9[Notifikasi ke Mahasiswa]
+    end
+
+    %% ---- Alur Onboarding ----
+    P1 --> O1 --> O2 --> O3 --> S1
+    S1 --> O4
+    S1 --> S2 --> S3 --> O4
+    O4 --> O5 --> M3
+    O6 -.setelah KSM terbit.-> O7
+
+    %% ---- Alur Persiapan Semester ----
+    B1 --> B2 --> K1 --> K2 --> K3
+    K3 -- ya --> K2
+    K3 -- tidak --> K4
+    K4 --> M1
+
+    %% ---- Alur Pengisian KRS ----
+    M1 --> M2 --> M3
+    M3 --> S4
+    S4 --> S5
+    S5 -- tidak valid --> M4
+    M4 -- ya --> M5 --> M3
+    S5 -- valid --> D1
+    D1 --> D2 --> D3
+    D3 -- ya --> D4
+    D3 -- tidak --> D5
+    D5 -.notifikasi revisi.-> M4
+    D4 --> S6 --> S7 --> M6
+    S7 -.jika onboarding.-> O6
+    S6 --> K5
+    K5 --> K6
+    K6 -- ya --> K7 -.kelas baru tersedia.-> M2
+    K6 -- tidak --> K5
+
+    %% ---- Alur Pasca-Semester ----
+    M6 -.perkuliahan berjalan.-> B4
+    B4 --> S8 --> S9 -.KHS tersedia.-> M6
+    B4 --> K8
+    B4 --> B5
+
+    %% ---- Approval lain (cuti, dsb) lewat Kaprodi ----
+    K9 -.permintaan lain: cuti, dsb.-> K9
+
+    S9 --> End([Selesai / Siklus Berulang Tiap Semester])
+
+    classDef decision fill:#FFF3CD,stroke:#B8860B,color:#000
+    classDef system fill:#DCEAF7,stroke:#2C6FAA,color:#000
+    classDef gap fill:#FDE2E2,stroke:#C0392B,color:#000,stroke-dasharray: 4 2
+
+    class K3,K6,S5,M4,D3 decision
+    class S1,S2,S3,S4,S6,S7,S8,S9 system
+    class D1,D2,D3,D4,D5 gap

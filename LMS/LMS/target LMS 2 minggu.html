@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentasi Interaktif - Pengembangan LMS ICEMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow: hidden; /* Prevent scrollbars on the body */
+        }
+        .slide-container {
+            transition: transform 0.5s ease-in-out;
+        }
+        .slide {
+            min-width: 100%;
+            box-sizing: border-box;
+        }
+        .dot {
+            transition: background-color 0.3s ease;
+        }
+        .dot.active {
+            background-color: #3b82f6; /* blue-500 */
+        }
+        .card {
+            background-color: #1f2937; /* gray-800 */
+            border: 1px solid #374151; /* gray-700 */
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        }
+        .progress-bar-bg {
+            background-color: #374151; /* gray-700 */
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background-color: #34d399; /* emerald-500 */
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <div class="w-screen h-screen bg-gray-800 flex flex-col overflow-hidden">
+        <!-- Slides Wrapper -->
+        <div class="flex-grow overflow-hidden">
+            <div class="h-full flex slide-container">
+
+                <!-- Slide 1: Judul -->
+                <div id="slide-0" class="slide h-full flex flex-col items-center justify-center text-center p-8 bg-gradient-to-br from-gray-900 to-blue-900/50">
+                    <img src="https://ui-sso.dev-unsia.id/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo-unsia-home.ff5d9a67.png&w=256&q=75" alt="Logo UNSIA" class="w-32 mb-8">
+                    <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Target Pengembangan LMS ICEMS</h1>
+                    <p class="mt-4 text-2xl md:text-3xl text-gray-300">Fokus Implementasi 2 Minggu</p>
+                    <div class="mt-12 w-full max-w-2xl bg-gray-700/50 rounded-full h-4 relative flex items-center">
+                        <div class="bg-gradient-to-r from-blue-500 to-emerald-500 h-4 rounded-full w-full"></div>
+                        <div class="absolute left-0 text-center -bottom-8">
+                            <div class="w-5 h-5 bg-blue-500 rounded-full border-2 border-white mx-auto"></div>
+                            <span class="text-sm font-semibold">9 Juli 2025</span>
+                        </div>
+                        <div class="absolute left-1/2 -translate-x-1/2 text-center -bottom-8">
+                            <div class="w-5 h-5 bg-yellow-500 rounded-full border-2 border-white mx-auto"></div>
+                            <span class="text-sm font-semibold">16 Juli</span>
+                        </div>
+                         <div class="absolute right-0 text-center -bottom-8">
+                            <div class="w-5 h-5 bg-emerald-500 rounded-full border-2 border-white mx-auto"></div>
+                            <span class="text-sm font-semibold">23 Juli 2025</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Tujuan Umum -->
+                <div id="slide-1" class="slide h-full flex flex-col p-8 md:p-16 justify-center">
+                    <h2 class="text-4xl md:text-5xl font-bold text-blue-400 mb-8 text-center">Tujuan & Tiga Pilar Eksekusi</h2>
+                    <div class="card bg-blue-900/30 border-blue-700 mb-10 max-w-4xl mx-auto w-full">
+                        <p class="text-xl text-center text-gray-200">Menyelesaikan integrasi dan aktivasi fitur utama LMS agar dapat digunakan aktif oleh dosen dan mahasiswa.</p>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto w-full">
+                        <div class="card flex flex-col items-center text-center p-8">
+                            <i data-lucide="refresh-cw" class="w-16 h-16 text-emerald-400 mb-4"></i>
+                            <h3 class="text-2xl font-bold mb-2">Integrasi Data Otomatis</h3>
+                            <p class="text-gray-400">Sinkronisasi data akademik ke LMS secara real-time.</p>
+                        </div>
+                        <div class="card flex flex-col items-center text-center p-8">
+                            <i data-lucide="user" class="w-16 h-16 text-yellow-400 mb-4"></i>
+                            <h3 class="text-2xl font-bold mb-2">Aktivasi Fitur Dosen</h3>
+                            <p class="text-gray-400">Memberi dosen perangkat untuk mengelola kelas digital.</p>
+                        </div>
+                        <div class="card flex flex-col items-center text-center p-8">
+                            <i data-lucide="users" class="w-16 h-16 text-rose-400 mb-4"></i>
+                            <h3 class="text-2xl font-bold mb-2">Aktivasi Akses Mahasiswa</h3>
+                            <p class="text-gray-400">Membuka akses penuh bagi mahasiswa ke kelas mereka.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Pilar 1 - Integrasi Data -->
+                <div id="slide-2" class="slide h-full flex flex-col p-8 md:p-16 justify-center">
+                    <h2 class="text-4xl md:text-5xl font-bold mb-2 text-center"><span class="text-emerald-400">Pilar 1:</span> Integrasi Data Otomatis (Auto Sync)</h2>
+                    <p class="text-gray-400 mb-10 text-center text-xl">Menghubungkan Sistem Akademik dengan LMS secara mulus.</p>
+                    <div class="flex-grow grid md:grid-cols-2 gap-8 items-center max-w-6xl mx-auto w-full">
+                        <div class="flex flex-col items-center justify-center space-y-6">
+                             <div class="text-center">
+                                <i data-lucide="database" class="w-20 h-20 text-blue-400 mx-auto"></i>
+                                <p class="font-bold mt-2 text-xl">Sistem Akademik</p>
+                            </div>
+                            <i data-lucide="arrow-down" class="w-12 h-12 text-gray-500"></i>
+                             <div class="text-center">
+                                <i data-lucide="server" class="w-20 h-20 text-emerald-400 mx-auto"></i>
+                                <p class="font-bold mt-2 text-xl">LMS ICEMS</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <ul class="space-y-4 text-lg">
+                                <li class="flex items-start"><i data-lucide="check-circle" class="w-6 h-6 text-emerald-500 mr-3 mt-1 flex-shrink-0"></i><span>Menarik data <strong>Periode Akademik Aktif</strong> dari modul Akademik</span></li>
+                                <li class="flex items-start"><i data-lucide="check-circle" class="w-6 h-6 text-emerald-500 mr-3 mt-1 flex-shrink-0"></i><span>Menarik data <strong>Dosen Pengampu</strong> sesuai jadwal</span></li>
+                                <li class="flex items-start"><i data-lucide="check-circle" class="w-6 h-6 text-emerald-500 mr-3 mt-1 flex-shrink-0"></i><span>Menarik data <strong>Mata Kuliah</strong> yang terbuka</span></li>
+                                <li class="flex items-start"><i data-lucide="check-circle" class="w-6 h-6 text-emerald-500 mr-3 mt-1 flex-shrink-0"></i><span>Menarik data <strong>Jadwal Kuliah</strong> sesuai SKS dan slot</span></li>
+                                <li class="flex items-start"><i data-lucide="check-circle" class="w-6 h-6 text-emerald-500 mr-3 mt-1 flex-shrink-0"></i><span>Menarik data <strong>Peserta MK (Mahasiswa)</strong> berdasarkan KRS</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                     <div class="mt-10 card bg-emerald-900/30 border-emerald-700 text-center max-w-4xl mx-auto">
+                        <p class="font-semibold text-xl">📌 <span class="font-bold">Output:</span> Semua mata kuliah tampil otomatis di dashboard dosen dan mahasiswa.</p>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Pilar 2 - Fitur Dosen -->
+                <div id="slide-3" class="slide h-full flex flex-col p-8 md:p-16 justify-center">
+                    <h2 class="text-4xl md:text-5xl font-bold mb-2 text-center"><span class="text-yellow-400">Pilar 2:</span> Aktivasi Fitur Pembelajaran Dosen</h2>
+                     <p class="text-gray-400 mb-10 text-center text-xl">Menyediakan semua perangkat yang dibutuhkan dosen untuk mengajar secara efektif.</p>
+                    <div class="flex-grow grid grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
+                        <div class="card items-center text-center p-6"><i data-lucide="file-up" class="w-12 h-12 text-yellow-500 mx-auto mb-3"></i><span class="font-semibold text-lg">Upload Materi</span><p class="text-sm text-gray-400">(PDF, PPT, Video)</p></div>
+                        <div class="card items-center text-center p-6"><i data-lucide="file-pen-line" class="w-12 h-12 text-yellow-500 mx-auto mb-3"></i><span class="font-semibold text-lg">Upload Tugas</span><p class="text-sm text-gray-400">(Otomatis/Manual)</p></div>
+                        <div class="card items-center text-center p-6"><i data-lucide="clipboard-check" class="w-12 h-12 text-yellow-500 mx-auto mb-3"></i><span class="font-semibold text-lg">Upload Ujian</span><p class="text-sm text-gray-400">(UTS & UAS)</p></div>
+                        <div class="card items-center text-center p-6"><i data-lucide="video" class="w-12 h-12 text-yellow-500 mx-auto mb-3"></i><span class="font-semibold text-lg">Jadwal Vicon</span><p class="text-sm text-gray-400">(Zoom/Meet)</p></div>
+                        <div class="card items-center text-center p-6"><i data-lucide="youtube" class="w-12 h-12 text-yellow-500 mx-auto mb-3"></i><span class="font-semibold text-lg">Video Rekaman</span><p class="text-sm text-gray-400">(Asinkron)</p></div>
+                        <div class="card items-center text-center p-6 bg-yellow-900/30 border-yellow-700"><i data-lucide="check-circle-2" class="w-12 h-12 text-yellow-400 mx-auto mb-3"></i><span class="font-semibold text-lg">Semua Fitur Aktif</span></div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Pilar 3 - Akses Mahasiswa -->
+                <div id="slide-4" class="slide h-full flex flex-col p-8 md:p-16 justify-center">
+                     <h2 class="text-4xl md:text-5xl font-bold mb-2 text-center"><span class="text-rose-400">Pilar 3:</span> Aktivasi Akses Mahasiswa</h2>
+                     <p class="text-gray-400 mb-10 text-center text-xl">Memastikan mahasiswa mendapatkan pengalaman belajar yang lancar dan terintegrasi.</p>
+                     <div class="flex-grow grid md:grid-cols-2 gap-8 items-center max-w-6xl mx-auto w-full">
+                        <div class="flex items-center justify-center">
+                            <div class="w-72 h-72 bg-rose-900/30 rounded-full flex items-center justify-center border-4 border-rose-700">
+                                <i data-lucide="users" class="w-40 h-40 text-rose-400"></i>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <ul class="space-y-5 text-xl p-4">
+                                <li class="flex items-center"><i data-lucide="log-in" class="w-8 h-8 text-rose-500 mr-4"></i>Akses semua kelas dari KRS</li>
+                                <li class="flex items-center"><i data-lucide="book-open" class="w-8 h-8 text-rose-500 mr-4"></i>Akses materi, tugas, ujian</li>
+                                <li class="flex items-center"><i data-lucide="users" class="w-8 h-8 text-rose-500 mr-4"></i>Ikut video conference</li>
+                                <li class="flex items-center"><i data-lucide="rotate-ccw" class="w-8 h-8 text-rose-500 mr-4"></i>Putar ulang video rekaman</li>
+                            </ul>
+                        </div>
+                     </div>
+                </div>
+                
+                <!-- Slide 6: Fokus Minggu 1 - Dosen -->
+                <div id="slide-5" class="slide h-full flex flex-col p-8 md:p-16 justify-center">
+                    <h2 class="text-4xl md:text-5xl font-bold mb-2 text-center">📊 Fokus Minggu 1: Target Modul Dosen</h2>
+                    <p class="text-gray-400 mb-8 text-center text-xl">Periode: 9 – 16 Juli 2025</p>
+                    <div class="flex-grow flex items-center justify-center">
+                        <div class="card flex flex-col p-8 w-full max-w-xl">
+                            <h3 class="text-2xl font-bold mb-6 text-yellow-400 flex items-center"><i data-lucide="user" class="w-8 h-8 mr-3"></i>Target Dosen</h3>
+                            <div class="space-y-6 flex-grow flex flex-col justify-around">
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <span class="font-semibold text-lg">Tampilan Mata Kuliah</span>
+                                        <span class="font-bold text-xl text-emerald-400">100%</span>
+                                    </div>
+                                    <div class="progress-bar-bg h-4 w-full">
+                                        <div class="progress-bar-fill bg-emerald-500" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <span class="font-semibold text-lg">Adopsi Fitur Kunci</span>
+                                        <span class="font-bold text-xl text-yellow-400">Target: 80%</span>
+                                    </div>
+                                    <div class="progress-bar-bg h-4 w-full">
+                                        <div class="progress-bar-fill bg-yellow-500" style="width: 80%;"></div>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-2">Materi, Ujian, Tugas, Video Pembelajaran, Video Conference</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Fokus Minggu 2 - Mahasiswa -->
+                <div id="slide-6" class="slide h-full flex flex-col p-8 md:p-16 justify-center">
+                    <h2 class="text-4xl md:text-5xl font-bold mb-2 text-center">📊 Fokus Minggu 2: Target Modul Mahasiswa</h2>
+                    <p class="text-gray-400 mb-8 text-center text-xl">Periode: 16 – 23 Juli 2025</p>
+                     <div class="flex-grow flex items-center justify-center">
+                        <div class="card flex flex-col p-8 w-full max-w-xl">
+                            <h3 class="text-2xl font-bold mb-6 text-rose-400 flex items-center"><i data-lucide="users" class="w-8 h-8 mr-3"></i>Target Mahasiswa</h3>
+                             <div class="space-y-6 flex-grow flex flex-col justify-around">
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <span class="font-semibold text-lg">Tampilan Mata Kuliah</span>
+                                        <span class="font-bold text-xl text-emerald-400">100%</span>
+                                    </div>
+                                    <div class="progress-bar-bg h-4 w-full">
+                                        <div class="progress-bar-fill bg-emerald-500" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <span class="font-semibold text-lg">Aksesibilitas Konten</span>
+                                        <span class="font-bold text-xl text-rose-400">Target: 80%</span>
+                                    </div>
+                                    <div class="progress-bar-bg h-4 w-full">
+                                        <div class="progress-bar-fill bg-rose-500" style="width: 80%;"></div>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-2">Materi, Ujian, Tugas, Video Pembelajaran, Video Conference</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Output Akhir -->
+                <div id="slide-7" class="slide h-full flex flex-col items-center justify-center text-center p-8 bg-gradient-to-br from-gray-900 to-emerald-900/50">
+                    <h2 class="text-5xl font-bold mb-4">🚦 Output Akhir: <span class="text-emerald-400">GO-LIVE!</span></h2>
+                    <p class="text-2xl text-gray-300 mb-12">Kriteria Keberhasilan per 23 Juli 2025</p>
+                    <div class="grid md:grid-cols-3 gap-8 w-full max-w-6xl">
+                        <div class="card bg-gray-800/50 p-8">
+                            <i data-lucide="users" class="w-20 h-20 text-rose-400 mx-auto mb-4"></i>
+                            <h3 class="text-2xl font-bold mb-2">Untuk Mahasiswa</h3>
+                            <p class="text-gray-300 text-lg">Semua mahasiswa dapat akses penuh ke seluruh kelas mereka di LMS.</p>
+                        </div>
+                        <div class="card bg-gray-800/50 p-8">
+                            <i data-lucide="user" class="w-20 h-20 text-yellow-400 mx-auto mb-4"></i>
+                            <h3 class="text-2xl font-bold mb-2">Untuk Dosen</h3>
+                            <p class="text-gray-300 text-lg">Semua dosen memiliki kelas dan akses unggah materi perkuliahan.</p>
+                        </div>
+                        <div class="card bg-gray-800/50 p-8">
+                            <i data-lucide="settings-2" class="w-20 h-20 text-emerald-400 mx-auto mb-4"></i>
+                            <h3 class="text-2xl font-bold mb-2">Untuk Sistem</h3>
+                            <p class="text-gray-300 text-lg">Seluruh mata kuliah aktif tampil otomatis dan terhubung data akademik.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Slide 9: Penutup -->
+                <div id="slide-8" class="slide h-full flex flex-col items-center justify-center text-center p-8">
+                    <img src="https://ui-sso.dev-unsia.id/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo-unsia-home.ff5d9a67.png&w=256&q=75" alt="Logo UNSIA" class="w-32 mb-8">
+                    <h2 class="text-7xl font-extrabold text-blue-400 mb-4">Terima Kasih</h2>
+                    <p class="text-3xl text-gray-300">Waktu untuk Diskusi & Tanya Jawab</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="bg-gray-900/80 backdrop-blur-sm p-4 flex items-center justify-between border-t border-gray-700 absolute bottom-0 left-0 right-0">
+            <button id="prevBtn" class="p-2 rounded-full bg-gray-700 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+            </button>
+            <div id="dotsContainer" class="flex items-center space-x-3">
+                <!-- Dots will be generated by JS -->
+            </div>
+            <button id="nextBtn" class="p-2 rounded-full bg-gray-700 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="arrow-right" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const slideContainer = document.querySelector('.slide-container');
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const dotsContainer = document.getElementById('dotsContainer');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+
+        // Create dots
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('button');
+            dot.classList.add('dot', 'w-3', 'h-3', 'bg-gray-600', 'rounded-full');
+            dot.addEventListener('click', () => goToSlide(i));
+            dotsContainer.appendChild(dot);
+        }
+        const dots = document.querySelectorAll('.dot');
+
+        function goToSlide(slideIndex) {
+            slideContainer.style.transform = `translateX(-${slideIndex * 100}%)`;
+            currentSlide = slideIndex;
+            updateNav();
+        }
+
+        function updateNav() {
+            // Update dots
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+
+            // Update buttons
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                goToSlide(currentSlide - 1);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                goToSlide(currentSlide + 1);
+            }
+        });
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                nextBtn.click();
+            } else if (e.key === 'ArrowLeft') {
+                prevBtn.click();
+            }
+        });
+
+        // Initialize
+        goToSlide(0);
+    </script>
+</body>
+</html>
