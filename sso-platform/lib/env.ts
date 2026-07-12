@@ -27,6 +27,7 @@ const envSchema = z.object({
   // Session
   SESSION_SECRET: z.string().optional(),
   SESSION_MAX_AGE: z.coerce.number().default(86400),
+  SESSION_COOKIE_SECURE: z.coerce.boolean().default(false),
 
   // Application
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

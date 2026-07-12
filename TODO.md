@@ -1,7 +1,13 @@
-# TODO - Fix SSO login not redirecting after sign-in
+# TODO - SSO /home 307 redirect + session stabilization
 
-- [ ] Review and make `sso-platform/lib/seed.ts` idempotent (no duplicate insert failures).
-- [ ] Fix seed error handling in `sso-platform/lib/seed.ts` (do not swallow critical errors).
-- [x] Update `sso-platform/app/actions.ts` to remove fragile seed dependency from login flow.
-- [ ] Run validation command(s) in `sso-platform`.
-- [x] Summarize fix and expected behavior.
+- [x] Investigate middleware/proxy redirect logic for `/home` and `/admin`
+- [x] Inspect login cookie/session creation flow
+- [x] Add env-controlled secure-cookie toggle for HTTP LAN deployments
+- [x] Update login action cookie policy to use env toggle instead of NODE_ENV only
+- [x] Add lightweight auth session debug endpoint (read-only)
+- [x] Ensure docker-compose SSO env explicitly sets cookie toggle for current deployment mode
+- [ ] Re-test key endpoints via curl:
+  - [ ] `/admin` unauth redirect
+  - [ ] `/home` unauth redirect
+  - [ ] `/api/auth/session-debug` visibility of cookie/session state
+- [ ] Ask user to verify browser login flow after rebuild/restart (server action stale cleanup)

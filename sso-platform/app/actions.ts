@@ -100,7 +100,7 @@ export async function loginAction(_prevState: LegacyLoginActionState | LoginActi
   cookieStore.set("sso_session", session.id, {
     path: "/",
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: env.SESSION_COOKIE_SECURE,
     sameSite: "lax",
     maxAge: env.SESSION_MAX_AGE,
   });

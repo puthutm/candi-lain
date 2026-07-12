@@ -60,9 +60,11 @@ services:
       - path: ./sso-platform/.env
         required: false
     environment:
+      - NODE_ENV=production
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/sso_platform
       - REDIS_URL=redis://redis:6379
       - NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=erp-unsia-sso-server-actions-key-2026
+      - SESSION_COOKIE_SECURE=false
 
   reference-data:
     build:
