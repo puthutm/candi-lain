@@ -67,11 +67,6 @@ function mapAuthErrorToState(error: string): LoginActionState {
   }
 }
 
-type LegacyLoginActionState = {
-  error?: string;
-  success?: boolean;
-  redirectTo?: string;
-} | null;
 
 async function computeCookieSecureFromRequest(): Promise<boolean> {
   const reqHeaders = await headers();
