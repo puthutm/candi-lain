@@ -6,8 +6,6 @@ import { lmsSessions, lmsAssignments, assignmentSubmissions } from "@/db/schema/
 import { videoConferences, vcAttendances } from "@/db/schema/vicon";
 import { eq, and, count } from "drizzle-orm";
 
-// Import SIAKAD tables through package alias to avoid fragile relative paths
-import { siakadGrades } from "@/../siakad-platform/db/schema/krs";
 
 function getGradePoint(letter: string): string {
   switch (letter) {
@@ -164,45 +162,8 @@ export async function POST(req: Request) {
             });
         }
 
-        // E. Direct write back to SIAKAD grades (if matching academic class exists)
+        // E. Send grade event to SIAKAD via webhook (decoupled integration)
         if (lmsClass.siakadClassId) {
-          const existingSiakadGrade = await tx
-            .select()
-            .from(siakadGrades)
-            .where(
-              and(
-                eq(siakadGrades.classId, lmsClass.siakadClassId),
-                eq(siakadGrades.studentId, student.userId)
-              )
-            )
-            .limit(1);
-
-          const gradePoint = getGradePoint(letterGrade);
-
-          if (existingSiakadGrade.length > 0) {
-            await tx
-              .update(siakadGrades)
-              .set({
-                finalScore: finalScore.toFixed(2),
-                letterGrade,
-                gradePoint,
-                locked: true,
-              })
-              .where(eq(siakadGrades.id, existingSiakadGrade[0]!.id));
-          } else {
-            await tx
-              .insert(siakadGrades)
-              .values({
-                studentId: student.userId,
-                classId: lmsClass.siakadClassId,
-                finalScore: finalScore.toFixed(2),
-                letterGrade,
-                gradePoint,
-                locked: true,
-              });
-          }
-
-          // Trigger decoupling webhook to SIAKAD as per API contract
           try {
             const payload = {
               event: "grade.finalized",
@@ -213,13 +174,15 @@ export async function POST(req: Request) {
                 student_user_id: student.userId,
                 final_score: Math.round(finalScore),
                 letter_grade: letterGrade,
-              }
+                grade_point: getGradePoint(letterGrade),
+              },
             };
+
             fetch("http://localhost:3003/api/webhooks/lms", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload),
-            }).catch(err => console.error("SIAKAD grade webhook failed", err));
+            }).catch((err) => console.error("SIAKAD grade webhook failed", err));
           } catch (webhookErr) {
             console.error("Grade webhook trigger error", webhookErr);
           }
