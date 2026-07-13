@@ -77,39 +77,39 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     // 3. Seed Applications
     const defaultApps = [
       {
-        clientId: "siakad-platform",
-        clientSecret: "siakad-platform-client-secret-key-2026",
+        clientId: env.SEED_SIAKAD_CLIENT_ID,
+        clientSecret: env.SEED_SIAKAD_CLIENT_SECRET,
         name: "SIAKAD Platform",
         description: "Sistem Informasi Akademik",
-        redirectUris: ["http://localhost:3003/api/auth/callback"],
+        redirectUris: [env.SEED_SIAKAD_CALLBACK_URL],
       },
       {
-        clientId: "lms-platform",
-        clientSecret: "lms-platform-client-secret-key-2026",
+        clientId: env.SEED_LMS_CLIENT_ID,
+        clientSecret: env.SEED_LMS_CLIENT_SECRET,
         name: "LMS Platform",
         description: "Learning Management System",
-        redirectUris: ["http://localhost:3004/api/auth/callback"],
+        redirectUris: [env.SEED_LMS_CALLBACK_URL],
       },
       {
-        clientId: "pmb-platform",
-        clientSecret: "pmb-platform-client-secret-key-2026",
+        clientId: env.SEED_PMB_CLIENT_ID,
+        clientSecret: env.SEED_PMB_CLIENT_SECRET,
         name: "PMB Platform",
         description: "Penerimaan Mahasiswa Baru",
-        redirectUris: ["http://localhost:3002/api/auth/callback"],
+        redirectUris: [env.SEED_PMB_CALLBACK_URL],
       },
       {
-        clientId: "keuangan-platform",
-        clientSecret: "keuangan-platform-client-secret-key-2026",
+        clientId: env.SEED_KEUANGAN_CLIENT_ID,
+        clientSecret: env.SEED_KEUANGAN_CLIENT_SECRET,
         name: "Keuangan Platform",
         description: "Sistem Keuangan Terpadu",
-        redirectUris: ["http://localhost:3005/api/auth/callback"],
+        redirectUris: [env.SEED_KEUANGAN_CALLBACK_URL],
       },
       {
-        clientId: "hris-platform",
-        clientSecret: "hris-platform-client-secret-key-2026",
+        clientId: env.SEED_HRIS_CLIENT_ID,
+        clientSecret: env.SEED_HRIS_CLIENT_SECRET,
         name: "HRIS Platform",
         description: "Human Resources Information System",
-        redirectUris: ["http://localhost:3006/api/auth/callback"],
+        redirectUris: [env.SEED_HRIS_CALLBACK_URL],
       }
     ];
 

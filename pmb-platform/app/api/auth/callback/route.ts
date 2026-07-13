@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { ssoUsers, ssoApplications, ssoApplicationRoles, ssoUserApplicationRoles, ssoOauthAuthorizationCodes } from "@/db/schema/sso";
 import { eq, and } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { env } from "@/lib/env";
 
 export async function GET(req: Request) {
   try {
@@ -57,7 +58,7 @@ export async function GET(req: Request) {
     const appList = await db
       .select()
       .from(ssoApplications)
-      .where(eq(ssoApplications.clientId, "pmb-platform"))
+      .where(eq(ssoApplications.clientId, env.SSO_OAUTH_CLIENT_ID))
       .limit(1);
 
     let role = "pendaftar"; // default fallback

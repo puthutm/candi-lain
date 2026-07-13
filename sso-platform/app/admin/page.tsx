@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { INSTITUTION_SHORT_NAME, APP_NAME } from "@/lib/client-config";
 
 interface AuditLog {
   id: string;
@@ -64,7 +65,7 @@ export default function AdminDashboardPage() {
       });
       const data = await res.json();
       if (data.success) {
-        triggerToast(`Sukses! Password ${name} direset ke default: "password123"`);
+        triggerToast(`Sukses! Password ${name} sudah direset ke default.`);
       } else {
         triggerToast(`Gagal mereset: ${data.error}`);
       }

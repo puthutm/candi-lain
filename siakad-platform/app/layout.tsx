@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { INSTITUTION_NAME, INSTITUTION_SHORT_NAME, APP_NAME } from "@/lib/client-config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SIAKAD UNSIA - Sistem Informasi Akademik Terpadu",
-  description: "Sistem Informasi Akademik Terpadu Universitas Siber Asia.",
+  title: `${APP_NAME} ${INSTITUTION_SHORT_NAME} - Sistem Informasi Akademik Terpadu`,
+  description: `Sistem Informasi Akademik Terpadu ${INSTITUTION_NAME}.`,
 };
 
 import { RoleProvider } from "./context/RoleContext";

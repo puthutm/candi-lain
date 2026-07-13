@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { logoutAction } from "./actions";
 import Link from "next/link";
+import { PORTAL_NAME } from "@/lib/client-config";
 
 export default async function HomePage() {
   const user = await getSessionUser();
@@ -52,7 +53,7 @@ export default async function HomePage() {
       {/* Top Navbar */}
       <nav className="z-10 flex items-center justify-between border-b border-white/10 bg-slate-950/80 px-8 py-4 backdrop-blur-md">
         <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-xl font-bold tracking-tight text-transparent">
-          SSO Portal
+          {PORTAL_NAME}
         </span>
         <div className="flex items-center gap-4">
           <span className="text-sm text-slate-400">{user.fullName}</span>
@@ -71,7 +72,7 @@ export default async function HomePage() {
       <div className="z-10 flex flex-1">
         {/* Sidebar */}
         <aside className="w-[56px] shrink-0 border-r border-white/10 bg-slate-950/60 backdrop-blur-md">
-          <div className="flex h-full flex-col items-center gap-3 py-6">
+          <div className="flex h-full flex-col items-center gap-3 py-6 text-white">
             {isUserAdmin && (
               <Link
                 href="/admin"
@@ -88,13 +89,40 @@ export default async function HomePage() {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="text-slate-300 group-hover:text-indigo-400"
+                  className="text-white group-hover:text-indigo-300"
+                  aria-hidden="true"
                 >
                   <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
                   <path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1a2 2 0 0 1-1.4 3.4h-.2a1.8 1.8 0 0 0-2 1.2 2 2 0 0 1-3.9 0 1.8 1.8 0 0 0-2-1.2h-.2a2 2 0 0 1-1.4-3.4l.1-.1a1.8 1.8 0 0 0 .4-2 1.8 1.8 0 0 0-1.6-1H4.7a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.1a1.8 1.8 0 0 0 1.6-1 1.8 1.8 0 0 0-.4-2l-.1-.1A2 2 0 0 1 7.4 2.5h.2a1.8 1.8 0 0 0 2-1.2 2 2 0 0 1 3.9 0 1.8 1.8 0 0 0 2 1.2h.2a2 2 0 0 1 1.4 3.4l-.1.1a1.8 1.8 0 0 0-.4 2 1.8 1.8 0 0 0 1.6 1h.1a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.1a1.8 1.8 0 0 0-1.6 1z" />
                 </svg>
               </Link>
             )}
+
+            {/* logout icon (always visible, icon-only) */}
+            <form action={logoutAction} className="w-full">
+              <button
+                type="submit"
+                aria-label="Logout"
+                className="group mx-auto flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] transition-all hover:-translate-y-0.5 hover:border-indigo-500/30 hover:bg-white/[0.04]"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-white group-hover:text-indigo-300"
+                  aria-hidden="true"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
+            </form>
           </div>
         </aside>
 
@@ -126,7 +154,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {userApps.map((app) => {
                 // Construct a default authorization redirection flow link with mockup PKCE
-                const defaultUri = app.redirectUris[0] || "http://localhost:3000";
+                const defaultUri = app.redirectUris[0] || "";
                 const authUrl = `/oauth/authorize?client_id=${app.clientId}&redirect_uri=${encodeURIComponent(
                   defaultUri
                 )}&response_type=code&scope=openid+profile&code_challenge=E9Melhoa2OwvFrGMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256&state=sso_portal_direct`;

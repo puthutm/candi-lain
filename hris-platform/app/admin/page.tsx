@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { APP_NAME } from "@/lib/client-config";
 
 interface OrgUnit {
   id: string;
@@ -101,7 +102,7 @@ export default function HrisAdminDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        triggerNotice(`Sukses! Password ${name} direset ke default: "password123"`);
+        triggerNotice(`Sukses! Password ${name} sudah direset ke default.`);
       } else {
         triggerNotice(`Gagal mereset: ${data.error}`);
       }

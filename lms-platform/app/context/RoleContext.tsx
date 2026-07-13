@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { SSO_AUTHORIZE_URL, SSO_CLIENT_ID, SSO_CALLBACK_URL } from "@/lib/client-config";
 
 type Role = "dosen" | "mahasiswa";
 
@@ -30,6 +31,10 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const redirectToSSO = () => {
+    window.location.href = `${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=mock_challenge&code_challenge_method=plain&scope=openid`;
+  };
+
   const refreshSession = async () => {
     try {
       const res = await fetch("/api/auth/session");
@@ -40,13 +45,13 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       } else {
         setUser(null);
         if (pathname !== "/login") {
-          window.location.href = "http://localhost:3000/oauth/authorize?client_id=lms-platform&redirect_uri=http://localhost:3004/api/auth/callback&response_type=code&code_challenge=mock_challenge&code_challenge_method=plain&scope=openid";
+          redirectToSSO();
         }
       }
     } catch (err) {
       setUser(null);
       if (pathname !== "/login") {
-        window.location.href = "http://localhost:3000/oauth/authorize?client_id=lms-platform&redirect_uri=http://localhost:3004/api/auth/callback&response_type=code&code_challenge=mock_challenge&code_challenge_method=plain&scope=openid";
+        redirectToSSO();
       }
     } finally {
       setLoading(false);

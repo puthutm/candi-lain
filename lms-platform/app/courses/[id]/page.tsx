@@ -3,6 +3,7 @@
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRole } from "../../context/RoleContext";
+import { INSTITUTION_NAME, INSTITUTION_SHORT_NAME, APP_NAME } from "@/lib/client-config";
 
 interface LMSClass {
   id: string;
@@ -252,7 +253,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
           sessionId: selectedSession.id,
           materialType: matType,
           title: matTitle,
-          fileUrl: matUrl || "http://storage.unsia.ac.id/materi.pdf",
+          fileUrl: matUrl || "",
         }),
       });
       const data = await res.json();
@@ -643,8 +644,8 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
               <span className="text-white font-display font-black text-lg">U</span>
             </div>
             <div className="leading-tight">
-              <p className="font-display font-black text-slate-900 text-sm">UNSIA LMS</p>
-              <p className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">Universitas Siber Asia</p>
+              <p className="font-display font-black text-slate-900 text-sm">{INSTITUTION_SHORT_NAME} {APP_NAME}</p>
+              <p className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">{INSTITUTION_NAME}</p>
             </div>
           </Link>
           <div className="hidden md:flex items-center gap-2 ml-3 pl-3 border-l border-slate-200 text-xs text-slate-500 font-bold">
@@ -806,7 +807,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                               value={matUrl}
                               onChange={(e) => setMatUrl(e.target.value)}
                               className="w-full mt-1.5 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#004996] text-xs font-semibold"
-                              placeholder="e.g. http://storage.unsia.ac.id/slides.pdf"
+                              placeholder="URL materi (dari storage platform)"
                             />
                           </div>
                           <button

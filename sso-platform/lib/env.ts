@@ -46,6 +46,26 @@ const envSchema = z.object({
   SUPER_ADMIN_EMAIL: z.string().email().optional(),
   SUPER_ADMIN_PASSWORD: z.string().optional(),
 
+  // Default password applied when an admin resets a user's password
+  DEFAULT_RESET_PASSWORD: z.string().default("Sso@2026!default"),
+
+  // Seed configuration: client IDs, secrets, and redirect URIs per platform
+  SEED_SIAKAD_CLIENT_ID: z.string().default("siakad-platform"),
+  SEED_SIAKAD_CLIENT_SECRET: z.string().default("siakad-platform-client-secret-key-2026"),
+  SEED_SIAKAD_CALLBACK_URL: z.string().default("http://localhost:3003/api/auth/callback"),
+  SEED_LMS_CLIENT_ID: z.string().default("lms-platform"),
+  SEED_LMS_CLIENT_SECRET: z.string().default("lms-platform-client-secret-key-2026"),
+  SEED_LMS_CALLBACK_URL: z.string().default("http://localhost:3004/api/auth/callback"),
+  SEED_PMB_CLIENT_ID: z.string().default("pmb-platform"),
+  SEED_PMB_CLIENT_SECRET: z.string().default("pmb-platform-client-secret-key-2026"),
+  SEED_PMB_CALLBACK_URL: z.string().default("http://localhost:3002/api/auth/callback"),
+  SEED_KEUANGAN_CLIENT_ID: z.string().default("keuangan-platform"),
+  SEED_KEUANGAN_CLIENT_SECRET: z.string().default("keuangan-platform-client-secret-key-2026"),
+  SEED_KEUANGAN_CALLBACK_URL: z.string().default("http://localhost:3005/api/auth/callback"),
+  SEED_HRIS_CLIENT_ID: z.string().default("hris-platform"),
+  SEED_HRIS_CLIENT_SECRET: z.string().default("hris-platform-client-secret-key-2026"),
+  SEED_HRIS_CALLBACK_URL: z.string().default("http://localhost:3006/api/auth/callback"),
+
   // CORS
   ALLOWED_ORIGINS: z.string().optional(),
 

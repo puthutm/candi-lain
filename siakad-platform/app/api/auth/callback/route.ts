@@ -4,6 +4,7 @@ import { ssoUsers, ssoApplications, ssoApplicationRoles, ssoUserApplicationRoles
 import { eq, and } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { ensureSiakadSeeded } from "@/db/seed";
+import { env } from "@/lib/env";
 
 export async function GET(req: Request) {
   try {
@@ -59,7 +60,7 @@ export async function GET(req: Request) {
     const appList = await db
       .select()
       .from(ssoApplications)
-      .where(eq(ssoApplications.clientId, "siakad-platform"))
+      .where(eq(ssoApplications.clientId, env.SSO_OAUTH_CLIENT_ID))
       .limit(1);
 
     let role = "mahasiswa";

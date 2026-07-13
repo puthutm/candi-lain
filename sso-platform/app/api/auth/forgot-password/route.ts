@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { users, passwordResetTokens } from "@/db/schema/users";
 import { eq } from "drizzle-orm";
+import { env } from "@/lib/env";
 
 export async function POST(req: Request) {
   try {
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
       used: false,
     });
 
-    const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+    const resetLink = `${env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
 
     return NextResponse.json({
       success: true,

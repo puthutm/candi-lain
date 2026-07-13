@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRole } from "../context/RoleContext";
+import { INSTITUTION_NAME, INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -52,7 +53,7 @@ export default function LoginPage() {
             <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#FED524] border-2 border-slate-900"></div>
           </div>
           <div>
-            <h2 className="font-display font-extrabold text-xl text-white tracking-tight">Portal SSO UNSIA</h2>
+            <h2 className="font-display font-extrabold text-xl text-white tracking-tight">Portal SSO {INSTITUTION_SHORT_NAME}</h2>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Single Sign-On Identity Provider</p>
           </div>
         </div>
@@ -99,7 +100,7 @@ export default function LoginPage() {
 
         <div className="border-t border-slate-800 pt-4 text-center">
           <p className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">
-            Universitas Siber Asia · Be Smart, Be Cyber
+            {INSTITUTION_NAME} · Be Smart, Be Cyber
           </p>
         </div>
 

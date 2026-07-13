@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { videoConferences } from "@/db/schema/vicon";
 import { lmsSessions } from "@/db/schema/sessions";
 import { eq } from "drizzle-orm";
+import { env } from "@/lib/env";
 
 export async function POST(req: Request) {
   try {
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Session not found" }, { status: 404 });
     }
 
-    const meetingRoomName = `UNSIA-Meet-${sessionId.slice(0, 8)}`;
+    const meetingRoomName = `${env.VIDEO_CONFERENCE_PREFIX}-${sessionId.slice(0, 8)}`;
     const meetingLink = `https://meet.jit.si/${meetingRoomName}`;
 
     const [vicon] = await db

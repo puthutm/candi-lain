@@ -2,6 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import {
+  INSTITUTION_NAME,
+  SSO_AUTHORIZE_URL,
+  SSO_CLIENT_ID,
+  SSO_CALLBACK_URL,
+  ENTRY_PATH_FEE,
+  DEFAULT_APPLICANT_PASSWORD,
+} from "@/lib/client-config";
 
 interface GelombangItem {
   id: string;
@@ -34,10 +42,10 @@ const GELOMBANG: GelombangItem[] = [
 ];
 
 const JALUR: JalurItem[] = [
-  { id: "reguler", name: "Reguler", desc: "Jalur umum tanpa syarat khusus", price: 250000, icon: "✨" },
-  { id: "prestasi", name: "Prestasi", desc: "Diskon biaya untuk pencapaian akademik / non-akademik", price: 150000, icon: "🏆" },
-  { id: "mitra", name: "Mitra", desc: "Untuk siswa dari sekolah / lembaga mitra resmi", price: 200000, icon: "🤝" },
-  { id: "beasiswa", name: "Beasiswa", desc: "Pembebasan biaya pendaftaran", price: 0, free: true, icon: "🎁" },
+  { id: "reguler", name: "Reguler", desc: "Jalur umum tanpa syarat khusus", price: ENTRY_PATH_FEE["reguler"] ?? 250000, icon: "✨" },
+  { id: "prestasi", name: "Prestasi", desc: "Diskon biaya untuk pencapaian akademik / non-akademik", price: ENTRY_PATH_FEE["prestasi"] ?? 150000, icon: "🏆" },
+  { id: "mitra", name: "Mitra", desc: "Untuk siswa dari sekolah / lembaga mitra resmi", price: ENTRY_PATH_FEE["mitra"] ?? 200000, icon: "🤝" },
+  { id: "beasiswa", name: "Beasiswa", desc: "Pembebasan biaya pendaftaran", price: ENTRY_PATH_FEE["beasiswa"] ?? 0, free: true, icon: "🎁" },
 ];
 
 const PRODI: ProdiItem[] = [
@@ -159,7 +167,7 @@ export default function PmbPublikPage() {
           waveId: selGelombang?.id,
           entryPathId: selJalur?.id,
           studyProgramId: selProdi?.id,
-          password: "password123", // default password for simulation
+          password: DEFAULT_APPLICANT_PASSWORD,
         }),
       })
         .then((res) => res.json())
@@ -257,7 +265,7 @@ export default function PmbPublikPage() {
             </div>
             <div className="leading-tight min-w-0">
               <div className="text-[10px] uppercase tracking-[0.18em] text-slate-200/80 font-bold">Portal PMB</div>
-              <div className="font-display font-bold text-sm sm:text-base truncate">Universitas Siber Asia</div>
+              <div className="font-display font-bold text-sm sm:text-base truncate">{INSTITUTION_NAME}</div>
             </div>
           </div>
 
@@ -319,7 +327,7 @@ export default function PmbPublikPage() {
           </div>
 
           <div className="mt-auto pt-6 text-[10px] text-slate-300/70">
-            © {currentYear} Universitas Siber Asia.
+            © {currentYear} {INSTITUTION_NAME}.
           </div>
         </div>
       </aside>
@@ -623,7 +631,7 @@ export default function PmbPublikPage() {
                         </div>
                         <div className="text-slate-500 text-xs mt-1">
                           Saya menyatakan data yang diisi adalah benar dan menyetujui kebijakan privasi serta ketentuan
-                          pendaftaran Universitas Siber Asia.
+                          pendaftaran {INSTITUTION_NAME}.
                         </div>
                       </div>
                     </label>
@@ -743,7 +751,7 @@ export default function PmbPublikPage() {
 
         {/* Footer */}
         <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500 shrink-0">
-          &copy; {currentYear} Universitas Siber Asia. All rights reserved.
+          &copy; {currentYear} {INSTITUTION_NAME}. All rights reserved.
         </footer>
       </main>
 
@@ -853,7 +861,7 @@ export default function PmbPublikPage() {
                 <div className="flex-grow border-t border-slate-100"></div>
               </div>
               <a
-                href="http://localhost:3000/oauth/authorize?client_id=pmb-platform&redirect_uri=http://localhost:3002/api/auth/callback&response_type=code&code_challenge=mock_challenge&code_challenge_method=plain&scope=openid"
+                href={`${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=mock_challenge&code_challenge_method=plain&scope=openid`}
                 className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-[#0f487b] bg-[#0f487b]/10 hover:bg-[#0f487b]/20 transition-all border border-[#0f487b]/10 text-xs text-center"
               >
                 🔑 Masuk dengan SSO Portal

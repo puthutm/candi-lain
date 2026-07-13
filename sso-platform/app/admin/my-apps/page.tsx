@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { applications } from "@/db/schema/applications";
 import { eq } from "drizzle-orm";
+import { PORTAL_NAME } from "@/lib/client-config";
 import Link from "next/link";
 
 export default async function MyAppsDashboard() {
@@ -23,7 +24,7 @@ export default async function MyAppsDashboard() {
       <aside className="w-64 border-r border-white/10 bg-slate-900/50 p-6 flex flex-col justify-between">
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-xl font-bold tracking-tight text-transparent">
-            SSO Portal
+            {PORTAL_NAME}
           </div>
           <nav className="flex flex-col gap-2">
             <Link

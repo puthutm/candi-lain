@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { lmsClasses, classEnrollments } from "@/db/schema/classes";
 import { eq } from "drizzle-orm";
+import { env } from "@/lib/env";
 
-const SIAKAD_BASE_URL = process.env.SIAKAD_BASE_URL || "http://localhost:3003";
+const SIAKAD_BASE_URL = env.SIAKAD_BASE_URL;
 
 type SiakadPeriod = {
   id: string;

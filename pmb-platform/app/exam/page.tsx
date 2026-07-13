@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { INSTITUTION_NAME, INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
 interface ExamModule {
   id: string;
@@ -202,7 +203,7 @@ export default function ExamPage() {
             📝
           </span>
           <div>
-            <h1 className="font-display font-bold text-lg md:text-xl leading-tight">CBT PMB UNSIA</h1>
+            <h1 className="font-display font-bold text-lg md:text-xl leading-tight">CBT PMB {INSTITUTION_SHORT_NAME}</h1>
             <p className="text-[10px] md:text-xs text-blue-100 font-medium tracking-wide uppercase">
               {activeModule ? activeModule.name : "Lobi Ujian Seleksi"}
             </p>
@@ -524,7 +525,7 @@ export default function ExamPage() {
 
       {/* Footer */}
       <footer className="h-10 border-t border-slate-200 bg-white flex items-center justify-center text-[10px] text-slate-400">
-        &copy; {new Date().getFullYear()} Universitas Siber Asia. All rights reserved.
+        &copy; {new Date().getFullYear()} {INSTITUTION_NAME}. All rights reserved.
       </footer>
     </div>
   );

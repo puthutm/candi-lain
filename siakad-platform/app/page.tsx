@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRole } from "./context/RoleContext";
+import { LOGO_URL, INSTITUTION_SHORT_NAME, INSTITUTION_NAME } from "@/lib/client-config";
 
 type OnboardTab = "dashboard" | "ukt" | "krs" | "ktm";
 
@@ -97,8 +98,8 @@ export default function OnboardingPage() {
       >
         <div className="h-20 flex items-center px-6 border-b border-white/10 shrink-0">
           <img
-            src="https://unsia.ac.id/wp-content/uploads/2022/11/LOGO-UNSIA-1.png"
-            alt="Logo UNSIA"
+            src={LOGO_URL}
+            alt={`Logo ${INSTITUTION_SHORT_NAME}`}
             className="h-8 object-contain brightness-0 invert"
           />
         </div>
@@ -441,7 +442,7 @@ export default function OnboardingPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-display font-black text-lg tracking-tight">KTM DIGITAL</h3>
-                    <p className="text-[9px] text-[#FED524] font-bold tracking-widest uppercase">Universitas Siber Asia</p>
+                    <p className="text-[9px] text-[#FED524] font-bold tracking-widest uppercase">{INSTITUTION_NAME}</p>
                   </div>
                   <span className="text-2xl">🏛️</span>
                 </div>
@@ -459,7 +460,7 @@ export default function OnboardingPage() {
 
                 <div className="flex justify-between items-end border-t border-white/10 pt-3 text-[8px] text-white/50">
                   <span>Diterbitkan: {new Date().toLocaleDateString("id-ID")}</span>
-                  <span className="font-mono text-[9px] text-[#FED524]">UNSIA-STUDENT</span>
+                  <span className="font-mono text-[9px] text-[#FED524]">{INSTITUTION_SHORT_NAME}-STUDENT</span>
                 </div>
               </div>
             </div>

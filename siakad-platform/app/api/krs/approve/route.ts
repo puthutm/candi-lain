@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { siakadKrsItems, siakadKrs } from "@/db/schema/krs";
 import { siakadStudents } from "@/db/schema/civitas";
 import { eq } from "drizzle-orm";
+import { env } from "@/lib/env";
 
 export async function POST(req: Request) {
   try {
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
           }
         };
 
-        fetch("http://localhost:3004/api/webhooks/siakad", {
+        fetch(env.LMS_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),

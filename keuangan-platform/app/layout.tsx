@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { INSTITUTION_SHORT_NAME, APP_NAME } from "@/lib/client-config";
 
 export const metadata: Metadata = {
-  title: "Sistem Keuangan Terpadu (SKEU) - UNSIA",
+  title: `Sistem Keuangan Terpadu (${APP_NAME}) - ${INSTITUTION_SHORT_NAME}`,
   description: "Portal Keuangan Mahasiswa & Biro Keuangan",
 };
 

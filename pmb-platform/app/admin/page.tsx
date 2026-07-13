@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
 type AdminPanelType =
   | "dashboard"
@@ -333,7 +334,7 @@ export default function AdminPage() {
             <span className="w-9 h-9 rounded-lg bg-[#ecc94b] flex items-center justify-center font-bold text-[#0f487b]">
               PMB
             </span>
-            <span className="text-white font-bold tracking-tight text-sm">Admin PMB UNSIA</span>
+            <span className="text-white font-bold tracking-tight text-sm">Admin PMB {INSTITUTION_SHORT_NAME}</span>
           </div>
         </div>
 

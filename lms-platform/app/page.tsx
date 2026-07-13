@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRole } from "./context/RoleContext";
+import { INSTITUTION_NAME, INSTITUTION_SHORT_NAME, APP_NAME } from "@/lib/client-config";
 
 interface LMSClass {
   id: string;
@@ -103,7 +104,7 @@ export default function HomeDashboard() {
           </div>
           <div className="leading-tight">
             <div className="flex items-center gap-1.5">
-              <p className="font-display font-black text-slate-900 text-sm">UNSIA LMS</p>
+              <p className="font-display font-black text-slate-900 text-sm">{INSTITUTION_SHORT_NAME} {APP_NAME}</p>
               <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
                 currentRole === "dosen"
                   ? "bg-rose-50 text-rose-600 border border-rose-100"
@@ -112,7 +113,7 @@ export default function HomeDashboard() {
                 {currentRole === "dosen" ? "Dosen" : "Mahasiswa"}
               </span>
             </div>
-            <p className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">Universitas Siber Asia</p>
+            <p className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">{INSTITUTION_NAME}</p>
           </div>
         </div>
 

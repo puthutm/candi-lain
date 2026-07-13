@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { ssoUsers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import { env } from "@/lib/env";
 
 export async function POST(req: Request) {
   try {
@@ -19,8 +20,8 @@ export async function POST(req: Request) {
     }
 
     // Default password
-    const defaultPassword = "password123";
-    const hashed = await bcrypt.hash(defaultPassword, 12);
+    const defaultPassword = env.DEFAULT_RESET_PASSWORD;
+    const hashed = await bcrypt.hash(defaultPassword, env.BCRYPT_ROUNDS);
 
     await db
       .update(ssoUsers)

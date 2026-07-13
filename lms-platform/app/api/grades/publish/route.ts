@@ -5,6 +5,7 @@ import { lmsGrades } from "@/db/schema/grades";
 import { lmsSessions, lmsAssignments, assignmentSubmissions } from "@/db/schema/sessions";
 import { videoConferences, vcAttendances } from "@/db/schema/vicon";
 import { eq, and, count } from "drizzle-orm";
+import { env } from "@/lib/env";
 
 
 function getGradePoint(letter: string): string {
@@ -178,7 +179,7 @@ export async function POST(req: Request) {
               },
             };
 
-            fetch("http://localhost:3003/api/webhooks/lms", {
+            fetch(env.SIAKAD_WEBHOOK_URL, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload),

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, use } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { INSTITUTION_NAME, INSTITUTION_SHORT_NAME, APP_NAME } from "@/lib/client-config";
 import { useRole } from "../../../../context/RoleContext";
 
 interface Annotation {
@@ -267,8 +268,8 @@ export default function GradingBoard({ params }: { params: Promise<{ id: string;
               <span className="text-white font-display font-black text-lg">U</span>
             </div>
             <div className="leading-tight">
-              <p className="font-display font-black text-slate-900 text-sm">UNSIA LMS</p>
-              <p className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">Universitas Siber Asia</p>
+              <p className="font-display font-black text-slate-900 text-sm">{INSTITUTION_SHORT_NAME} {APP_NAME}</p>
+              <p className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">{INSTITUTION_NAME}</p>
             </div>
           </Link>
           <div className="hidden md:flex items-center gap-2 ml-3 pl-3 border-l border-slate-200 text-xs text-slate-500 font-bold">

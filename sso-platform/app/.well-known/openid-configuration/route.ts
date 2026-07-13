@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
 
 export async function GET() {
-  const appUrl = env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const issuer = env.JWT_ISSUER || "http://localhost:3000";
+  const appUrl = env.NEXT_PUBLIC_APP_URL;
+  const issuer = env.JWT_ISSUER || appUrl;
 
   const config = {
     issuer,

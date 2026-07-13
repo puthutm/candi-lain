@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
 interface LMSClass {
   id: string;
@@ -166,7 +167,7 @@ export default function DosenDashboard() {
           sessionId: selectedSession.id,
           materialType,
           title: materialTitle,
-          fileUrl: materialUrl || "http://example.com/file.pdf",
+          fileUrl: materialUrl || "",
         }),
       });
       const data = await res.json();
@@ -267,7 +268,7 @@ export default function DosenDashboard() {
           </div>
           <div>
             <h1 className="font-display font-bold text-xl tracking-tight text-white">LMS ICEMS</h1>
-            <p className="text-xs text-slate-400 font-medium">Portal Dosen UNSIA</p>
+            <p className="text-xs text-slate-400 font-medium">Portal Dosen {INSTITUTION_SHORT_NAME}</p>
           </div>
         </div>
 
@@ -449,7 +450,7 @@ export default function DosenDashboard() {
                               value={materialUrl}
                               onChange={(e) => setMaterialUrl(e.target.value)}
                               className="w-full mt-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm font-medium"
-                              placeholder="e.g. http://storage.unsia.ac.id/modul.pdf"
+                              placeholder="URL materi (dari storage platform)"
                             />
                           </div>
 

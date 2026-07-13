@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbApplicants, pmbApplicantDocuments, pmbDocumentTypes } from "@/db/schema/applicants";
 import { eq } from "drizzle-orm";
+import { env } from "@/lib/env";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -87,13 +88,13 @@ export async function PUT(req: Request, { params }: RouteParams) {
             study_program_code: appRecord.studyProgramId || "INF",
             entry_path_code: appRecord.entryPathId || "REGULER",
             documents_snapshot: [
-              { doc_type: "ktp", file_url: "http://storage.unsia.ac.id/ktp.pdf", verified_at: new Date().toISOString() }
+              { doc_type: "ktp", file_url: `${env.STORAGE_BASE_URL}/ktp.pdf`, verified_at: new Date().toISOString() }
             ]
           }
         };
 
         // Fire and forget, log errors if any
-        fetch("http://localhost:3003/api/webhooks/pmb", {
+        fetch(env.SIAKAD_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),

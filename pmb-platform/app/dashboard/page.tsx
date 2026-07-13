@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import {
+  INSTITUTION_NAME,
+  FORM_FEE_DISPLAY,
+  PAYMENT_BANKS,
+} from "@/lib/client-config";
 
 type TabType = "dashboard" | "tagihan" | "data" | "ujian" | "pengumuman";
 
@@ -354,7 +359,7 @@ export default function ApplicantDashboard() {
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800 text-base">S1 Informatika</h3>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">Universitas Siber Asia</p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">{INSTITUTION_NAME}</p>
                     <div className="flex gap-1.5 mt-1">
                       <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[9px] rounded font-bold">
                         Online
@@ -373,7 +378,7 @@ export default function ApplicantDashboard() {
                   </div>
                   <div>
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Biaya Tagihan</p>
-                    <p className="font-bold text-slate-700 mt-0.5">Rp 250.000</p>
+                    <p className="font-bold text-slate-700 mt-0.5">{FORM_FEE_DISPLAY}</p>
                   </div>
                   <div>
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Status</p>
@@ -423,7 +428,7 @@ export default function ApplicantDashboard() {
                   <div className="md:col-span-2 space-y-4 bg-white p-6 rounded-2xl border border-slate-200">
                     <h3 className="text-sm font-bold text-slate-800 mb-3">Pilih Virtual Account</h3>
                     <div className="space-y-2">
-                      {["Bank BNI VA", "Bank Mandiri VA", "Bank Permata VA"].map((va) => {
+                      {PAYMENT_BANKS.map((va) => {
                         const isSelected = selectedVa === va;
                         return (
                           <button
@@ -442,7 +447,7 @@ export default function ApplicantDashboard() {
 
                     <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                       <span className="text-xs text-slate-400">Biaya Formulir</span>
-                      <span className="font-bold text-[#0f487b]">Rp 250.000</span>
+                      <span className="font-bold text-[#0f487b]">{FORM_FEE_DISPLAY}</span>
                     </div>
 
                     <button

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRole } from "../context/RoleContext";
+import { LOGO_URL, INSTITUTION_SHORT_NAME, INSTITUTION_NAME } from "@/lib/client-config";
 
 type DosenTab = "beranda" | "jadwal" | "nilai" | "krs_perwalian";
 
@@ -124,7 +125,7 @@ export default function DosenPage() {
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       } lg:translate-x-0 transition-transform duration-300 ease-in-out`}>
         <div className="h-20 flex items-center px-6 border-b border-white/10 shrink-0">
-          <img src="https://unsia.ac.id/wp-content/uploads/2022/11/LOGO-UNSIA-1.png" alt="Logo UNSIA" className="h-8 object-contain brightness-0 invert" />
+          <img src={LOGO_URL} alt={`Logo ${INSTITUTION_SHORT_NAME}`} className="h-8 object-contain brightness-0 invert" />
         </div>
 
         <div className="px-6 py-5 border-b border-white/10 shrink-0">
@@ -201,7 +202,7 @@ export default function DosenPage() {
               <div className="bg-gradient-to-br from-[#0f487b] to-[#0a345c] text-white p-8 rounded-3xl shadow-xl flex flex-col gap-3 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
                 <h2 className="text-xl font-bold">Selamat Datang Kembali, {user?.name || "Dr. Hendra Setiawan"}</h2>
-                <p className="text-xs text-white/70 max-w-lg">Sistem Informasi Akademik terintegrasi UNSIA. Kelola absensi mahasiswa, persetujuan KRS perwalian, dan input nilai akhir semester secara mandiri di sini.</p>
+                <p className="text-xs text-white/70 max-w-lg">Sistem Informasi Akademik terintegrasi {INSTITUTION_SHORT_NAME}. Kelola absensi mahasiswa, persetujuan KRS perwalian, dan input nilai akhir semester secara mandiri di sini.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

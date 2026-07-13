@@ -2,6 +2,11 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import {
+  SSO_AUTHORIZE_URL,
+  SSO_CLIENT_ID,
+  SSO_CALLBACK_URL,
+} from "@/lib/client-config";
 
 interface UserProfile {
   userId: string;
@@ -43,7 +48,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   };
 
   const redirectToSSO = () => {
-    window.location.href = "http://localhost:3000/oauth/authorize?client_id=siakad-platform&redirect_uri=http://localhost:3003/api/auth/callback&response_type=code&code_challenge=mock_challenge&code_challenge_method=plain&scope=openid";
+    window.location.href = `${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=mock_challenge&code_challenge_method=plain&scope=openid`;
   };
 
   useEffect(() => {

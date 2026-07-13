@@ -3,6 +3,7 @@
 import { Suspense, useActionState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loginAction } from "@/app/actions";
+import { PORTAL_NAME } from "@/lib/client-config";
 
 function LoginContent() {
   const router = useRouter();
@@ -38,7 +39,7 @@ function LoginContent() {
       <div className="z-10 w-full max-w-md rounded-2xl border border-white/10 bg-white/[0.03] p-8 shadow-2xl backdrop-blur-md">
         <div className="mb-8 text-center">
           <h2 className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-3xl font-bold tracking-tight text-transparent">
-            SSO Portal
+            {PORTAL_NAME}
           </h2>
           <p className="mt-2 text-sm text-slate-400">
             Sign in to access your corporate applications

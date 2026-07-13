@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { LOGO_URL, INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
 type TabType = "dashboard" | "kurikulum" | "krs" | "khs" | "layanan";
 
@@ -55,8 +56,8 @@ export default function RegularStudentDashboard() {
       >
         <div className="h-20 flex items-center px-6 border-b border-white/10 shrink-0">
           <img
-            src="https://unsia.ac.id/wp-content/uploads/2022/11/LOGO-UNSIA-1.png"
-            alt="Logo UNSIA"
+            src={LOGO_URL}
+            alt={`Logo ${INSTITUTION_SHORT_NAME}`}
             className="h-8 object-contain brightness-0 invert"
           />
         </div>

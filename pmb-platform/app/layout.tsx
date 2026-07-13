@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Outfit } from "next/font/google";
 import "./globals.css";
+import { INSTITUTION_NAME } from "@/lib/client-config";
 
 const sansFont = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -13,8 +14,8 @@ const displayFont = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Portal PMB — Universitas Siber Asia",
-  description: "Portal pendaftaran calon mahasiswa baru UNSIA.",
+  title: `Portal PMB — ${INSTITUTION_NAME}`,
+  description: `Portal pendaftaran calon mahasiswa baru ${INSTITUTION_NAME}.`,
 };
 
 export default function RootLayout({

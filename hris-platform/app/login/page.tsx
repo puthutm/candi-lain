@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import { SSO_AUTHORIZE_URL, SSO_CLIENT_ID, SSO_CALLBACK_URL, INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
 export default function LoginPage() {
   useEffect(() => {
-    const ssoUrl = "http://localhost:3000/oauth/authorize?client_id=hris-platform&redirect_uri=http://localhost:3006/api/auth/callback&response_type=code&code_challenge=mock_challenge&code_challenge_method=plain&scope=openid";
+    const ssoUrl = `${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=mock_challenge&code_challenge_method=plain&scope=openid`;
     window.location.href = ssoUrl;
   }, []);
 
@@ -12,7 +13,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white font-sans">
       <div className="flex flex-col items-center gap-4">
         <div className="w-10 h-10 rounded-full border-4 border-[#FED524] border-t-transparent animate-spin"></div>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Mengarahkan ke SSO UNSIA...</p>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Mengarahkan ke SSO {INSTITUTION_SHORT_NAME}...</p>
       </div>
     </div>
   );

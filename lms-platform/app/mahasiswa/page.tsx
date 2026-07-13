@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
 interface LMSClass {
   id: string;
@@ -190,7 +191,7 @@ export default function StudentDashboard() {
           </div>
           <div>
             <h1 className="font-display font-bold text-xl tracking-tight text-white">LMS ICEMS</h1>
-            <p className="text-xs text-slate-400 font-medium">Portal Mahasiswa UNSIA</p>
+            <p className="text-xs text-slate-400 font-medium">Portal Mahasiswa {INSTITUTION_SHORT_NAME}</p>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 type AdminTab = "dashboard" | "krs_validation" | "pddikti" | "audit";
 
 interface KrsSubmission {
@@ -312,7 +313,7 @@ export default function AcademicAdminPage() {
               <h2 className="text-xl font-bold text-slate-800">Sinkronisasi Pangkalan Data Pendidikan Tinggi</h2>
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center space-y-4">
                 <span className="text-4xl">☁️</span>
-                <h3 className="font-bold text-slate-800">UNSIA Feeder Sync Agent</h3>
+                <h3 className="font-bold text-slate-800">{INSTITUTION_SHORT_NAME} Feeder Sync Agent</h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
                   Sinkronisasikan data mahasiswa, nilai KRS, dan kelulusan aktif langsung ke server PDDikti pusat secara terjadwal.
                 </p>

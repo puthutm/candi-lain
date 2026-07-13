@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { pmbApplicants, pmbApplicantProfiles, pmbApplicantStatusHistory } from "@/db/schema/applicants";
 import { pmbStudyPrograms, pmbEntryPaths } from "@/db/schema/master";
 import { eq } from "drizzle-orm";
+import { env } from "@/lib/env";
 
 export async function POST(req: Request) {
   try {
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
           entryPath: applicant.entryPathCode === "BEAS" ? "beasiswa" : "mandiri",
         };
 
-        const siakadCallbackUrl = "http://localhost:3003/api/integration/pmb-callback";
+        const siakadCallbackUrl = env.SIAKAD_CALLBACK_URL;
         
         // Non-blocking fire-and-forget or await the callback
         const response = await fetch(siakadCallbackUrl, {

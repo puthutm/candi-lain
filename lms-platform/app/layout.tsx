@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Outfit } from "next/font/google";
 import { RoleProvider } from "./context/RoleContext";
 import "./globals.css";
+import { INSTITUTION_NAME, INSTITUTION_SHORT_NAME, APP_NAME } from "@/lib/client-config";
 
 const sansFont = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -14,8 +15,8 @@ const displayFont = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "LMS ICEMS — Universitas Siber Asia",
-  description: "Learning Management System UNSIA",
+  title: `${APP_NAME} ICEMS — ${INSTITUTION_NAME}`,
+  description: `Learning Management System ${INSTITUTION_SHORT_NAME}`,
 };
 
 export default function RootLayout({
