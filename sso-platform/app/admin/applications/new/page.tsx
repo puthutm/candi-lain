@@ -1,48 +1,14 @@
-"use client";
-
 import { useActionState } from "react";
 import Link from "next/link";
 import { registerAppAction } from "./actions";
+import AdminSidebar from "@/components/AdminSidebar";
 
 export default function RegisterAppPage() {
   const [state, formAction, isPending] = useActionState(registerAppAction, null);
 
   return (
     <div className="flex min-h-screen bg-slate-950 font-sans text-white">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-white/10 bg-slate-900/50 p-6 flex flex-col justify-between">
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-xl font-bold tracking-tight text-transparent">
-            SSO Admin
-          </div>
-          <nav className="flex flex-col gap-2">
-            <Link
-              href="/admin"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/admin/applications"
-              className="rounded-lg bg-indigo-500/10 px-4 py-2 text-sm font-semibold text-indigo-400"
-            >
-              Applications
-            </Link>
-            <Link
-              href="/admin/reference"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-            >
-              Reference Data
-            </Link>
-            <Link
-              href="/home"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-            >
-              &larr; User Portal
-            </Link>
-          </nav>
-        </div>
-      </aside>
+      <AdminSidebar activeTab="applications" adminName="Administrator" />
 
       {/* Content */}
       <main className="flex-1 p-8 overflow-y-auto max-w-2xl mx-auto w-full">

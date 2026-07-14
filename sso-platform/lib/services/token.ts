@@ -128,7 +128,7 @@ export class TokenService {
 
     const roles = rolesList.map(r => r.roleKey);
 
-    const issuer = env.JWT_ISSUER || "http://localhost:3000";
+    const issuer = env.JWT_ISSUER || env.NEXT_PUBLIC_APP_URL;
     const jti = crypto.randomUUID();
     
     // Access Token Expiry (1 hour default)
@@ -211,7 +211,7 @@ export class TokenService {
     const { publicKey } = await getSigningKeys();
 
     try {
-      const issuer = env.JWT_ISSUER || "http://localhost:3000";
+      const issuer = env.JWT_ISSUER || env.NEXT_PUBLIC_APP_URL;
       const { payload } = await jose.jwtVerify(token, publicKey, {
         issuer,
       });

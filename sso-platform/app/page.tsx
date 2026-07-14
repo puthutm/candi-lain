@@ -66,10 +66,16 @@ function LoginContent() {
 
           {/* Password Input */}
           <div className="space-y-2">
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-400" htmlFor="password">
                 Password
               </label>
+              <a
+                href="/forgot-password"
+                className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition"
+              >
+                Lupa Password?
+              </a>
             </div>
             <input
               id="password"

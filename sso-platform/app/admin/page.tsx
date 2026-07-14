@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import AdminSidebar from "@/components/AdminSidebar";
 
 interface AuditLog {
   id: string;
@@ -86,40 +87,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="flex min-h-screen bg-slate-950 font-sans text-white">
-      {/* Sidebar navigation */}
-      <aside className="w-64 border-r border-white/10 bg-slate-900/50 p-6 flex flex-col justify-between">
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-xl font-bold tracking-tight text-transparent">
-            SSO Admin
-          </div>
-          <nav className="flex flex-col gap-2">
-            <Link
-              href="/admin"
-              className="rounded-lg bg-indigo-500/10 px-4 py-2 text-sm font-semibold text-indigo-400"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/admin/applications"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-            >
-              Applications
-            </Link>
-            <Link
-              href="/admin/reference"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-            >
-              Reference Data
-            </Link>
-            <Link
-              href="/home"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-all border border-transparent border-dashed"
-            >
-              &larr; User Portal
-            </Link>
-          </nav>
-        </div>
-      </aside>
+      <AdminSidebar activeTab="dashboard" />
 
       {/* Main dashboard content */}
       <main className="flex-1 p-8 overflow-y-auto max-w-6xl mx-auto w-full flex flex-col gap-8">
