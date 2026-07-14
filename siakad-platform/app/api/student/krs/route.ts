@@ -5,7 +5,7 @@ import { siakadStudents } from "@/db/schema/civitas";
 import { siakadKrs, siakadKrsItems } from "@/db/schema/krs";
 import { siakadClasses } from "@/db/schema/classes";
 import { siakadCourses, siakadAcademicPeriods } from "@/db/schema/master";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export async function GET() {
   try {
