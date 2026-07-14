@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { questionBankItems, questionBankOptions, questionUsageLogs } from "@/db/schema/content";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
