@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, postgresClient } from "@/db";
-import { ssoApplications, ssoApplicationRoles } from "@/db/schema/sso";
+import { ssoApplications } from "@/db/schema/sso";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
 
@@ -185,6 +185,10 @@ export async function GET() {
         })
         .returning();
       console.log("SSO application registered.");
+    }
+
+    if (!app) {
+      throw new Error("Failed to register SSO application");
     }
 
     // 3. Register SSO Application Roles

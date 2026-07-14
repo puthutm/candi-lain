@@ -161,7 +161,7 @@ export default function ExamPage() {
     }
   };
 
-  const handleSelectOption = (qId: number, optionKey: string) => {
+  const handleSelectAnswer = (qId: number, optionKey: string) => {
     setAnswers((prev) => ({ ...prev, [qId]: optionKey }));
   };
 
