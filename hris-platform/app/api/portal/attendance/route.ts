@@ -4,7 +4,7 @@ import { employees, attendances } from "@/db/schema/schema";
 import { eq, and } from "drizzle-orm";
 import { cookies } from "next/headers";
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get("hris_user");

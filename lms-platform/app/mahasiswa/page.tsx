@@ -29,10 +29,10 @@ interface LMSMaterial {
 
 interface ViconDetails {
   id: string;
-  meetingId: string;
-  topic: string;
-  startTime: string;
-  joinUrl: string;
+  sessionId: string;
+  title: string;
+  meetingLink: string;
+  durationMinutes: number;
 }
 
 export default function StudentLMSDashboard() {

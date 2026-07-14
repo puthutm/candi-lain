@@ -269,20 +269,18 @@ export default function ExamPage() {
                       <button
                         key={m.id}
                         onClick={() => handleSelectModule(m)}
-                        className={`text-left p-6 rounded-2xl border transition-all ${
-                          completed
+                        className={`text-left p-6 rounded-2xl border transition-all ${completed
                             ? "bg-emerald-50 border-emerald-200 cursor-not-allowed opacity-80"
                             : "bg-white border-slate-200 hover:border-[#0f487b]/40 hover:shadow-md cursor-pointer"
-                        }`}
+                          }`}
                       >
                         <span className="text-3xl">{m.icon}</span>
                         <h3 className="font-display text-base font-bold text-slate-800 mt-4">{m.name}</h3>
                         <div className="flex justify-between items-center mt-6 pt-4 border-t border-dashed border-slate-100 text-xs">
                           <span className="text-slate-400">{m.durationMinutes} Menit</span>
                           <span
-                            className={`font-semibold uppercase tracking-wider px-2 py-0.5 rounded ${
-                              completed ? "bg-emerald-100 text-emerald-700" : "bg-blue-50 text-blue-600"
-                            }`}
+                            className={`font-semibold uppercase tracking-wider px-2 py-0.5 rounded ${completed ? "bg-emerald-100 text-emerald-700" : "bg-blue-50 text-blue-600"
+                              }`}
                           >
                             {completed ? "Selesai" : "Mulai"}
                           </span>
@@ -378,16 +376,14 @@ export default function ExamPage() {
                       <button
                         key={opt.key}
                         onClick={() => handleSelectAnswer(currentQuestionIndex, opt.key)}
-                        className={`w-full text-left p-4 rounded-xl border flex items-start gap-3 transition-colors ${
-                          isSelected
+                        className={`w-full text-left p-4 rounded-xl border flex items-start gap-3 transition-colors ${isSelected
                             ? "border-[#0f487b] bg-blue-50/50"
                             : "border-slate-200 hover:bg-slate-50"
-                        }`}
+                          }`}
                       >
                         <span
-                          className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border ${
-                            isSelected ? "bg-[#0f487b] text-white border-[#0f487b]" : "bg-slate-100 text-slate-500"
-                          }`}
+                          className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border ${isSelected ? "bg-[#0f487b] text-white border-[#0f487b]" : "bg-slate-100 text-slate-500"
+                            }`}
                         >
                           {opt.key}
                         </span>
@@ -448,15 +444,14 @@ export default function ExamPage() {
                     <button
                       key={i}
                       onClick={() => setCurrentQuestionIndex(i)}
-                      className={`w-10 h-10 rounded-lg border font-bold text-sm flex items-center justify-center transition-all ${
-                        active
+                      className={`w-10 h-10 rounded-lg border font-bold text-sm flex items-center justify-center transition-all ${active
                           ? "border-[#0f487b] ring-2 ring-[#0f487b]/20 bg-blue-50 text-[#0f487b]"
                           : ragu
-                          ? "bg-yellow-500 text-white border-yellow-500"
-                          : answered
-                          ? "bg-[#0f487b] text-white border-[#0f487b]"
-                          : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
-                      }`}
+                            ? "bg-yellow-500 text-white border-yellow-500"
+                            : answered
+                              ? "bg-[#0f487b] text-white border-[#0f487b]"
+                              : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+                        }`}
                     >
                       {i + 1}
                     </button>
