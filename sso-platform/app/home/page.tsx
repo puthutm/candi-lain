@@ -56,7 +56,18 @@ export default async function HomePage() {
           {PORTAL_NAME}
         </span>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-slate-400">{user.fullName}</span>
+          <div className="flex items-center gap-3">
+            {/* Avatar */}
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-sm font-bold text-white">
+              {user.fullName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2)}
+            </div>
+            <span className="text-sm text-slate-300 font-medium">{user.fullName}</span>
+          </div>
           <form action={logoutAction}>
             <button
               type="submit"
@@ -97,6 +108,61 @@ export default async function HomePage() {
                 </svg>
               </Link>
             )}
+
+            {/* Profile icon */}
+            <Link
+              href="/home/profile"
+              className="group inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] transition-all hover:-translate-y-0.5 hover:border-indigo-500/30 hover:bg-white/[0.04]"
+              aria-label="Profile"
+            >
+              {/* user icon */}
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-white group-hover:text-indigo-300"
+                aria-hidden="true"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </Link>
+
+            {/* Settings icon */}
+            <Link
+              href="/home/settings"
+              className="group inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] transition-all hover:-translate-y-0.5 hover:border-indigo-500/30 hover:bg-white/[0.04]"
+              aria-label="Settings"
+            >
+              {/* sliders icon */}
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-white group-hover:text-indigo-300"
+                aria-hidden="true"
+              >
+                <line x1="4" y1="21" x2="4" y2="14" />
+                <line x1="4" y1="10" x2="4" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12" y2="3" />
+                <line x1="20" y1="21" x2="20" y2="16" />
+                <line x1="20" y1="12" x2="20" y2="3" />
+                <circle cx="4" cy="17" r="3" />
+                <circle cx="12" cy="9" r="3" />
+                <circle cx="20" cy="14" r="3" />
+              </svg>
+            </Link>
 
             {/* logout icon (always visible, icon-only) */}
             <form action={logoutAction} className="w-full">
