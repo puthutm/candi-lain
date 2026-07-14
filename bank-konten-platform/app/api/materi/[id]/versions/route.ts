@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { materialBankItems, materialBankVersions, auditLogs } from "@/db/schema/content";
 import { getSessionUser } from "@/lib/auth-helper";

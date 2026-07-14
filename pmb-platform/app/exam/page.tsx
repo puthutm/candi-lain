@@ -161,14 +161,6 @@ export default function ExamPage() {
     }
   };
 
-  const handleNextQuestion = () => {
-    if (!activeModule) return;
-    const questions = activeModule.id === "tpa" ? QUESTIONS_TPA : [];
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-    }
-  };
-
   const handleSelectOption = (qId: number, optionKey: string) => {
     setAnswers((prev) => ({ ...prev, [qId]: optionKey }));
   };
