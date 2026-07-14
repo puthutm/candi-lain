@@ -161,12 +161,6 @@ export default function ExamPage() {
     }
   };
 
-  const handlePrevQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((prev) => prev - 1);
-    }
-  };
-
   const handleNextQuestion = () => {
     if (!activeModule) return;
     const questions = activeModule.id === "tpa" ? QUESTIONS_TPA : [];
