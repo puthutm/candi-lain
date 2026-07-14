@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema/users";
 import { eq } from "drizzle-orm";
 import { getSessionUser } from "@/lib/auth-helper";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, chmod } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 
@@ -37,6 +37,12 @@ export async function POST(request: NextRequest) {
     const uploadDir = join(process.cwd(), "public", "uploads", "profiles");
     if (!existsSync(uploadDir)) {
       await mkdir(uploadDir, { recursive: true });
+      // Set directory permissions to allow read/write
+      try {
+        await chmod(uploadDir, 0o755);
+      } catch (chmodErr) {
+        console.warn("Warning: Could not set directory permissions", chmodErr);
+      }
     }
 
     // Generate unique filename
@@ -48,6 +54,13 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(filepath, buffer);
+    
+    // Set file permissions to allow read/write
+    try {
+      await chmod(filepath, 0o644);
+    } catch (chmodErr) {
+      console.warn("Warning: Could not set file permissions", chmodErr);
+    }
 
     // Construct photo URL
     const photoUrl = `/uploads/profiles/${filename}`;
@@ -68,7 +81,23 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error("Photo upload error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    
+    // Provide more helpful error messages
+    if (error.code === "EACCES") {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Tidak memiliki izin untuk menyimpan file. Hubungi administrator." 
+      }, { status: 500 });
+    }
+    
+    if (error.code === "ENOENT") {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Direktori upload tidak ditemukan. Hubungi administrator." 
+      }, { status: 500 });
+    }
+    
+    return NextResponse.json({ success: false, error: error.message || "Gagal mengunggah foto" }, { status: 500 });
   }
 }
 
