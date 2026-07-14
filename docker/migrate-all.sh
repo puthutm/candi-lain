@@ -9,13 +9,15 @@ run_migration() {
 
   cd "/workspace/${SERVICE_DIR}"
 
-  if [ -f package-lock.json ]; then
-    npm ci
-  elif [ -f pnpm-lock.yaml ]; then
-    npm install -g pnpm
-    pnpm install --frozen-lockfile
-  else
-    npm install
+  if [ ! -d node_modules ]; then
+    if [ -f package-lock.json ]; then
+      npm ci
+    elif [ -f pnpm-lock.yaml ]; then
+      npm install -g pnpm
+      pnpm install --frozen-lockfile
+    else
+      npm install
+    fi
   fi
 
   export DATABASE_URL="postgresql://postgres:postgres@db:5432/${DB_NAME}"
