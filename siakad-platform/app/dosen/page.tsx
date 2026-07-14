@@ -47,7 +47,6 @@ export default function DosenPage() {
   const [lecturer, setLecturer] = useState<LecturerProfile | null>(null);
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [grades, setGrades] = useState<StudentGrade[]>([]);
-  const [loadingGrades, setLoadingGrades] = useState(false);
 
   useEffect(() => {
     fetchSchedule();
@@ -76,16 +75,13 @@ export default function DosenPage() {
   };
 
   const fetchGrades = async (classId: string) => {
-    setLoadingGrades(true);
     try {
       const res = await fetch(`/api/dosen/grades?classId=${classId}`);
       const data = await res.json();
       if (data.success) {
         setGrades(data.grades || []);
       }
-    } catch {} finally {
-      setLoadingGrades(false);
-    }
+    } catch {}
   };
 
   const handleGradeImport = (e: React.ChangeEvent<HTMLInputElement>) => {
