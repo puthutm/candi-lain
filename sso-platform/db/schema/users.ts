@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   email: text("email").unique().notNull(),
   passwordHash: text("password_hash").notNull(),
   fullName: text("full_name").notNull(),
+  photoUrl: text("photo_url"),
   status: text("status").default("active").notNull(), // "active" | "inactive" | "locked"
   mfaEnabled: boolean("mfa_enabled").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

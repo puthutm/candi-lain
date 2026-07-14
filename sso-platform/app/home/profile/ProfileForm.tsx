@@ -7,6 +7,7 @@ interface ProfileFormProps {
   initialUser: {
     fullName: string;
     email: string;
+    photoUrl?: string | null;
   };
 }
 
@@ -18,6 +19,11 @@ export default function ProfileForm({ initialUser }: ProfileFormProps) {
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
+  
+  // Photo upload states
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>(initialUser.photoUrl || "");
+  const [photoLoading, setPhotoLoading] = useState(false);
 
   const getAvatarInitials = () => {
     return fullName
@@ -42,6 +48,68 @@ export default function ProfileForm({ initialUser }: ProfileFormProps) {
   };
 
   const avatarColors = ["indigo", "purple", "blue", "pink", "rose", "teal", "amber"];
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      triggerNotice("Hanya file gambar yang diizinkan", true);
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      triggerNotice("Ukuran file tidak boleh melebihi 5MB", true);
+      return;
+    }
+
+    setSelectedFile(file);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setPhotoPreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle photo upload
+  const handlePhotoUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile) {
+      triggerNotice("Pilih foto terlebih dahulu", true);
+      return;
+    }
+
+    setPhotoLoading(true);
+    setNotice("Mengunggah foto...");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const res = await fetch("/api/profile/upload-photo", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        triggerNotice(data.message || "Foto berhasil diunggah!");
+        setSelectedFile(null);
+        router.refresh();
+      } else {
+        triggerNotice(data.error || "Gagal mengunggah foto", true);
+      }
+    } catch (err: any) {
+      triggerNotice("Kesalahan jaringan: " + err.message, true);
+    } finally {
+      setPhotoLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,6 +261,92 @@ export default function ProfileForm({ initialUser }: ProfileFormProps) {
             <p className="mt-4 text-xs text-slate-400">
               Avatar Anda akan otomatis menampilkan inisial nama depan dan belakang Anda dengan warna yang dipilih.
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Photo Upload Section */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-8">
+        <h2 className="text-xl font-bold mb-6">Foto Profil</h2>
+
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Photo Preview */}
+          <div className="flex flex-col items-center gap-4">
+            {photoPreview ? (
+              <div className="relative">
+                <img
+                  src={photoPreview}
+                  alt="Photo preview"
+                  className="h-40 w-40 rounded-full object-cover border-4 border-indigo-500/30 shadow-lg"
+                />
+                {selectedFile && (
+                  <div className="absolute inset-0 rounded-full bg-indigo-500/20 border-4 border-indigo-500 flex items-center justify-center">
+                    <span className="text-white font-semibold text-sm">Baru</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="h-40 w-40 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border-2 border-dashed border-white/20 flex items-center justify-center">
+                <span className="text-slate-400 text-4xl">📷</span>
+              </div>
+            )}
+            <div className="text-center">
+              <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Pratinjau Foto</p>
+              <p className="text-sm text-slate-300 mt-2">
+                {photoPreview ? "Foto siap diunggah" : "Belum ada foto"}
+              </p>
+            </div>
+          </div>
+
+          {/* Upload Form */}
+          <div className="flex-1">
+            <form onSubmit={handlePhotoUpload} className="space-y-4">
+              <div>
+                <label
+                  className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4"
+                  htmlFor="photoInput"
+                >
+                  Pilih Foto
+                </label>
+                <input
+                  id="photoInput"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-slate-300
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-lg file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-indigo-600 file:text-white
+                    hover:file:bg-indigo-500
+                    cursor-pointer"
+                />
+              </div>
+
+              <p className="text-xs text-slate-400">
+                Format: JPG, PNG, GIF, WebP (Maks: 5MB)
+              </p>
+
+              {selectedFile && (
+                <div className="rounded-lg bg-indigo-500/10 border border-indigo-500/30 p-3">
+                  <p className="text-xs text-indigo-300">
+                    📦 <strong>{selectedFile.name}</strong> - {(selectedFile.size / 1024 / 1024).toFixed(2)}MB
+                  </p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={!selectedFile || photoLoading}
+                className={`rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition w-full ${
+                  !selectedFile || photoLoading
+                    ? "bg-slate-800 border border-slate-700 cursor-not-allowed text-slate-500"
+                    : "bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-900/25 cursor-pointer"
+                }`}
+              >
+                {photoLoading ? "Mengunggah..." : "Unggah Foto"}
+              </button>
+            </form>
           </div>
         </div>
       </div>

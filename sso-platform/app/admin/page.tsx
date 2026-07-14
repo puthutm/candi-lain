@@ -97,6 +97,39 @@ export default function AdminDashboardPage() {
           </div>
         </header>
 
+        {/* Admin Features Navigation */}
+        <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <a href="/admin/users" className="group rounded-lg border border-white/10 bg-white/[0.02] p-4 hover:bg-white/[0.05] hover:border-indigo-500/30 transition flex flex-col items-center gap-2">
+            <div className="text-3xl">👥</div>
+            <p className="text-xs font-semibold text-center text-slate-300 group-hover:text-white transition">Kelola User</p>
+          </a>
+
+          <a href="/admin/roles" className="group rounded-lg border border-white/10 bg-white/[0.02] p-4 hover:bg-white/[0.05] hover:border-purple-500/30 transition flex flex-col items-center gap-2">
+            <div className="text-3xl">🎭</div>
+            <p className="text-xs font-semibold text-center text-slate-300 group-hover:text-white transition">Kelola Role</p>
+          </a>
+
+          <a href="/admin/permissions" className="group rounded-lg border border-white/10 bg-white/[0.02] p-4 hover:bg-white/[0.05] hover:border-blue-500/30 transition flex flex-col items-center gap-2">
+            <div className="text-3xl">🔐</div>
+            <p className="text-xs font-semibold text-center text-slate-300 group-hover:text-white transition">Kelola Permission</p>
+          </a>
+
+          <a href="/admin/clients" className="group rounded-lg border border-white/10 bg-white/[0.02] p-4 hover:bg-white/[0.05] hover:border-emerald-500/30 transition flex flex-col items-center gap-2">
+            <div className="text-3xl">🔑</div>
+            <p className="text-xs font-semibold text-center text-slate-300 group-hover:text-white transition">OAuth2 Clients</p>
+          </a>
+
+          <a href="/admin/audit-logs" className="group rounded-lg border border-white/10 bg-white/[0.02] p-4 hover:bg-white/[0.05] hover:border-amber-500/30 transition flex flex-col items-center gap-2">
+            <div className="text-3xl">📋</div>
+            <p className="text-xs font-semibold text-center text-slate-300 group-hover:text-white transition">Audit Logs</p>
+          </a>
+
+          <a href="/admin/settings" className="group rounded-lg border border-white/10 bg-white/[0.02] p-4 hover:bg-white/[0.05] hover:border-rose-500/30 transition flex flex-col items-center gap-2">
+            <div className="text-3xl">⚙️</div>
+            <p className="text-xs font-semibold text-center text-slate-300 group-hover:text-white transition">Konfigurasi</p>
+          </a>
+        </section>
+
         {/* Stats Grid */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6 shadow-md">

@@ -17,7 +17,7 @@ export default async function ProfilePage() {
         </p>
 
         <div className="mt-8">
-          <ProfileForm initialUser={{ fullName: user.fullName, email: user.email }} />
+          <ProfileForm initialUser={{ fullName: user.fullName, email: user.email, photoUrl: user.photoUrl }} />
         </div>
       </div>
     </div>
