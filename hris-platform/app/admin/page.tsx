@@ -68,8 +68,22 @@ export default function HrisAdminDashboard() {
     setTimeout(() => setToastMsg(""), 3000);
   };
 
-  const handleTriggerSync = () => {
-    triggerNotice("Sinkronisasi database pegawai berhasil!");
+  const handleTriggerSync = async () => {
+    triggerNotice("Memulai sinkronisasi database pegawai...");
+    try {
+      const res = await fetch("/api/admin/sync", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerNotice(data.message || "Sinkronisasi database pegawai berhasil!");
+        fetchData();
+      } else {
+        triggerNotice("Sinkronisasi gagal: " + data.error);
+      }
+    } catch (err: any) {
+      triggerNotice("Galat jaringan: " + err.message);
+    }
   };
 
   const handleCsvImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,7 +91,7 @@ export default function HrisAdminDashboard() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const text = event.target?.result as string;
       const lines = text.split("\n").filter(line => line.trim() !== "");
       if (lines.length <= 1) {
@@ -85,10 +99,22 @@ export default function HrisAdminDashboard() {
         return;
       }
       triggerNotice(`Memproses import ${lines.length - 1} data pegawai dari CSV...`);
-      setTimeout(() => {
-        triggerNotice("Sukses mengimpor data pegawai baru!");
-        fetchData();
-      }, 1000);
+      try {
+        const res = await fetch("/api/admin/import-csv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ csvText: text }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          triggerNotice(`Sukses mengimpor ${data.count} data pegawai baru!`);
+          fetchData();
+        } else {
+          triggerNotice("Gagal mengimpor: " + data.error);
+        }
+      } catch (err: any) {
+        triggerNotice("Galat jaringan: " + err.message);
+      }
     };
     reader.readAsText(file);
   };

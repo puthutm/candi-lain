@@ -83,7 +83,7 @@ export default function SkeuDashboard() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const text = event.target?.result as string;
       const lines = text.split("\n").filter(line => line.trim() !== "");
       if (lines.length <= 1) {
@@ -91,10 +91,22 @@ export default function SkeuDashboard() {
         return;
       }
       triggerNotice(`Memproses import ${lines.length - 1} data tarif dari CSV...`);
-      setTimeout(() => {
-        triggerNotice("Sukses mengimpor data tarif baru ke database!");
-        fetchData();
-      }, 1000);
+      try {
+        const res = await fetch("/api/skeu/import-csv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ csvText: text }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          triggerNotice(`Sukses mengimpor ${data.count} data tarif baru ke database!`);
+          fetchData();
+        } else {
+          triggerNotice("Gagal mengimpor: " + data.error);
+        }
+      } catch (err: any) {
+        triggerNotice("Galat jaringan: " + err.message);
+      }
     };
     reader.readAsText(file);
   };

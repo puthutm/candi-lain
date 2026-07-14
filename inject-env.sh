@@ -16,6 +16,7 @@ MODULES=(
   "lms-platform"
   "keuangan-platform"
   "hris-platform"
+  "bank-konten-platform"
 )
 
 for MODULE in "${MODULES[@]}"; do

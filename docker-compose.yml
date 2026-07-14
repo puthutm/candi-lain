@@ -30,17 +30,17 @@ services:
       timeout: 5s
       retries: 5
 
-  # migrate-all:
-  #   image: node:20-alpine
-  #   container_name: erp-migrate-all
-  #   working_dir: /workspace
-  #   volumes:
-  #     - ./:/workspace
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   command: sh /workspace/docker/migrate-all.sh
-  #   restart: "no"
+  migrate-all:
+    image: node:20-alpine
+    container_name: erp-migrate-all
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh /workspace/docker/migrate-all.sh
+    restart: "no"
 
 
   sso-platform:
@@ -184,6 +184,26 @@ services:
         required: false
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/hris_platform
+      - REDIS_URL=redis://redis:6379
+
+  bank-konten-platform:
+    build:
+      context: ./bank-konten-platform
+      dockerfile: Dockerfile
+    container_name: erp-bank-konten-platform
+    restart: unless-stopped
+    ports:
+      - "3007:3007"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - path: ./bank-konten-platform/.env
+        required: false
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/bank_konten_platform
       - REDIS_URL=redis://redis:6379
 
 volumes:

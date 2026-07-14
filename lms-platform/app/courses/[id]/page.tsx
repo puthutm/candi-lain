@@ -33,7 +33,7 @@ interface LMSMaterial {
 }
 
 function getStudentProfile(userId: string) {
-  if (userId === "26090182") return { name: "Budi Santoso", initial: "BS", color: "blue" };
+  if (userId === "26090182" || userId === "mahasiswa") return { name: "Budi Santoso", initial: "BS", color: "blue" };
   if (userId === "25090127" || userId.endsWith("7") || userId.endsWith("1")) return { name: "Citra Lestari", initial: "CL", color: "emerald" };
   if (userId === "25090129" || userId.endsWith("9") || userId.endsWith("2")) return { name: "Dewi Maharani", initial: "DM", color: "violet" };
   return { name: `Mahasiswa (${userId.slice(-4)})`, initial: "M", color: "slate" };
@@ -107,6 +107,25 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
+  // Bank Konten states
+  const [bankMaterials, setBankMaterials] = useState<any[]>([]);
+  const [selectedBankMaterialId, setSelectedBankMaterialId] = useState("");
+
+  const fetchBankMaterials = async (courseCode: string) => {
+    try {
+      const res = await fetch(`http://localhost:3007/api/materi?courseCode=${courseCode}&status=terbit`);
+      const data = await res.json();
+      if (data.success) {
+        setBankMaterials(data.materials || []);
+        if (data.materials?.length > 0) {
+          setSelectedBankMaterialId(data.materials[0].id);
+        }
+      }
+    } catch (err) {
+      console.error("Gagal memuat materi dari Bank Konten", err);
+    }
+  };
+
   useEffect(() => {
     fetchClassDetails();
     fetchClassesForDuplication();
@@ -128,6 +147,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
           fetchSessions(found.id);
           fetchGradesRekap(found.id);
           fetchForumPosts(found.id);
+          fetchBankMaterials(found.courseCode);
         }
       }
     } catch (err) {
@@ -261,6 +281,36 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
         triggerMsg("Bahan ajar diajukan ke Kaprodi!", "success");
         setMatTitle("");
         setMatUrl("");
+        fetchSessionContents(selectedSession.id);
+      } else {
+        triggerMsg(data.error, "error");
+      }
+    } catch (err: any) {
+      triggerMsg(err.message, "error");
+    }
+  };
+
+  const handleImportFromBankMateri = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSession || !selectedBankMaterialId) return;
+
+    const chosen = bankMaterials.find(m => m.id === selectedBankMaterialId);
+    if (!chosen) return;
+
+    try {
+      const res = await fetch("/api/materials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: selectedSession.id,
+          materialType: chosen.materialType === "dokumen" ? "dokumen" : chosen.materialType === "video" ? "video" : "tautan",
+          title: chosen.title,
+          fileUrl: chosen.currentVersion?.fileUrl || "",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerMsg("Bahan ajar berhasil diimpor dari Bank Materi!", "success");
         fetchSessionContents(selectedSession.id);
       } else {
         triggerMsg(data.error, "error");
@@ -820,6 +870,40 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                       </div>
                     )}
 
+                    {currentRole === "dosen" && (
+                      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                        <h4 className="font-display font-bold text-sm text-slate-800 border-b border-slate-100 pb-3">Impor dari Bank Materi Terpusat</h4>
+                        {bankMaterials.length === 0 ? (
+                          <div className="text-xs text-slate-400 py-3 font-semibold">
+                            Tidak ada materi terbit untuk kode MK "{cls?.courseCode}" di Bank Konten saat ini.
+                          </div>
+                        ) : (
+                          <form onSubmit={handleImportFromBankMateri} className="flex flex-col gap-4 mt-4">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-500 uppercase">Pilih Materi Terbit</label>
+                              <select
+                                value={selectedBankMaterialId}
+                                onChange={(e) => setSelectedBankMaterialId(e.target.value)}
+                                className="w-full mt-1.5 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#004996] text-xs font-semibold bg-white"
+                              >
+                                {bankMaterials.map((m) => (
+                                  <option key={m.id} value={m.id}>
+                                    {m.title} ({m.materialType}) - v{m.currentVersionNumber}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <button
+                              type="submit"
+                              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl self-end transition cursor-pointer"
+                            >
+                              📥 Impor ke LMS
+                            </button>
+                          </form>
+                        )}
+                      </div>
+                    )}
+
                     {/* Interactive Video Player component from mockup */}
                     {videoData && (
                       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
@@ -1230,7 +1314,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                             <span>👤 Citra Lestari (25090127)</span>
                           </div>
                           <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-                            <span>👤 Budi Santoso (26090182)</span>
+                            <span>👤 {user?.role === "mahasiswa" ? user.name : "Budi Santoso"} ({user?.role === "mahasiswa" ? user.username : "26090182"})</span>
                           </div>
                         </div>
                       </div>

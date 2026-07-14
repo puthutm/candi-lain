@@ -191,6 +191,15 @@ export default function AdminPage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/";
+    } catch {
+      window.location.href = "/";
+    }
+  };
+
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(""), 3000);
@@ -453,7 +462,10 @@ export default function AdminPage() {
           >
             ✨ {isSeeding ? "Seeding..." : "Seed Mock Data"}
           </button>
-          <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-rose-500/10 text-rose-300 font-bold rounded-lg hover:bg-rose-500 hover:text-white transition-colors text-xs border border-rose-500/20">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-rose-500/10 text-rose-300 font-bold rounded-lg hover:bg-rose-500 hover:text-white transition-colors text-xs border border-rose-500/20"
+          >
             🚪 Keluar
           </button>
         </div>

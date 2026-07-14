@@ -1,34 +1,111 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { LOGO_URL, INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
 type TabType = "dashboard" | "kurikulum" | "krs" | "khs" | "layanan";
 
+interface StudentProfile {
+  id: string;
+  nim: string | null;
+  fullName: string;
+  studyProgramName: string;
+  angkatan: number;
+  currentSemester: number;
+  academicStatus: string;
+  ipk: string;
+  totalSksLulus: number;
+  dosenPaName: string;
+}
+
+interface KrsCourse {
+  classId: string;
+  className: string;
+  courseCode: string;
+  courseName: string;
+  sks: number;
+  courseType: string;
+  capacity?: number;
+  enrolledCount?: number;
+  itemStatus?: string;
+}
+
 export default function RegularStudentDashboard() {
   const [activeTab, setActiveTab] = useState<TabType>("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [selectedKrs, setSelectedKrs] = useState<string[]>(["alg", "db"]);
+  const [selectedKrs, setSelectedKrs] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState("");
+  const [student, setStudent] = useState<StudentProfile | null>(null);
+  const [krsCourses, setKrsCourses] = useState<KrsCourse[]>([]);
+  const [availableClasses, setAvailableClasses] = useState<KrsCourse[]>([]);
+  const [krsStatus, setKrsStatus] = useState<string | null>(null);
+  const [periodName, setPeriodName] = useState("");
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
-  const krsCourses = [
-    { id: "alg", code: "INF201", name: "Algoritma Lanjut & Kompleksitas", sks: 4, lecturer: "Dr. Budi Setiawan" },
-    { id: "db", code: "INF202", name: "Basis Data Terdistribusi", sks: 3, lecturer: "Dr. Hendra Setiawan" },
-    { id: "ai", code: "INF203", name: "Kecerdasan Buatan", sks: 3, lecturer: "Prof. Rina Kumala" },
-    { id: "pjj", code: "INF204", name: "Arsitektur Sistem PJJ", sks: 3, lecturer: "Dr. Ade Wijaya" },
-  ];
+  useEffect(() => {
+    fetchProfile();
+    fetchKrs();
+  }, []);
 
-  const handleSelectCourse = (courseId: string) => {
-    if (selectedKrs.includes(courseId)) {
-      setSelectedKrs(selectedKrs.filter((id) => id !== courseId));
-    } else {
-      setSelectedKrs([...selectedKrs, courseId]);
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch("/api/student/profile");
+      const data = await res.json();
+      if (data.success && data.student) {
+        setStudent(data.student);
+      }
+    } catch {} finally {
+      setLoadingProfile(false);
     }
   };
 
-  const handleKrsSubmit = () => {
-    triggerToast("Pengajuan KRS Anda telah diajukan ke Dosen PA!");
+  const fetchKrs = async () => {
+    try {
+      const res = await fetch("/api/student/krs");
+      const data = await res.json();
+      if (data.success) {
+        if (data.krs) {
+          setKrsStatus(data.krs.status);
+        }
+        if (data.courses) {
+          setKrsCourses(data.courses);
+        }
+        if (data.availableClasses) {
+          setAvailableClasses(data.availableClasses);
+        }
+        if (data.period) {
+          setPeriodName(data.period.name || "");
+        }
+      }
+    } catch {}
+  };
+
+  const handleSelectCourse = (classId: string) => {
+    if (selectedKrs.includes(classId)) {
+      setSelectedKrs(selectedKrs.filter((id) => id !== classId));
+    } else {
+      setSelectedKrs([...selectedKrs, classId]);
+    }
+  };
+
+  const handleKrsSubmit = async () => {
+    try {
+      const res = await fetch("/api/student/krs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ classIds: selectedKrs }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast(data.message || "KRS berhasil diajukan!");
+        fetchKrs();
+      } else {
+        triggerToast(data.error || "Gagal mengajukan KRS");
+      }
+    } catch (err: any) {
+      triggerToast("Galat jaringan: " + err.message);
+    }
   };
 
   const triggerToast = (msg: string) => {
@@ -37,6 +114,18 @@ export default function RegularStudentDashboard() {
   };
 
   const currentYear = new Date().getFullYear();
+  const displayName = student?.fullName || "Mahasiswa";
+  const displayNim = student?.nim || "-";
+  const displayInitials = displayName.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase();
+  const displayProdi = student?.studyProgramName || "Program Studi";
+  const displaySemester = student?.currentSemester || 1;
+  const displayIpk = student?.ipk || "0.00";
+  const displaySksLulus = student?.totalSksLulus || 0;
+  const displayPa = student?.dosenPaName || "-";
+  const displayStatus = student?.academicStatus || "aktif";
+
+  // Use available classes for KRS form, fallback to enrolled KRS courses for display
+  const krsFormCourses = availableClasses.length > 0 ? availableClasses : krsCourses;
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f4f7f9] text-slate-800 font-sans">
@@ -66,13 +155,13 @@ export default function RegularStudentDashboard() {
           <div className="flex items-center gap-3">
             <div className="relative shrink-0">
               <div className="w-11 h-11 rounded-full bg-[#FED524] border-2 border-white/20 shadow-md flex items-center justify-center font-bold text-[#0f487b]">
-                BS
+                {displayInitials}
               </div>
               <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-[#0f487b] rounded-full"></div>
             </div>
             <div className="overflow-hidden">
-              <h3 className="font-bold text-white truncate text-sm">Budi Santoso</h3>
-              <p className="text-[10px] text-white/60 font-bold mt-0.5 tracking-wider font-mono">26090182</p>
+              <h3 className="font-bold text-white truncate text-sm">{displayName}</h3>
+              <p className="text-[10px] text-white/60 font-bold mt-0.5 tracking-wider font-mono">{displayNim}</p>
             </div>
           </div>
         </div>
@@ -176,7 +265,7 @@ export default function RegularStudentDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-500 font-bold">Budi Santoso</span>
+            <span className="text-xs text-slate-500 font-bold">{displayName}</span>
             <span className="h-8 w-px bg-slate-200"></span>
             <span className="text-slate-400 cursor-pointer">🔔</span>
           </div>
@@ -192,21 +281,21 @@ export default function RegularStudentDashboard() {
                 <div className="lg:col-span-2 bg-gradient-to-r from-[#0f487b] to-[#00719f] rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow text-white">
                   <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
                     <div className="w-20 h-20 rounded-full bg-[#FED524] text-[#0f487b] font-extrabold text-3xl border-4 border-white/20 flex items-center justify-center shrink-0">
-                      BS
+                      {displayInitials}
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold uppercase rounded-md tracking-wider">
-                          ✓ Status: Aktif
+                          ✓ Status: {displayStatus}
                         </span>
                         <span className="px-2 py-0.5 bg-white/10 text-white/80 border border-white/20 text-[9px] font-bold uppercase rounded-md tracking-wider">
-                          Semester 3
+                          Semester {displaySemester}
                         </span>
                       </div>
-                      <h1 className="font-display text-2xl font-bold mb-1">Budi Santoso</h1>
-                      <p className="text-brand-100 text-sm font-medium mb-3">S1 Informatika (PJJ)</p>
+                      <h1 className="font-display text-2xl font-bold mb-1">{displayName}</h1>
+                      <p className="text-brand-100 text-sm font-medium mb-3">{displayProdi}</p>
                       <p className="text-xs text-white/80 bg-black/20 px-3 py-1 rounded-lg w-fit border border-white/10">
-                        PA Advisor: Dr. Hendra Setiawan, M.Kom.
+                        PA Advisor: {displayPa}
                       </p>
                     </div>
                   </div>
@@ -216,23 +305,23 @@ export default function RegularStudentDashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white rounded-2xl p-5 border border-slate-200 flex flex-col justify-center">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">IPK Kumulatif</p>
-                    <h3 className="font-display font-black text-3xl text-[#0f487b] mb-1">3.85</h3>
-                    <p className="text-[10px] text-emerald-500 font-semibold">↑ Naik 0.15</p>
+                    <h3 className="font-display font-black text-3xl text-[#0f487b] mb-1">{displayIpk}</h3>
+                    <p className="text-[10px] text-emerald-500 font-semibold">Semester {displaySemester}</p>
                   </div>
                   <div className="bg-white rounded-2xl p-5 border border-slate-200 flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">IPS Terakhir</p>
-                    <h3 className="font-display font-black text-3xl text-[#0f487b] mb-1">3.90</h3>
-                    <p className="text-[10px] text-slate-500">Semester Ganjil</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">NIM</p>
+                    <h3 className="font-display font-black text-xl text-[#0f487b] mb-1 font-mono">{displayNim}</h3>
+                    <p className="text-[10px] text-slate-500">Angkatan {student?.angkatan || "-"}</p>
                   </div>
                   <div className="col-span-2 bg-white rounded-2xl p-5 border border-slate-200 flex items-center justify-between">
                     <div>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">SKS Lulus</p>
                       <p className="font-display font-black text-2xl text-slate-800">
-                        45 <span className="text-xs text-slate-400 font-semibold">/ 144 SKS</span>
+                        {displaySksLulus} <span className="text-xs text-slate-400 font-semibold">/ 144 SKS</span>
                       </p>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-blue-50 text-[#0f487b] flex items-center justify-center font-bold text-xs">
-                      31%
+                      {Math.round((displaySksLulus / 144) * 100)}%
                     </div>
                   </div>
                 </div>
@@ -316,61 +405,97 @@ export default function RegularStudentDashboard() {
             <div className="max-w-4xl mx-auto space-y-6 fade-in">
               <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Form Pengisian KRS Semester 3</h2>
-                  <p className="text-sm text-slate-500">Tentukan mata kuliah pilihan dan wajib untuk semester ini.</p>
+                  <h2 className="text-xl font-bold text-slate-800">Form Pengisian KRS {periodName || `Semester ${displaySemester}`}</h2>
+                  <p className="text-sm text-slate-500">
+                    {krsStatus === "diajukan" ? "KRS Anda sudah diajukan. Menunggu persetujuan Dosen PA." :
+                     krsStatus === "disetujui_pa" ? "KRS Anda telah disetujui oleh Dosen PA." :
+                     krsStatus === "ditolak" ? "KRS Anda ditolak. Silakan ajukan ulang." :
+                     "Tentukan mata kuliah pilihan dan wajib untuk semester ini."}
+                  </p>
                 </div>
                 <div className="text-right">
                   <span className="text-xs text-slate-400">Total SKS Terpilih</span>
                   <p className="text-2xl font-black text-[#0f487b]">
-                    {krsCourses.filter((c) => selectedKrs.includes(c.id)).reduce((acc, c) => acc + c.sks, 0)} SKS
+                    {krsFormCourses.filter((c) => selectedKrs.includes(c.classId)).reduce((acc, c) => acc + c.sks, 0)} SKS
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                <div className="p-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-500">
-                  Pilihan Kelas Tersedia
+              {/* Enrolled courses (if KRS submitted) */}
+              {krsCourses.length > 0 && krsStatus && krsStatus !== "draft" && (
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="p-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-500">
+                    Mata Kuliah Terdaftar ({krsStatus})
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {krsCourses.map((c) => (
+                      <div key={c.classId || c.courseCode} className="p-4 flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm">{c.courseName}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">{c.courseCode} — {c.className}</p>
+                        </div>
+                        <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{c.sks} SKS</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="divide-y divide-slate-100">
-                  {krsCourses.map((c) => {
-                    const selected = selectedKrs.includes(c.id);
-                    return (
-                      <div
-                        key={c.id}
-                        onClick={() => handleSelectCourse(c.id)}
-                        className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${
-                          selected ? "bg-blue-50/20" : "hover:bg-slate-50/50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
+              )}
+
+              {/* Available classes for selection */}
+              {(!krsStatus || krsStatus === "draft" || krsStatus === "ditolak") && krsFormCourses.length > 0 && (
+                <>
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div className="p-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-500">
+                      Pilihan Kelas Tersedia
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {krsFormCourses.map((c) => {
+                        const selected = selectedKrs.includes(c.classId);
+                        return (
                           <div
-                            className={`w-5 h-5 rounded border flex items-center justify-center ${
-                              selected ? "bg-[#0f487b] border-[#0f487b]" : "bg-white border-slate-300"
+                            key={c.classId}
+                            onClick={() => handleSelectCourse(c.classId)}
+                            className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${
+                              selected ? "bg-blue-50/20" : "hover:bg-slate-50/50"
                             }`}
                           >
-                            {selected && <span className="text-white text-xs">✓</span>}
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-5 h-5 rounded border flex items-center justify-center ${
+                                  selected ? "bg-[#0f487b] border-[#0f487b]" : "bg-white border-slate-300"
+                                }`}
+                              >
+                                {selected && <span className="text-white text-xs">✓</span>}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-800 text-sm">{c.courseName}</p>
+                                <p className="text-xs text-slate-400 mt-0.5">{c.courseCode} — {c.className}</p>
+                              </div>
+                            </div>
+                            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded shrink-0">
+                              {c.sks} SKS
+                            </span>
                           </div>
-                          <div>
-                            <p className="font-bold text-slate-800 text-sm">{c.name}</p>
-                            <p className="text-xs text-slate-400 mt-0.5">Dosen: {c.lecturer} ({c.code})</p>
-                          </div>
-                        </div>
-                        <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded shrink-0">
-                          {c.sks} SKS
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-              <button
-                onClick={handleKrsSubmit}
-                disabled={selectedKrs.length === 0}
-                className="w-full py-3 bg-[#0f487b] text-white hover:bg-[#00719f] font-bold rounded-xl text-sm transition-all shadow-md"
-              >
-                Kirim Pengajuan KRS ke Dosen PA
-              </button>
+                  <button
+                    onClick={handleKrsSubmit}
+                    disabled={selectedKrs.length === 0}
+                    className="w-full py-3 bg-[#0f487b] text-white hover:bg-[#00719f] font-bold rounded-xl text-sm transition-all shadow-md disabled:opacity-50"
+                  >
+                    Kirim Pengajuan KRS ke Dosen PA
+                  </button>
+                </>
+              )}
+
+              {(!krsStatus || krsStatus === "draft") && krsFormCourses.length === 0 && (
+                <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+                  <p className="text-sm text-slate-500">Belum ada kelas tersedia untuk periode akademik saat ini.</p>
+                </div>
+              )}
             </div>
           )}
 

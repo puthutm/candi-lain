@@ -1,0 +1,83 @@
+flowchart TD
+
+    Start([Mulai]) --> D1
+
+    subgraph L1["👨‍🏫 Dosen (Kontributor)"]
+        D1[Unggah Materi / Buat Soal Baru]
+        D2[Cari & Pakai Ulang Konten Terverifikasi]
+        D3{Dapat Notifikasi Revisi?}
+        D4[Revisi & Submit Ulang]
+        D5[Lihat Rekomendasi Revisi dari Item Analysis]
+    end
+
+    subgraph L2["🏛️ Prodi & BPM (Verifikator)"]
+        V1[Review Tahap 1 - Prodi]
+        V2[Review Tahap 2 - BPM]
+    end
+
+    subgraph L3["⚙️ Bank Konten Akademik"]
+        Y1[Set Status: menunggu_prodi]
+        Y2{Prodi Setuju?}
+        Y3[Set Status: menunggu_bpm]
+        Y4{BPM Setuju?}
+        Y5[Set Status: Terbit]
+        Y6[Kembalikan + Catatan Revisi]
+        Y7[API Tarik Materi/Soal Terverifikasi]
+        Y8[Generate Set Soal sesuai Kriteria Distribusi]
+        Y9{Soal Sering Dipakai Baru-baru Ini?}
+        Y10[Exclude dari Hasil Generate]
+        Y11[Terima Data Agregat Hasil Pengerjaan]
+        Y12[Hitung Ulang Item Analysis]
+        Y13{Kualitas Soal Buruk?}
+        Y14[Set quality_flag = perlu_revisi]
+        Y15[Catat Usage Log]
+    end
+
+    subgraph L4["📚 LMS / 🎓 SIAKAD / 📝 PMB (Sistem Konsumen)"]
+        C1[Dosen Siapkan Sesi/Kuis di LMS]
+        C2[Panitia Siapkan UTS/UAS di SIAKAD]
+        C3[Panitia Siapkan Ujian Seleksi di PMB]
+        C4[Cache Materi/Soal Lokal]
+        C5[Ujian/Kuis Berlangsung]
+        C6[Kirim Balik Data Agregat Hasil]
+    end
+
+    %% ---- Kontribusi & Verifikasi ----
+    D1 --> Y1 --> V1
+    V1 --> Y2
+    Y2 -- ya --> Y3 --> V2
+    Y2 -- tidak --> Y6
+    V2 --> Y4
+    Y4 -- ya --> Y5
+    Y4 -- tidak --> Y6
+    Y6 -.notifikasi.-> D3
+    D3 -- ya --> D4 --> Y1
+
+    %% ---- Pemakaian oleh Sistem Konsumen ----
+    Y5 --> D2
+    Y5 --> Y7
+    C1 --> Y7
+    C2 --> Y8
+    C3 --> Y8
+    Y7 --> C4
+    Y8 --> Y9
+    Y9 -- ya --> Y10 -.pilih soal lain.-> Y8
+    Y9 -- tidak --> C4
+    Y7 -.log.-> Y15
+    Y8 -.log.-> Y15
+    C4 --> C5
+
+    %% ---- Feedback Loop Item Analysis ----
+    C5 --> C6 --> Y11 --> Y12
+    Y12 --> Y13
+    Y13 -- ya --> Y14 -.notifikasi.-> D5
+    Y13 -- tidak --> End([Selesai / Siklus Berulang])
+    D5 --> D4
+
+    classDef decision fill:#FFF3CD,stroke:#B8860B,color:#000
+    classDef system fill:#DCEAF7,stroke:#2C6FAA,color:#000
+    classDef verif fill:#E3DCF7,stroke:#6A4C93,color:#000
+
+    class Y2,Y4,Y9,Y13,D3 decision
+    class Y1,Y3,Y5,Y6,Y7,Y8,Y11,Y12,Y14,Y15 system
+    class V1,V2 verif

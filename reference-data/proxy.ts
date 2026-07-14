@@ -19,8 +19,9 @@ export function proxy(request: NextRequest) {
   // Session checks for all main pages
   const sessionCookie = request.cookies.get("sso_session")?.value;
   if (!sessionCookie) {
-    // Redirect to the SSO Core Login portal at http://localhost:3000/
-    const ssoLoginUrl = new URL("http://localhost:3000/");
+    // Redirect to the SSO Core Login portal
+    const ssoAppUrl = process.env.NEXT_PUBLIC_SSO_APP_URL || "http://localhost:3000";
+    const ssoLoginUrl = new URL("/", ssoAppUrl);
     ssoLoginUrl.searchParams.set("return_to", request.url);
     return NextResponse.redirect(ssoLoginUrl.toString());
   }

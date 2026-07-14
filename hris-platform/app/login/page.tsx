@@ -5,7 +5,11 @@ import { SSO_AUTHORIZE_URL, SSO_CLIENT_ID, SSO_CALLBACK_URL, INSTITUTION_SHORT_N
 
 export default function LoginPage() {
   useEffect(() => {
-    const ssoUrl = `${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=mock_challenge&code_challenge_method=plain&scope=openid`;
+    const array = new Uint32Array(22);
+    window.crypto.getRandomValues(array);
+    const verifier = Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
+    sessionStorage.setItem("sso_code_verifier", verifier);
+    const ssoUrl = `${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
     window.location.href = ssoUrl;
   }, []);
 

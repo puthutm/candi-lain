@@ -33,5 +33,6 @@ run_migration "siakad-platform" "siakad_platform"
 run_migration "lms-platform" "lms_platform"
 run_migration "keuangan-platform" "keuangan_platform"
 run_migration "hris-platform" "hris_platform"
+run_migration "bank-konten-platform" "bank_konten_platform"
 
 echo "All migrations completed."

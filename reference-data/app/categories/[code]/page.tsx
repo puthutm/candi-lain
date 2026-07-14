@@ -11,7 +11,8 @@ export default async function CategoryItemsPage({ params }: PageProps) {
   const { code } = await params;
   const user = await getSessionUser();
   if (!user || !isSuperAdmin(user)) {
-    redirect("http://localhost:3000/");
+    const ssoAppUrl = process.env.NEXT_PUBLIC_SSO_APP_URL || "http://localhost:3000/";
+    redirect(ssoAppUrl);
   }
 
   const category = await ReferenceDataService.getCategoryByCode(code);

@@ -19,9 +19,8 @@ export default function GradingBoard({ params }: { params: Promise<{ id: string;
   const sessionId = unwrappedParams.assignId;
 
   const searchParams = useSearchParams();
-  const studentNim = searchParams.get("studentNim") || "26090182";
-  
   const { user, loading: sessionLoading } = useRole();
+  const studentNim = searchParams.get("studentNim") || user?.username || "26090182";
 
   if (sessionLoading) {
     return (
@@ -36,7 +35,7 @@ export default function GradingBoard({ params }: { params: Promise<{ id: string;
 
   if (!user) return null;
 
-  const [studentName, setStudentName] = useState("Budi Santoso");
+  const [studentName, setStudentName] = useState(user.username === studentNim ? user.name : "Budi Santoso");
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
@@ -56,11 +55,13 @@ export default function GradingBoard({ params }: { params: Promise<{ id: string;
 
   useEffect(() => {
     if (studentNim === "25090127") setStudentName("Citra Lestari");
-    if (studentNim === "25090129") setStudentName("Dewi Maharani");
-    if (studentNim === "25090130") setStudentName("Eko Putra");
+    else if (studentNim === "25090129") setStudentName("Dewi Maharani");
+    else if (studentNim === "25090130") setStudentName("Eko Putra");
+    else if (studentNim === user?.username) setStudentName(user?.name || "Budi Santoso");
+    else if (studentNim === "26090182") setStudentName("Budi Santoso");
 
     fetchSubmissionDetails();
-  }, [studentNim, sessionId]);
+  }, [studentNim, sessionId, user]);
 
   const triggerToast = (msg: string) => {
     setToastMsg(msg);

@@ -1,56 +1,92 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRole } from "../context/RoleContext";
 import { LOGO_URL, INSTITUTION_SHORT_NAME, INSTITUTION_NAME } from "@/lib/client-config";
 
 type DosenTab = "beranda" | "jadwal" | "nilai" | "krs_perwalian";
 
-interface ClassSchedule {
-  id: string;
-  code: string;
-  name: string;
+interface ClassData {
+  classId: string;
+  className: string;
+  courseCode: string;
+  courseName: string;
   sks: number;
-  room: string;
-  time: string;
-  studentCount: number;
+  capacity: number;
+  enrolledCount: number;
+  mode: string;
 }
 
 interface StudentGrade {
-  nim: string;
-  name: string;
-  tugas: number;
-  uts: number;
-  uas: number;
-  finalGrade: string;
+  gradeId: string | null;
+  studentId: string;
+  nim: string | null;
+  fullName: string;
+  tugasScore: string;
+  utsScore: string;
+  uasScore: string;
+  finalScore: string;
+  letterGrade: string | null;
+  locked: boolean;
+}
+
+interface LecturerProfile {
+  id: string;
+  nidn: string;
+  fullName: string;
+  studyProgramName: string;
+  bkdLoad: string;
 }
 
 export default function DosenPage() {
   const { user, logout, loading } = useRole();
   const [activeTab, setActiveTab] = useState<DosenTab>("beranda");
-  const [selectedClassId, setSelectedClassId] = useState<string>("inf202");
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [toastMsg, setToastMsg] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [lecturer, setLecturer] = useState<LecturerProfile | null>(null);
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [grades, setGrades] = useState<StudentGrade[]>([]);
+  const [loadingGrades, setLoadingGrades] = useState(false);
 
-  // Mock schedule
-  const schedules: ClassSchedule[] = [
-    { id: "inf101", code: "INF101", name: "Pemrograman Dasar", sks: 4, room: "Vicon Class A", time: "Senin, 08:00 - 11:30", studentCount: 42 },
-    { id: "inf202", code: "INF202", name: "Basis Data Terdistribusi", sks: 3, room: "Vicon Class B", time: "Selasa, 13:00 - 15:30", studentCount: 38 },
-    { id: "inf203", code: "INF203", name: "Kecerdasan Buatan", sks: 3, room: "Vicon Class C", time: "Kamis, 10:00 - 12:30", studentCount: 40 },
-  ];
+  useEffect(() => {
+    fetchSchedule();
+  }, []);
 
-  // Mock students grades for input
-  const [grades, setGrades] = useState<Record<string, StudentGrade[]>>({
-    inf202: [
-      { nim: "26090011", name: "Andi Wijaya", tugas: 80, uts: 75, uas: 85, finalGrade: "A-" },
-      { nim: "26090182", name: "Budi Santoso", tugas: 90, uts: 85, uas: 88, finalGrade: "A" },
-      { nim: "26090045", name: "Citra Lestari", tugas: 70, uts: 70, uas: 75, finalGrade: "B" },
-    ],
-    inf101: [
-      { nim: "26090200", name: "Dani Ramadhan", tugas: 85, uts: 80, uas: 90, finalGrade: "A" },
-      { nim: "26090311", name: "Elisa Fitri", tugas: 60, uts: 65, uas: 70, finalGrade: "C" },
-    ]
-  });
+  useEffect(() => {
+    if (selectedClassId) {
+      fetchGrades(selectedClassId);
+    }
+  }, [selectedClassId]);
+
+  const fetchSchedule = async () => {
+    try {
+      const res = await fetch("/api/dosen/schedule");
+      const data = await res.json();
+      if (data.success) {
+        if (data.lecturer) setLecturer(data.lecturer);
+        if (data.classes) {
+          setClasses(data.classes);
+          if (data.classes.length > 0 && !selectedClassId) {
+            setSelectedClassId(data.classes[0].classId);
+          }
+        }
+      }
+    } catch {}
+  };
+
+  const fetchGrades = async (classId: string) => {
+    setLoadingGrades(true);
+    try {
+      const res = await fetch(`/api/dosen/grades?classId=${classId}`);
+      const data = await res.json();
+      if (data.success) {
+        setGrades(data.grades || []);
+      }
+    } catch {} finally {
+      setLoadingGrades(false);
+    }
+  };
 
   const handleGradeImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,38 +105,63 @@ export default function DosenPage() {
     reader.readAsText(file);
   };
 
-  const handleGradeChange = (classId: string, studentNim: string, field: "tugas" | "uts" | "uas", value: string) => {
-    const numValue = Math.min(100, Math.max(0, parseInt(value) || 0));
-    setGrades(prev => {
-      const classGrades = prev[classId] || [];
-      const updatedClassGrades = classGrades.map(g => {
-        if (g.nim === studentNim) {
-          const newG = { ...g, [field]: numValue };
-          // Recalculate final grade
-          const total = (newG.tugas * 0.3) + (newG.uts * 0.3) + (newG.uas * 0.4);
-          let gradeLetter = "E";
-          if (total >= 85) gradeLetter = "A";
-          else if (total >= 80) gradeLetter = "A-";
-          else if (total >= 75) gradeLetter = "B+";
-          else if (total >= 70) gradeLetter = "B";
-          else if (total >= 60) gradeLetter = "C";
-          else if (total >= 50) gradeLetter = "D";
-          return { ...newG, finalGrade: gradeLetter };
-        }
-        return g;
-      });
-      return { ...prev, [classId]: updatedClassGrades };
-    });
+  const handleGradeChange = (studentId: string, field: "tugasScore" | "utsScore" | "uasScore", value: string) => {
+    const numValue = Math.min(100, Math.max(0, parseInt(value) || 0)).toString();
+    setGrades(prev => prev.map(g => {
+      if (g.studentId === studentId) {
+        const newG = { ...g, [field]: numValue };
+        // Recalculate
+        const total = (parseFloat(newG.tugasScore) * 0.3) + (parseFloat(newG.utsScore) * 0.3) + (parseFloat(newG.uasScore) * 0.4);
+        let letter = "E";
+        if (total >= 85) letter = "A";
+        else if (total >= 80) letter = "A-";
+        else if (total >= 75) letter = "B+";
+        else if (total >= 70) letter = "B";
+        else if (total >= 60) letter = "C";
+        else if (total >= 50) letter = "D";
+        return { ...newG, finalScore: total.toFixed(2), letterGrade: letter };
+      }
+      return g;
+    }));
   };
 
-  const handleSaveGrades = () => {
-    triggerToast("Nilai perkuliahan berhasil disimpan ke SIAKAD!");
+  const handleSaveGrades = async () => {
+    if (!selectedClassId) return;
+    try {
+      const res = await fetch("/api/dosen/grades", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          classId: selectedClassId,
+          grades: grades.map(g => ({
+            studentId: g.studentId,
+            tugasScore: parseFloat(g.tugasScore),
+            utsScore: parseFloat(g.utsScore),
+            uasScore: parseFloat(g.uasScore),
+            finalScore: parseFloat(g.finalScore),
+            letterGrade: g.letterGrade,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast(data.message || "Nilai berhasil disimpan!");
+      } else {
+        triggerToast(data.error || "Gagal menyimpan nilai");
+      }
+    } catch (err: any) {
+      triggerToast("Galat: " + err.message);
+    }
   };
 
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
   };
+
+  const displayName = lecturer?.fullName || user?.name || "Dosen";
+  const displayNidn = lecturer?.nidn || "-";
+  const displayInitials = displayName.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase();
 
   if (loading) {
     return (
@@ -132,13 +193,13 @@ export default function DosenPage() {
           <div className="flex items-center gap-3">
             <div className="relative shrink-0">
               <div className="w-11 h-11 rounded-full bg-[#FED524] border-2 border-white/20 shadow-md flex items-center justify-center font-bold text-[#0f487b]">
-                DS
+                {displayInitials}
               </div>
               <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-[#0f487b] rounded-full"></div>
             </div>
             <div className="overflow-hidden">
-              <h3 className="font-bold text-white truncate text-sm">{user?.name || "Dr. Hendra Setiawan"}</h3>
-              <p className="text-[10px] text-white/60 font-bold mt-0.5 tracking-wider font-mono">NIDN: 0428058203</p>
+              <h3 className="font-bold text-white truncate text-sm">{displayName}</h3>
+              <p className="text-[10px] text-white/60 font-bold mt-0.5 tracking-wider font-mono">NIDN: {displayNidn}</p>
             </div>
           </div>
         </div>
@@ -201,25 +262,25 @@ export default function DosenPage() {
             <div className="flex flex-col gap-6 max-w-5xl">
               <div className="bg-gradient-to-br from-[#0f487b] to-[#0a345c] text-white p-8 rounded-3xl shadow-xl flex flex-col gap-3 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-                <h2 className="text-xl font-bold">Selamat Datang Kembali, {user?.name || "Dr. Hendra Setiawan"}</h2>
+                <h2 className="text-xl font-bold">Selamat Datang Kembali, {displayName}</h2>
                 <p className="text-xs text-white/70 max-w-lg">Sistem Informasi Akademik terintegrasi {INSTITUTION_SHORT_NAME}. Kelola absensi mahasiswa, persetujuan KRS perwalian, dan input nilai akhir semester secara mandiri di sini.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white border border-slate-200 p-6 rounded-2xl flex flex-col gap-2 shadow-sm">
                   <span className="text-2xl">📅</span>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Jadwal Hari Ini</h3>
-                  <p className="text-sm font-bold text-slate-800">1 Kelas Mengajar</p>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Kelas Diampu</h3>
+                  <p className="text-sm font-bold text-slate-800">{classes.length} Kelas</p>
                 </div>
                 <div className="bg-white border border-slate-200 p-6 rounded-2xl flex flex-col gap-2 shadow-sm">
                   <span className="text-2xl">🤝</span>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Bimbingan KRS</h3>
-                  <p className="text-sm font-bold text-slate-800">3 Mahasiswa Menunggu</p>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Mahasiswa</h3>
+                  <p className="text-sm font-bold text-slate-800">{classes.reduce((a, c) => a + c.enrolledCount, 0)} Orang</p>
                 </div>
                 <div className="bg-white border border-slate-200 p-6 rounded-2xl flex flex-col gap-2 shadow-sm">
                   <span className="text-2xl">🏆</span>
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">BKD Semester</h3>
-                  <p className="text-sm font-bold text-slate-800">12 SKS Terpenuhi</p>
+                  <p className="text-sm font-bold text-slate-800">{lecturer?.bkdLoad || "0"} SKS</p>
                 </div>
               </div>
             </div>
@@ -233,19 +294,21 @@ export default function DosenPage() {
                 <p className="text-xs text-slate-400">Daftar mata kuliah yang diampu semester ini</p>
               </div>
               <div className="divide-y divide-slate-100">
-                {schedules.map((sched) => (
-                  <div key={sched.id} className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {classes.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-slate-400">Belum ada jadwal mengajar untuk periode ini.</div>
+                ) : classes.map((cls) => (
+                  <div key={cls.classId} className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-[#0f487b]">{sched.code}</span>
-                        <span className="text-[9px] bg-slate-150 px-2 py-0.5 rounded text-slate-500 font-bold uppercase">{sched.room}</span>
+                        <span className="text-xs font-mono font-bold text-[#0f487b]">{cls.courseCode}</span>
+                        <span className="text-[9px] bg-slate-150 px-2 py-0.5 rounded text-slate-500 font-bold uppercase">{cls.className}</span>
                       </div>
-                      <h4 className="text-sm font-bold text-slate-800 mt-1">{sched.name}</h4>
-                      <p className="text-xs text-slate-500 mt-0.5">{sched.time}</p>
+                      <h4 className="text-sm font-bold text-slate-800 mt-1">{cls.courseName}</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">{cls.sks} SKS • {cls.mode}</p>
                     </div>
                     <div className="text-right">
                       <span className="text-xs text-slate-400 block">Jumlah Mahasiswa</span>
-                      <span className="text-sm font-bold text-slate-700">{sched.studentCount} Orang</span>
+                      <span className="text-sm font-bold text-slate-700">{cls.enrolledCount} / {cls.capacity}</span>
                     </div>
                   </div>
                 ))}
@@ -264,8 +327,9 @@ export default function DosenPage() {
                   </div>
                   <div className="flex gap-2 items-center">
                     <select value={selectedClassId} onChange={(e) => setSelectedClassId(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold bg-white text-slate-700 outline-none">
-                      <option value="inf202">Basis Data Terdistribusi (INF202)</option>
-                      <option value="inf101">Pemrograman Dasar (INF101)</option>
+                      {classes.map(cls => (
+                        <option key={cls.classId} value={cls.classId}>{cls.courseName} ({cls.courseCode})</option>
+                      ))}
                     </select>
                     <label className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer text-center">
                       📥 Import Nilai (CSV)
@@ -290,20 +354,22 @@ export default function DosenPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {(grades[selectedClassId] || []).map((student) => (
-                        <tr key={student.nim} className="hover:bg-slate-50 transition">
-                          <td className="py-3 font-mono text-slate-500">{student.nim}</td>
-                          <td className="py-3 font-bold text-slate-700">{student.name}</td>
+                      {grades.length === 0 ? (
+                        <tr><td colSpan={6} className="py-8 text-center text-sm text-slate-400">Belum ada mahasiswa terdaftar di kelas ini.</td></tr>
+                      ) : grades.map((student) => (
+                        <tr key={student.studentId} className="hover:bg-slate-50 transition">
+                          <td className="py-3 font-mono text-slate-500">{student.nim || "-"}</td>
+                          <td className="py-3 font-bold text-slate-700">{student.fullName}</td>
                           <td className="py-2 text-center">
-                            <input type="number" value={student.tugas} onChange={(e) => handleGradeChange(selectedClassId, student.nim, "tugas", e.target.value)} className="w-16 px-2 py-1 text-center bg-slate-50 border border-slate-200 rounded outline-none focus:border-[#0f487b]" />
+                            <input type="number" value={parseInt(student.tugasScore)} onChange={(e) => handleGradeChange(student.studentId, "tugasScore", e.target.value)} className="w-16 px-2 py-1 text-center bg-slate-50 border border-slate-200 rounded outline-none focus:border-[#0f487b]" />
                           </td>
                           <td className="py-2 text-center">
-                            <input type="number" value={student.uts} onChange={(e) => handleGradeChange(selectedClassId, student.nim, "uts", e.target.value)} className="w-16 px-2 py-1 text-center bg-slate-50 border border-slate-200 rounded outline-none focus:border-[#0f487b]" />
+                            <input type="number" value={parseInt(student.utsScore)} onChange={(e) => handleGradeChange(student.studentId, "utsScore", e.target.value)} className="w-16 px-2 py-1 text-center bg-slate-50 border border-slate-200 rounded outline-none focus:border-[#0f487b]" />
                           </td>
                           <td className="py-2 text-center">
-                            <input type="number" value={student.uas} onChange={(e) => handleGradeChange(selectedClassId, student.nim, "uas", e.target.value)} className="w-16 px-2 py-1 text-center bg-slate-50 border border-slate-200 rounded outline-none focus:border-[#0f487b]" />
+                            <input type="number" value={parseInt(student.uasScore)} onChange={(e) => handleGradeChange(student.studentId, "uasScore", e.target.value)} className="w-16 px-2 py-1 text-center bg-slate-50 border border-slate-200 rounded outline-none focus:border-[#0f487b]" />
                           </td>
-                          <td className="py-3 text-center font-black text-[#0f487b]">{student.finalGrade}</td>
+                          <td className="py-3 text-center font-black text-[#0f487b]">{student.letterGrade || "-"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -321,20 +387,8 @@ export default function DosenPage() {
                 <p className="text-xs text-slate-400">Persetujuan rencana studi mahasiswa bimbingan</p>
               </div>
               <div className="divide-y divide-slate-100">
-                <div className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-700">Budi Santoso</h4>
-                    <p className="text-xs text-slate-400 font-mono">NIM: 26090182 | IPK: 3.82</p>
-                    <p className="text-[10px] text-emerald-500 font-bold uppercase mt-1">Status Keuangan: Lunas (UKT)</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => triggerToast("KRS Budi Santoso disetujui!")} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md transition">
-                      Setujui KRS
-                    </button>
-                    <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition">
-                      Lihat Rincian
-                    </button>
-                  </div>
+                <div className="py-8 text-center text-sm text-slate-400">
+                  Data perwalian KRS akan ditampilkan dari API secara dinamis.
                 </div>
               </div>
             </div>

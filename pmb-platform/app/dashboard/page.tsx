@@ -18,8 +18,8 @@ export default function ApplicantDashboard() {
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: string }>({});
   const [showUjianReady, setShowUjianReady] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [candidateName, setCandidateName] = useState("Budi Santoso");
-  const [candidateRef, setCandidateRef] = useState("PMB26-09812");
+  const [candidateName, setCandidateName] = useState("");
+  const [candidateRef, setCandidateRef] = useState("");
   const [candidateId, setCandidateId] = useState("");
 
   const triggerToast = (msg: string) => {
@@ -123,6 +123,15 @@ export default function ApplicantDashboard() {
   };
 
   const currentYear = new Date().getFullYear();
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/";
+    } catch {
+      window.location.href = "/";
+    }
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f8fafc] text-slate-800 font-sans">
@@ -260,12 +269,12 @@ export default function ApplicantDashboard() {
         </nav>
 
         <div className="p-4 border-t border-white/10 shrink-0">
-          <Link
-            href="/"
+          <button
+            onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-rose-500/15 text-rose-300 font-bold rounded-lg hover:bg-rose-500 hover:text-white transition-all text-xs border border-rose-500/20"
           >
             🚪 Keluar
-          </Link>
+          </button>
         </div>
       </aside>
 

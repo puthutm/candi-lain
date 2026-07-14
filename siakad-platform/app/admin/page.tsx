@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 type AdminTab = "dashboard" | "krs_validation" | "pddikti" | "audit";
 
@@ -8,36 +8,84 @@ interface KrsSubmission {
   id: string;
   name: string;
   nim: string;
-  prodi: string;
   sksCount: number;
   courses: string[];
+  status?: string;
 }
-
-const INITIAL_SUBMISSIONS: KrsSubmission[] = [
-  { id: "sub-1", name: "Budi Santoso", nim: "26090182", prodi: "S1 Informatika", sksCount: 12, courses: ["INF201: Algoritma Lanjut (4 SKS)", "INF202: Basis Data Terdistribusi (3 SKS)", "INF203: Kecerdasan Buatan (3 SKS)", "MKU101: Pendidikan Pancasila (2 SKS)"] },
-  { id: "sub-2", name: "Andi Pratama Wijaya", nim: "26090143", prodi: "S1 Sistem Informasi", sksCount: 9, courses: ["INF201: Algoritma Lanjut (4 SKS)", "INF202: Basis Data Terdistribusi (3 SKS)", "MKU101: Pendidikan Pancasila (2 SKS)"] },
-];
 
 export default function AcademicAdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
-  const [submissions, setSubmissions] = useState<KrsSubmission[]>(INITIAL_SUBMISSIONS);
-  const [selectedSub, setSelectedSub] = useState<KrsSubmission | null>(INITIAL_SUBMISSIONS[0] || null);
+  const [submissions, setSubmissions] = useState<KrsSubmission[]>([]);
+  const [selectedSub, setSelectedSub] = useState<KrsSubmission | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [rejectNote, setRejectNote] = useState("");
+  const [loadingSubmissions, setLoadingSubmissions] = useState(true);
 
-  const handleKrsApprove = (id: string, name: string) => {
-    setSubmissions(submissions.filter((s) => s.id !== id));
-    setSelectedSub(null);
-    setRejectNote("");
-    triggerToast(`KRS ${name} berhasil disetujui (Approved)`);
+  useEffect(() => {
+    fetchSubmissions();
+  }, []);
+
+  const fetchSubmissions = async () => {
+    setLoadingSubmissions(true);
+    try {
+      const res = await fetch("/api/admin/krs-submissions");
+      const data = await res.json();
+      if (data.success) {
+        setSubmissions(data.submissions || []);
+        if (data.submissions?.length > 0) {
+          setSelectedSub(data.submissions[0]);
+        }
+      }
+    } catch {} finally {
+      setLoadingSubmissions(false);
+    }
   };
 
-  const handleKrsReject = (id: string, name: string) => {
-    setSubmissions(submissions.filter((s) => s.id !== id));
-    setSelectedSub(null);
-    setRejectNote("");
-    triggerToast(`KRS ${name} ditolak (Rejected) dengan catatan: ${rejectNote}`);
+  const handleKrsApprove = async (id: string, name: string) => {
+    try {
+      const res = await fetch("/api/admin/krs-submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ krsId: id, action: "approve" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast(`KRS ${name} berhasil disetujui (Approved)`);
+        setSelectedSub(null);
+        setRejectNote("");
+        fetchSubmissions();
+      } else {
+        triggerToast(data.error || "Gagal menyetujui KRS");
+      }
+    } catch (err: any) {
+      triggerToast("Galat: " + err.message);
+    }
+  };
+
+  const handleKrsReject = async (id: string, name: string) => {
+    if (!rejectNote) {
+      triggerToast("Catatan penolakan wajib diisi");
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/krs-submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ krsId: id, action: "reject", note: rejectNote }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast(`KRS ${name} ditolak (Rejected) dengan catatan: ${rejectNote}`);
+        setSelectedSub(null);
+        setRejectNote("");
+        fetchSubmissions();
+      } else {
+        triggerToast(data.error || "Gagal menolak KRS");
+      }
+    } catch (err: any) {
+      triggerToast("Galat: " + err.message);
+    }
   };
 
   const triggerToast = (msg: string) => {
@@ -342,9 +390,9 @@ export default function AcademicAdminPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     <tr>
-                      <td className="px-6 py-4 font-semibold text-slate-800">Aris Wijaya (BAAK)</td>
-                      <td className="px-6 py-4 text-xs font-mono">APPROVE_KRS - NIM: 26090182</td>
-                      <td className="px-6 py-4 text-xs text-slate-400">{new Date().toLocaleString()}</td>
+                      <td colSpan={3} className="px-6 py-8 text-center text-sm text-slate-400">
+                        Audit log akan terisi secara otomatis dari aktivitas admin (approve/reject KRS, dsb).
+                      </td>
                     </tr>
                   </tbody>
                 </table>

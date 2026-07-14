@@ -7,6 +7,9 @@ import { userApplicationRoles, applicationRoles } from "@/db/schema/rbac";
 import { users } from "@/db/schema/users";
 import { eq, and } from "drizzle-orm";
 import Link from "next/link";
+import AppActions from "./AppActions";
+import RolesManager from "./RolesManager";
+import AssignmentsManager from "./AssignmentsManager";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -104,6 +107,9 @@ export default async function AppDetailPage({ params }: PageProps) {
               </span>
             </div>
             <p className="text-slate-400 text-sm mt-1">{app.description || "No description provided."}</p>
+            <div className="mt-4">
+              <AppActions app={app} />
+            </div>
           </div>
         </header>
 
@@ -144,76 +150,18 @@ export default async function AppDetailPage({ params }: PageProps) {
 
           <div className="lg:col-span-2 space-y-8">
             {/* Roles configuration card */}
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6 shadow-md">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-base font-bold">Application Roles</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Application-specific dynamic roles keys for token mappings.</p>
-                </div>
-              </div>
-
-              {roles.length === 0 ? (
-                <div className="text-center py-6 text-slate-500 text-sm">
-                  No roles defined yet. Admin can register custom roles for access mappings.
-                </div>
-              ) : (
-                <div className="divide-y divide-white/5">
-                  {roles.map((role) => (
-                    <div key={role.id} className="py-3 flex justify-between items-center text-sm">
-                      <div>
-                        <p className="font-semibold text-white">
-                          {role.roleName}{" "}
-                          {role.isDefault && (
-                            <span className="rounded bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-400 ml-1.5">
-                              Default
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs text-slate-400 font-mono mt-0.5">{role.roleKey}</p>
-                      </div>
-                      <p className="text-xs text-slate-500 max-w-xs text-right truncate">
-                        {role.description || "-"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <RolesManager appId={id} initialRoles={roles} />
 
             {/* Active User assignments card */}
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6 shadow-md">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-base font-bold">User Assignments</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Users mapped with roles who have access permission.</p>
-                </div>
-              </div>
-
-              {assignments.length === 0 ? (
-                <div className="text-center py-6 text-slate-500 text-sm">
-                  No user role assignments active for this application.
-                </div>
-              ) : (
-                <div className="divide-y divide-white/5">
-                  {assignments.map((asg) => (
-                    <div key={asg.id} className="py-3 flex justify-between items-center text-sm">
-                      <div>
-                        <p className="font-semibold text-white">{asg.fullName}</p>
-                        <p className="text-xs text-slate-400">{asg.email}</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-400 border border-indigo-500/20">
-                          {asg.roleName}
-                        </span>
-                        <p className="text-[10px] text-slate-500 mt-1">
-                          Assigned {new Date(asg.grantedAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <AssignmentsManager appId={id} initialAssignments={assignments.map(a => ({
+              id: a.id,
+              userId: a.userId,
+              fullName: a.fullName,
+              email: a.email,
+              roleId: a.roleId,
+              roleName: a.roleName,
+              grantedAt: a.grantedAt.toISOString(),
+            }))} roles={roles} />
           </div>
         </section>
       </main>

@@ -83,6 +83,22 @@ export default function ExamPage() {
   const [colorPlateIndex, setColorPlateIndex] = useState(0);
   const [plateTimer, setPlateTimer] = useState(10);
   const plateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [candidateName, setCandidateName] = useState("Calon Mahasiswa");
+
+  // Load applicant identity
+  useEffect(() => {
+    const id = localStorage.getItem("pmb_applicant_id");
+    if (id) {
+      fetch(`/api/applicants/${id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.applicant) {
+            setCandidateName(data.applicant.fullName);
+          }
+        })
+        .catch((err) => console.error(err));
+    }
+  }, []);
 
   // General Timer
   useEffect(() => {
@@ -139,15 +155,28 @@ export default function ExamPage() {
       setView("exam_color");
     } else {
       setCurrentQuestionIndex(0);
+      setAnswers({});
+      setRaguStatus({});
       setView("exam_text");
     }
   };
 
-  const handleSelectAnswer = (qId: number, key: string) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [qId]: key,
-    }));
+  const handlePrevQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (!activeModule) return;
+    const questions = activeModule.id === "tpa" ? QUESTIONS_TPA : [];
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    }
+  };
+
+  const handleSelectOption = (qId: number, optionKey: string) => {
+    setAnswers((prev) => ({ ...prev, [qId]: optionKey }));
   };
 
   const handleToggleRagu = (qId: number) => {
@@ -158,26 +187,19 @@ export default function ExamPage() {
   };
 
   const handleColorNext = () => {
-    // Save color answer
-    setAnswers((prev) => ({
-      ...prev,
-      [colorPlateIndex + 100]: colorInput, // offset to prevent collisions
-    }));
-    setColorInput("");
-
     if (colorPlateIndex < PLATES_COLOR.length - 1) {
-      setColorPlateIndex(colorPlateIndex + 1);
+      setColorPlateIndex((prev) => prev + 1);
+      setColorInput("");
     } else {
-      if (plateTimerRef.current) clearInterval(plateTimerRef.current);
       handleFinishModule();
     }
   };
 
   const handleFinishModule = () => {
+    if (plateTimerRef.current) clearInterval(plateTimerRef.current);
     if (!activeModule) return;
     setShowConfirmModal(false);
 
-    // Set module status to completed
     setModules((prev) =>
       prev.map((m) => (m.id === activeModule.id ? { ...m, status: "completed" } : m))
     );
@@ -218,7 +240,7 @@ export default function ExamPage() {
           )}
           <span className="h-8 w-px bg-blue-400/20"></span>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-white leading-none">Budi Santoso</span>
+            <span className="text-sm font-bold text-white leading-none">{candidateName}</span>
           </div>
         </div>
       </header>

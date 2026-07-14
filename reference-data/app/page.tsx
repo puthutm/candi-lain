@@ -8,8 +8,8 @@ import Link from "next/link";
 export default async function ReferenceDashboardPage() {
   const user = await getSessionUser();
   if (!user || !isSuperAdmin(user)) {
-    // Redirect to the SSO login portal since it's hosted at port 3000
-    redirect("http://localhost:3000/");
+    const ssoAppUrl = process.env.NEXT_PUBLIC_SSO_APP_URL || "http://localhost:3000/";
+    redirect(ssoAppUrl);
   }
 
   // Fetch categories with counts

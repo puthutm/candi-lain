@@ -1,0 +1,135 @@
+erDiagram
+
+    %% ================= BANK MATERI =================
+    MATERIAL_BANK_ITEMS ||--o{ MATERIAL_BANK_VERSIONS : "punya_versi"
+    MATERIAL_BANK_ITEMS ||--o{ MATERIAL_USAGE_LOGS : "dipakai_pada"
+    MATERIAL_BANK_ITEMS ||--o{ VERIFICATION_RECORDS : "diverifikasi_melalui"
+
+    MATERIAL_BANK_ITEMS {
+        uuid id PK
+        string title
+        text description
+        string course_code "kode MK, ref logis ke SIAKAD, bukan FK"
+        string topic
+        json tags
+        enum material_type "dokumen|video|presentasi|dataset"
+        uuid contributor_user_id "ref SSO_USERS, bukan FK"
+        int current_version_number
+        enum verification_status "draft|menunggu_prodi|menunggu_bpm|terbit|revisi|arsip"
+        timestamp created_at
+    }
+
+    MATERIAL_BANK_VERSIONS {
+        uuid id PK
+        uuid material_item_id FK
+        int version_number
+        string file_url
+        text changelog
+        uuid uploaded_by_user_id
+        timestamp uploaded_at
+    }
+
+    MATERIAL_USAGE_LOGS {
+        uuid id PK
+        uuid material_item_id FK
+        enum consumer_system "lms|siakad|pmb"
+        string consumer_class_ref "ref logis ke lms_classes/classes, bukan FK"
+        uuid used_by_user_id
+        timestamp used_at
+    }
+
+    %% ================= BANK SOAL =================
+    QUESTION_BANK_ITEMS ||--o{ QUESTION_BANK_OPTIONS : "punya_opsi"
+    QUESTION_BANK_ITEMS ||--o{ QUESTION_BANK_VERSIONS : "punya_versi"
+    QUESTION_BANK_ITEMS ||--o{ QUESTION_USAGE_LOGS : "dipakai_pada"
+    QUESTION_BANK_ITEMS ||--o{ QUESTION_ITEM_ANALYSIS : "dianalisis_pada"
+    QUESTION_BANK_ITEMS ||--o{ VERIFICATION_RECORDS : "diverifikasi_melalui"
+
+    QUESTION_BANK_ITEMS {
+        uuid id PK
+        string course_code "ref logis ke SIAKAD, bukan FK"
+        string topic
+        text question_text
+        enum question_type "pilihan_ganda|esai|pilihan_ganda_kompleks"
+        string correct_answer
+        enum difficulty_level "mudah|sedang|sulit"
+        enum bloom_taxonomy "C1|C2|C3|C4|C5|C6"
+        json tags
+        uuid contributor_user_id "ref SSO_USERS"
+        int current_version_number
+        int usage_count
+        timestamp last_used_at
+        enum verification_status "draft|menunggu_prodi|menunggu_bpm|terbit|revisi|arsip"
+        enum quality_flag "baik|perlu_revisi|belum_dianalisis"
+    }
+
+    QUESTION_BANK_OPTIONS {
+        uuid id PK
+        uuid question_id FK
+        string option_label "A|B|C|D|E"
+        text option_text
+        boolean is_correct
+    }
+
+    QUESTION_BANK_VERSIONS {
+        uuid id PK
+        uuid question_id FK
+        int version_number
+        text question_text_snapshot
+        text changelog
+        uuid revised_by_user_id
+        timestamp revised_at
+    }
+
+    QUESTION_USAGE_LOGS {
+        uuid id PK
+        uuid question_id FK
+        enum consumer_system "pmb|siakad|lms"
+        string consumer_exam_ref "ref logis ke exam_module/quiz/dsb, bukan FK"
+        timestamp used_at
+    }
+
+    QUESTION_ITEM_ANALYSIS {
+        uuid id PK
+        uuid question_id FK
+        enum consumer_system "pmb|siakad|lms"
+        string consumer_exam_ref
+        int respondent_count
+        decimal correct_rate "tingkat kesukaran aktual, % benar"
+        decimal discrimination_index "daya beda, kelompok atas vs bawah"
+        timestamp computed_at
+    }
+
+    QUIZ_GENERATION_RULES {
+        uuid id PK
+        string name
+        string course_code
+        int total_questions
+        json difficulty_distribution "mis. {mudah:30, sedang:50, sulit:20}"
+        json tag_filter
+        int exclude_if_used_within_days "BR-04"
+        uuid created_by_user_id
+    }
+
+    %% ================= VERIFIKASI BERJENJANG (SHARED) =================
+    VERIFICATION_RECORDS {
+        uuid id PK
+        enum content_type "materi|soal"
+        uuid content_id "ref material_bank_items ATAU question_bank_items"
+        enum stage "prodi|bpm"
+        enum decision "setuju|revisi"
+        uuid verifier_user_id "ref SSO_USERS"
+        string note
+        timestamp decided_at
+    }
+
+    %% ================= GOVERNANCE =================
+    AUDIT_LOGS {
+        uuid id PK
+        string actor_ref "ref SSO_USERS"
+        string entity_type
+        uuid entity_id
+        string action
+        json detail
+        timestamp created_at
+    }

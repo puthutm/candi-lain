@@ -212,6 +212,15 @@ export default function PmbPublikPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
+  const handleSsoLogin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const array = new Uint32Array(22);
+    window.crypto.getRandomValues(array);
+    const verifier = Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
+    sessionStorage.setItem("sso_code_verifier", verifier);
+    window.location.href = `${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
+  };
+
   const handlePrev = () => {
     if (step > 1) setStep(step - 1);
   };
@@ -860,12 +869,13 @@ export default function PmbPublikPage() {
                 <span className="flex-shrink mx-3 text-slate-400 text-xs font-semibold">atau</span>
                 <div className="flex-grow border-t border-slate-100"></div>
               </div>
-              <a
-                href={`${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=mock_challenge&code_challenge_method=plain&scope=openid`}
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-[#0f487b] bg-[#0f487b]/10 hover:bg-[#0f487b]/20 transition-all border border-[#0f487b]/10 text-xs text-center"
+              <button
+                type="button"
+                onClick={handleSsoLogin}
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-[#0f487b] bg-[#0f487b]/10 hover:bg-[#0f487b]/20 transition-all border border-[#0f487b]/10 text-xs text-center cursor-pointer"
               >
                 🔑 Masuk dengan SSO Portal
-              </a>
+              </button>
             </form>
           </div>
         </div>

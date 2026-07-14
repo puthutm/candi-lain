@@ -7,6 +7,7 @@ import { env } from "../env";
 import { isValidPassword } from "../utils";
 import { auditQueue } from "../redis";
 import { randomUUID } from "crypto";
+import postgres from "postgres";
 
 export type AuthResult =
   | { success: true; user: typeof users.$inferSelect }
@@ -37,25 +38,53 @@ export class AuthenticationService {
     return bcrypt.compare(password, hash);
   }
 
-  /**
-   * Authenticate a user by username/email and password
-   */
   static async authenticate(usernameOrEmail: string, password: string): Promise<AuthResult> {
     // Find user by username, email, NIP, or NIM
+    let user = null;
     let searchCondition = eq(users.username, usernameOrEmail);
     if (usernameOrEmail.includes("@")) {
       searchCondition = eq(users.email, usernameOrEmail);
-    } else if (usernameOrEmail === "26090182") {
-      // Budi Santoso's NIM
-      searchCondition = eq(users.username, "mahasiswa");
-    } else if (usernameOrEmail === "0428058203" || usernameOrEmail === "198305282009121003") {
-      // Dr. Hendra's NIP
-      searchCondition = eq(users.username, "dosen");
+    }
+    const directUserList = await db.select().from(users).where(searchCondition).limit(1);
+    if (directUserList.length > 0) {
+      user = directUserList[0];
+    } else {
+      // Fallback dynamic database lookups against siakad_platform students or lecturers
+      let resolvedUserId: string | null = null;
+      let client: any = null;
+      try {
+        const siakadDbUrl = process.env.DATABASE_URL?.replace("/sso_platform", "/siakad_platform");
+        if (siakadDbUrl) {
+          client = postgres(siakadDbUrl);
+          
+          // Check student NIM
+          const students = await client`SELECT user_id FROM siakad_students WHERE nim = ${usernameOrEmail} LIMIT 1`;
+          if (students.length > 0 && students[0].user_id) {
+            resolvedUserId = students[0].user_id;
+          } else {
+            // Check lecturer NIDN/NIP
+            const lecturers = await client`SELECT user_id FROM siakad_lecturers WHERE nidn = ${usernameOrEmail} LIMIT 1`;
+            if (lecturers.length > 0 && lecturers[0].user_id) {
+              resolvedUserId = lecturers[0].user_id;
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error looking up user by SIAKAD NIM/NIP dynamically:", err);
+      } finally {
+        if (client) {
+          await client.end();
+        }
+      }
+
+      if (resolvedUserId) {
+        const list = await db.select().from(users).where(eq(users.id, resolvedUserId)).limit(1);
+        if (list.length > 0) {
+          user = list[0];
+        }
+      }
     }
 
-    const userList = await db.select().from(users).where(searchCondition).limit(1);
-
-    const user = userList[0];
     if (!user) {
       return { success: false, error: "INVALID_CREDENTIALS" };
     }

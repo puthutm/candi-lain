@@ -74,6 +74,22 @@ export async function PUT(req: Request, { params }: RouteParams) {
     // Trigger webhook if applicant is accepted AND payment is paid
     if (appRecord.currentStage === "diterima" && appRecord.paymentStatus === "lunas") {
       try {
+        const actualDocs = await db
+          .select({
+            code: pmbDocumentTypes.code,
+            fileUrl: pmbApplicantDocuments.fileUrl,
+            uploadedAt: pmbApplicantDocuments.uploadedAt,
+          })
+          .from(pmbApplicantDocuments)
+          .leftJoin(pmbDocumentTypes, eq(pmbApplicantDocuments.documentTypeId, pmbDocumentTypes.id))
+          .where(eq(pmbApplicantDocuments.applicantId, appRecord.id));
+
+        const documentsSnapshot = actualDocs.map(d => ({
+          doc_type: d.code || "unknown",
+          file_url: d.fileUrl || "",
+          verified_at: d.uploadedAt?.toISOString() || new Date().toISOString(),
+        }));
+
         const eventId = crypto.randomUUID();
         const payload = {
           event: "applicant.accepted_and_paid",
@@ -87,9 +103,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
             phone: appRecord.phone || "",
             study_program_code: appRecord.studyProgramId || "INF",
             entry_path_code: appRecord.entryPathId || "REGULER",
-            documents_snapshot: [
-              { doc_type: "ktp", file_url: `${env.STORAGE_BASE_URL}/ktp.pdf`, verified_at: new Date().toISOString() }
-            ]
+            documents_snapshot: documentsSnapshot,
           }
         };
 

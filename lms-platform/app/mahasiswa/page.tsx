@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { INSTITUTION_SHORT_NAME } from "@/lib/client-config";
+import { useRole } from "../context/RoleContext";
 
 interface LMSClass {
   id: string;
@@ -28,12 +29,17 @@ interface LMSMaterial {
 
 interface ViconDetails {
   id: string;
-  title: string;
-  meetingLink: string;
-  durationMinutes: number;
+  meetingId: string;
+  topic: string;
+  startTime: string;
+  joinUrl: string;
 }
 
-export default function StudentDashboard() {
+export default function StudentLMSDashboard() {
+  const { user } = useRole();
+  const studentUserId = user?.username || "26090182";
+  const studentName = user?.name || "Budi Santoso";
+
   const [classes, setClasses] = useState<LMSClass[]>([]);
   const [selectedClass, setSelectedClass] = useState<LMSClass | null>(null);
   const [sessions, setSessions] = useState<LMSSession[]>([]);
@@ -50,9 +56,6 @@ export default function StudentDashboard() {
   const [submissionStatus, setSubmissionStatus] = useState<string>("belum_dikerjakan");
 
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
-
-  // Seeded student ID (e.g. Budi Santoso)
-  const studentUserId = "26090182";
 
   useEffect(() => {
     fetchEnrolledClasses();
@@ -196,7 +199,7 @@ export default function StudentDashboard() {
         </div>
 
         <div className="flex items-center gap-3 bg-slate-800 px-4 py-2 rounded-xl text-xs font-semibold text-slate-300">
-          👤 Budi Santoso ({studentUserId})
+          👤 {studentName} ({studentUserId})
         </div>
       </header>
 

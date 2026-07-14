@@ -29,6 +29,17 @@ export async function POST(request: NextRequest) {
 
     // 3. Process status updates (Idempotent check)
     if (transaction_status === "settlement" || transaction_status === "capture") {
+      // Verify if payment has already been recorded
+      const [existingPayment] = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.providerRef, transaction_id))
+        .limit(1);
+
+      if (existingPayment) {
+        return NextResponse.json({ success: true, message: "Payment already processed (idempotent)" });
+      }
+
       await db.transaction(async (tx: any) => {
         // Update invoice payment details
         const paidAmount = parseFloat(gross_amount);
@@ -46,24 +57,16 @@ export async function POST(request: NextRequest) {
           })
           .where(eq(studentInvoices.id, invoice.id));
 
-        // Create or update payment log
-        const [existingPayment] = await tx
-          .select()
-          .from(payments)
-          .where(eq(payments.providerRef, transaction_id))
-          .limit(1);
-
-        if (!existingPayment) {
-          await tx.insert(payments).values({
-            invoiceId: invoice.id,
-            channel: payment_type === "bank_transfer" ? "virtual_account" : "qris",
-            providerRef: transaction_id,
-            amount: gross_amount,
-            status: "success",
-            autoReconciled: true,
-            paidAt: new Date(),
-          });
-        }
+        // Create payment log
+        await tx.insert(payments).values({
+          invoiceId: invoice.id,
+          channel: payment_type === "bank_transfer" ? "virtual_account" : "qris",
+          providerRef: transaction_id,
+          amount: gross_amount,
+          status: "success",
+          autoReconciled: true,
+          paidAt: new Date(),
+        });
 
         // 4. Update academic clearance status to "aktif" if fully paid/cleared
         if (invoiceStatus === "lunas" || outstandingAmount <= 0) {
