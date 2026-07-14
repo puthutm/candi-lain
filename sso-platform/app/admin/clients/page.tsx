@@ -1,9 +1,13 @@
 "use client";
 
+import AdminSidebar from "@/components/AdminSidebar";
+
 export default function ClientsPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6">
-      <div className="mx-auto max-w-7xl">
+    <div className="flex min-h-screen bg-slate-950 text-white">
+      <AdminSidebar activeTab="clients" />
+      <main className="flex-1 p-8 overflow-y-auto">
+        <div className="mx-auto max-w-7xl">
         <h1 className="text-4xl font-bold tracking-tight">OAuth2 Clients Management</h1>
         <p className="mt-2 text-slate-400">
           Kelola client credentials dan configure grant types
@@ -17,6 +21,7 @@ export default function ClientsPage() {
           </p>
         </div>
       </div>
+      </main>
     </div>
   );
 }

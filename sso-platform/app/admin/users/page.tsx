@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import AdminSidebar from "@/components/AdminSidebar";
 
 interface User {
   id: string;
@@ -154,24 +155,27 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6">
-      {/* Toast */}
-      {toastMsg && (
-        <div
-          className={`fixed bottom-5 right-5 z-50 px-6 py-4 rounded-2xl border shadow-2xl transition-all duration-350 max-w-sm ${
-            toastType === "error"
-              ? "bg-rose-950/90 border-rose-800 text-rose-200"
-              : "bg-emerald-950/90 border-emerald-800 text-emerald-200"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-lg">{toastType === "error" ? "⚠️" : "✅"}</span>
-            <p className="text-xs font-bold tracking-wide">{toastMsg}</p>
+    <div className="flex min-h-screen bg-slate-950 text-white">
+      <AdminSidebar activeTab="users" />
+      
+      <main className="flex-1 p-8 overflow-y-auto">
+        {/* Toast */}
+        {toastMsg && (
+          <div
+            className={`fixed bottom-5 right-5 z-50 px-6 py-4 rounded-2xl border shadow-2xl transition-all duration-350 max-w-sm ${
+              toastType === "error"
+                ? "bg-rose-950/90 border-rose-800 text-rose-200"
+                : "bg-emerald-950/90 border-emerald-800 text-emerald-200"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-lg">{toastType === "error" ? "⚠️" : "✅"}</span>
+              <p className="text-xs font-bold tracking-wide">{toastMsg}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -316,7 +320,8 @@ export default function UsersPage() {
             Menampilkan {filteredUsers.length} dari {users.length} pengguna
           </div>
         )}
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

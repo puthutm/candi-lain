@@ -1,9 +1,13 @@
 "use client";
 
+import AdminSidebar from "@/components/AdminSidebar";
+
 export default function RolesPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6">
-      <div className="mx-auto max-w-7xl">
+    <div className="flex min-h-screen bg-slate-950 text-white">
+      <AdminSidebar activeTab="roles" />
+      <main className="flex-1 p-8 overflow-y-auto">
+        <div className="mx-auto max-w-7xl">
         <h1 className="text-4xl font-bold tracking-tight">Role Management</h1>
         <p className="mt-2 text-slate-400">
           Buat dan kelola role untuk kontrol akses berbasis peran
@@ -17,6 +21,7 @@ export default function RolesPage() {
           </p>
         </div>
       </div>
+      </main>
     </div>
   );
 }

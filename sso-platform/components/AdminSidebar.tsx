@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 interface AdminSidebarProps {
-  activeTab: "dashboard" | "applications" | "reference" | "settings" | "profile";
+  activeTab: "dashboard" | "applications" | "reference" | "settings" | "profile" | "users" | "roles" | "permissions" | "clients" | "audit-logs";
   adminName?: string;
 }
 
@@ -56,6 +56,59 @@ export default function AdminSidebar({ activeTab, adminName }: AdminSidebarProps
           >
             SSO Settings
           </Link>
+          <hr className="border-white/10 my-2" />
+          <div className="text-xs font-bold uppercase tracking-widest text-slate-500 px-4 py-2">Manajemen</div>
+          <Link
+            href="/admin/users"
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2 ${
+              activeTab === "users"
+                ? "bg-indigo-500/10 text-indigo-400"
+                : "text-slate-400 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <span>👥</span> Kelola User
+          </Link>
+          <Link
+            href="/admin/roles"
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2 ${
+              activeTab === "roles"
+                ? "bg-indigo-500/10 text-indigo-400"
+                : "text-slate-400 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <span>🎭</span> Kelola Role
+          </Link>
+          <Link
+            href="/admin/permissions"
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2 ${
+              activeTab === "permissions"
+                ? "bg-indigo-500/10 text-indigo-400"
+                : "text-slate-400 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <span>🔐</span> Permissions
+          </Link>
+          <Link
+            href="/admin/clients"
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2 ${
+              activeTab === "clients"
+                ? "bg-indigo-500/10 text-indigo-400"
+                : "text-slate-400 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <span>🔑</span> OAuth2 Clients
+          </Link>
+          <Link
+            href="/admin/audit-logs"
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2 ${
+              activeTab === "audit-logs"
+                ? "bg-indigo-500/10 text-indigo-400"
+                : "text-slate-400 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <span>📋</span> Audit Logs
+          </Link>
+          <hr className="border-white/10 my-2" />
           <Link
             href="/admin/profile"
             className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
