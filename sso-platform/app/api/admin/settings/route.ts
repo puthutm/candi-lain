@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     // Write audit log
     await db.insert(auditLogs).values({
-      actorRef: sessionUser.id,
+      actorUserId: sessionUser.id,
       entityType: "system_settings",
       entityId: "global",
       action: "update_settings",
