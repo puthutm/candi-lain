@@ -173,6 +173,17 @@ export default function SoalPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Memuat Data Bank Soal...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-8 font-sans">
       {notice && (
