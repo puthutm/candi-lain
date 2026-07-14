@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { APP_NAME } from "@/lib/client-config";
 
 interface OrgUnit {
   id: string;

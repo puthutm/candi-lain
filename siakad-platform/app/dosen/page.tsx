@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRole } from "../context/RoleContext";
-import { LOGO_URL, INSTITUTION_SHORT_NAME, INSTITUTION_NAME } from "@/lib/client-config";
+import { LOGO_URL, INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
 type DosenTab = "beranda" | "jadwal" | "nilai" | "krs_perwalian";
 
