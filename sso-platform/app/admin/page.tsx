@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { INSTITUTION_SHORT_NAME, APP_NAME } from "@/lib/client-config";
 
 interface AuditLog {
   id: string;
