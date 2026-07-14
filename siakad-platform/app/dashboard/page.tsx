@@ -41,7 +41,6 @@ export default function RegularStudentDashboard() {
   const [availableClasses, setAvailableClasses] = useState<KrsCourse[]>([]);
   const [krsStatus, setKrsStatus] = useState<string | null>(null);
   const [periodName, setPeriodName] = useState("");
-  const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
     fetchProfile();
@@ -55,9 +54,7 @@ export default function RegularStudentDashboard() {
       if (data.success && data.student) {
         setStudent(data.student);
       }
-    } catch {} finally {
-      setLoadingProfile(false);
-    }
+    } catch {}
   };
 
   const fetchKrs = async () => {
