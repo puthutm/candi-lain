@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { db } from "@/db";
 import { siakadLecturers, siakadStudents } from "@/db/schema/civitas";
 import { siakadGrades, siakadKrsItems, siakadKrs } from "@/db/schema/krs";
-import { siakadCourses, siakadAcademicPeriods } from "@/db/schema/master";
+import { siakadAcademicPeriods } from "@/db/schema/master";
 import { eq, and } from "drizzle-orm";
 
 export async function GET(req: Request) {
