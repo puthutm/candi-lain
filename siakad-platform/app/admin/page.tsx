@@ -280,7 +280,7 @@ export default function AcademicAdminPage() {
                     >
                       <div>
                         <div className="font-bold text-slate-800 text-base">{s.name}</div>
-                        <p className="text-xs text-slate-400 font-mono mt-0.5">{s.nim} · {s.prodi}</p>
+                        <p className="text-xs text-slate-400 font-mono mt-0.5">{s.nim}</p>
                       </div>
                       <span className="text-xs bg-[#FED524]/20 text-[#0f487b] font-bold px-2 py-1 rounded">
                         {s.sksCount} SKS Diajukan
