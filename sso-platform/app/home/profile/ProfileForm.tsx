@@ -14,9 +14,34 @@ export default function ProfileForm({ initialUser }: ProfileFormProps) {
   const router = useRouter();
   const [fullName, setFullName] = useState(initialUser.fullName);
   const [email, setEmail] = useState(initialUser.email);
+  const [avatarColor, setAvatarColor] = useState("indigo"); // indigo, purple, blue, pink, rose, teal, amber
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
+
+  const getAvatarInitials = () => {
+    return fullName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getAvatarGradient = () => {
+    const gradients: Record<string, string> = {
+      indigo: "from-indigo-500 to-indigo-600",
+      purple: "from-purple-500 to-purple-600",
+      blue: "from-blue-500 to-blue-600",
+      pink: "from-pink-500 to-pink-600",
+      rose: "from-rose-500 to-rose-600",
+      teal: "from-teal-500 to-teal-600",
+      amber: "from-amber-500 to-amber-600",
+    };
+    return gradients[avatarColor] || gradients.indigo;
+  };
+
+  const avatarColors = ["indigo", "purple", "blue", "pink", "rose", "teal", "amber"];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +56,7 @@ export default function ProfileForm({ initialUser }: ProfileFormProps) {
       const res = await fetch("/api/profile/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, email }),
+        body: JSON.stringify({ fullName, email, avatarColor }),
       });
       const data = await res.json();
       if (data.success) {
@@ -110,6 +135,67 @@ export default function ProfileForm({ initialUser }: ProfileFormProps) {
           </div>
         </div>
       )}
+
+      {/* Avatar Editor Section */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-8">
+        <h2 className="text-xl font-bold mb-6">Edit Avatar</h2>
+        
+        <div className="flex flex-col md:flex-row gap-8 items-start">
+          {/* Avatar Preview */}
+          <div className="flex flex-col items-center gap-4">
+            <div className={`flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br ${getAvatarGradient()} text-4xl font-bold text-white shadow-lg`}>
+              {getAvatarInitials()}
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Pratinjau Avatar</p>
+              <p className="text-sm text-slate-300 mt-2">{getAvatarInitials()} - {fullName}</p>
+            </div>
+          </div>
+
+          {/* Color Selector */}
+          <div className="flex-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">
+              Pilih Warna Avatar
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {avatarColors.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setAvatarColor(color)}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    avatarColor === color
+                      ? "border-white/50 bg-white/10"
+                      : "border-white/10 bg-white/5 hover:bg-white/[0.08]"
+                  }`}
+                >
+                  <div
+                    className={`h-8 w-8 rounded-md bg-gradient-to-br ${
+                      color === "indigo"
+                        ? "from-indigo-500 to-indigo-600"
+                        : color === "purple"
+                        ? "from-purple-500 to-purple-600"
+                        : color === "blue"
+                        ? "from-blue-500 to-blue-600"
+                        : color === "pink"
+                        ? "from-pink-500 to-pink-600"
+                        : color === "rose"
+                        ? "from-rose-500 to-rose-600"
+                        : color === "teal"
+                        ? "from-teal-500 to-teal-600"
+                        : "from-amber-500 to-amber-600"
+                    }`}
+                  />
+                  <p className="mt-2 text-xs font-medium capitalize">{color}</p>
+                </button>
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-slate-400">
+              Avatar Anda akan otomatis menampilkan inisial nama depan dan belakang Anda dengan warna yang dipilih.
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
