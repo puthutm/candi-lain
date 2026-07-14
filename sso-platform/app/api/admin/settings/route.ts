@@ -3,6 +3,7 @@ import { getSessionUser, isSuperAdmin } from "@/lib/auth-helper";
 import { SettingsService } from "@/lib/settings-service";
 import { db } from "@/db";
 import { auditLogs } from "@/db/schema/audit";
+import { ENTITY_TYPES, GLOBAL_ENTITY_ID, AUDIT_ACTIONS } from "@/lib/constants/entity-types";
 
 export async function GET() {
   const sessionUser = await getSessionUser();
@@ -44,9 +45,9 @@ export async function POST(req: Request) {
     // Write audit log
     await db.insert(auditLogs).values({
       actorUserId: sessionUser.id,
-      entityType: "system_settings",
-      entityId: "global",
-      action: "update_settings",
+      entityType: ENTITY_TYPES.SYSTEM_SETTINGS,
+      entityId: GLOBAL_ENTITY_ID,
+      action: AUDIT_ACTIONS.UPDATE,
     });
 
     return NextResponse.json({ success: true, message: "Pengaturan SSO berhasil diperbarui!" });

@@ -11,8 +11,8 @@ const envSchema = z.object({
   JWT_PRIVATE_KEY: z.string().optional(),
   JWT_PUBLIC_KEY: z.string().optional(),
   JWT_ALGORITHM: z.enum(["RS256"]).default("RS256"),
-  JWT_ISSUER: z.string().url().optional(),
-  JWT_AUDIENCE: z.string().optional(),
+  JWT_ISSUER: z.string().default("urn:unsia:sso"),
+  JWT_AUDIENCE: z.string().default("urn:unsia:platform"),
 
   // Token Expiration
   ACCESS_TOKEN_EXPIRY: z.coerce.number().default(3600),
@@ -31,7 +31,7 @@ const envSchema = z.object({
 
   // Application
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   NEXT_PUBLIC_API_URL: z.string().url().optional(),
 
   // Security

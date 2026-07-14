@@ -128,7 +128,7 @@ export class TokenService {
 
     const roles = rolesList.map(r => r.roleKey);
 
-    const issuer = env.JWT_ISSUER || env.NEXT_PUBLIC_APP_URL;
+    const issuer = env.JWT_ISSUER;
     const jti = crypto.randomUUID();
     
     // Access Token Expiry (1 hour default)
@@ -211,7 +211,7 @@ export class TokenService {
     const { publicKey } = await getSigningKeys();
 
     try {
-      const issuer = env.JWT_ISSUER || env.NEXT_PUBLIC_APP_URL;
+      const issuer = env.JWT_ISSUER;
       const { payload } = await jose.jwtVerify(token, publicKey, {
         issuer,
       });
