@@ -198,7 +198,7 @@ export async function bootstrapDatabase() {
         VALUES (${appId}, 'Bank Konten Akademik', ${client_id})
       `;
     } else {
-      appId = apps[0].id;
+      appId = apps[0]!.id;
     }
 
     // 3. Register SSO Application Roles
