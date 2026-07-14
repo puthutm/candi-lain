@@ -20,14 +20,12 @@ export default function AcademicAdminPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [rejectNote, setRejectNote] = useState("");
-  const [loadingSubmissions, setLoadingSubmissions] = useState(true);
 
   useEffect(() => {
     fetchSubmissions();
   }, []);
 
   const fetchSubmissions = async () => {
-    setLoadingSubmissions(true);
     try {
       const res = await fetch("/api/admin/krs-submissions");
       const data = await res.json();
@@ -37,9 +35,7 @@ export default function AcademicAdminPage() {
           setSelectedSub(data.submissions[0]);
         }
       }
-    } catch {} finally {
-      setLoadingSubmissions(false);
-    }
+    } catch {}
   };
 
   const handleKrsApprove = async (id: string, name: string) => {
