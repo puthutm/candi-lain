@@ -186,7 +186,7 @@ export default function ExamPage() {
     if (!activeModule) return;
     setShowConfirmModal(false);
 
-    const updatedModules = modules.map((m) => (m.id === activeModule.id ? { ...m, status: "completed" } : m));
+    const updatedModules = modules.map((m) => (m.id === activeModule.id ? { ...m, status: "completed" as const } : m));
     setModules(updatedModules);
     setView("lobby");
     setActiveModule(null);

@@ -90,7 +90,18 @@ export async function GET(req: Request) {
             .values(defaultSubmissions)
             .returning();
           
-          submissionsList = inserted;
+          submissionsList = inserted.map((sub: any) => ({
+            id: sub.id,
+            assignmentId: sub.assignmentId,
+            studentUserId: sub.studentUserId,
+            studentName: null,
+            answerText: sub.answerText,
+            score: sub.score,
+            graderUserId: sub.gradedByUserId,
+            status: sub.status,
+            gradedAt: sub.gradedAt,
+            submittedAt: sub.submittedAt,
+          }));
         }
       }
     }
