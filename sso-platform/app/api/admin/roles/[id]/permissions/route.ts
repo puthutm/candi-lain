@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionUser, isSuperAdmin } from "@/lib/auth-helper";
 import { db } from "@/db";
 import { rolePermissions, permissions, applicationRoles } from "@/db/schema/rbac";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { RBACService } from "@/lib/services/rbac";
 
 export async function GET(
