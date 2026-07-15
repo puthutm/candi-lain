@@ -18,43 +18,43 @@ export default function AdminSidebar({ activeTab, adminName }: AdminSidebarProps
         <nav className="flex flex-col gap-2">
           <Link
             href="/admin"
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2 ${
               activeTab === "dashboard"
                 ? "bg-indigo-500/10 text-indigo-400"
                 : "text-slate-400 hover:bg-white/5 hover:text-white"
             }`}
           >
-            Dashboard
+            <span>📊</span> Dashboard
           </Link>
           <Link
             href="/admin/applications"
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2 ${
               activeTab === "applications"
                 ? "bg-indigo-500/10 text-indigo-400"
                 : "text-slate-400 hover:bg-white/5 hover:text-white"
             }`}
           >
-            Applications
+            <span>📦</span> Applications
           </Link>
           <Link
             href="/admin/reference"
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2 ${
               activeTab === "reference"
                 ? "bg-indigo-500/10 text-indigo-400"
                 : "text-slate-400 hover:bg-white/5 hover:text-white"
             }`}
           >
-            Reference Data
+            <span>📚</span> Reference Data
           </Link>
           <Link
             href="/admin/settings"
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2 ${
               activeTab === "settings"
                 ? "bg-indigo-500/10 text-indigo-400"
                 : "text-slate-400 hover:bg-white/5 hover:text-white"
             }`}
           >
-            SSO Settings
+            <span>⚙️</span> SSO Settings
           </Link>
           <hr className="border-white/10 my-2" />
           <div className="text-xs font-bold uppercase tracking-widest text-slate-500 px-4 py-2">Manajemen</div>
@@ -111,13 +111,13 @@ export default function AdminSidebar({ activeTab, adminName }: AdminSidebarProps
           <hr className="border-white/10 my-2" />
           <Link
             href="/admin/profile"
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2 ${
               activeTab === "profile"
                 ? "bg-indigo-500/10 text-indigo-400"
                 : "text-slate-400 hover:bg-white/5 hover:text-white"
             }`}
           >
-            Admin Profile
+            <span>👤</span> Admin Profile
           </Link>
           <hr className="border-white/10 my-2" />
           <Link
