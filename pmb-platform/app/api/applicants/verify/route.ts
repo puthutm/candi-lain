@@ -3,8 +3,19 @@ import { db } from "@/db";
 import { pmbApplicantDocuments, pmbApplicants, pmbApplicantStatusHistory } from "@/db/schema/applicants";
 import { eq } from "drizzle-orm";
 
+import { cookies } from "next/headers";
+
 export async function POST(req: Request) {
   try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("pmb_user");
+    if (!sessionCookie) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const sessionUser = JSON.parse(sessionCookie.value);
+    if (sessionUser.role !== "admin") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
     const body = await req.json();
     const evaluations = Array.isArray(body) ? body : [body];
 

@@ -186,11 +186,29 @@ export default function ExamPage() {
     if (!activeModule) return;
     setShowConfirmModal(false);
 
-    setModules((prev) =>
-      prev.map((m) => (m.id === activeModule.id ? { ...m, status: "completed" } : m))
-    );
+    const updatedModules = modules.map((m) => (m.id === activeModule.id ? { ...m, status: "completed" } : m));
+    setModules(updatedModules);
     setView("lobby");
     setActiveModule(null);
+
+    const allDone = updatedModules.every(m => m.status === "completed");
+    if (allDone) {
+      const id = localStorage.getItem("pmb_applicant_id");
+      if (id) {
+        fetch(`/api/applicants/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ currentStage: "selesai_ujian" })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log("Status ujian selesai berhasil disimpan!");
+          }
+        })
+        .catch(err => console.error("Gagal menyimpan progress ujian:", err));
+      }
+    }
   };
 
   const allCompleted = modules.every((m) => m.status === "completed");

@@ -34,6 +34,7 @@ const envSchema = z.object({
   SIAKAD_BASE_URL: z.string().default("http://localhost:3003"),
   SIAKAD_WEBHOOK_URL: z.string().default("http://localhost:3003/api/webhooks/lms"),
   STORAGE_BASE_URL: z.string().default("http://storage.unsia.ac.id"),
+  BANK_KONTEN_BASE_URL: z.string().default("http://localhost:3007"),
 
   // Session
   SESSION_MAX_AGE: z.coerce.number().default(86400),

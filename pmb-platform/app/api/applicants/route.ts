@@ -5,9 +5,21 @@ import { pmbWaves, pmbEntryPaths, pmbStudyPrograms, pmbQuotas } from "@/db/schem
 import { eq, desc, sql, and } from "drizzle-orm";
 import { ensurePmbSeeded } from "@/db/seed";
 
+import { cookies } from "next/headers";
+
 // List all applicants
 export async function GET() {
   try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("pmb_user");
+    if (!sessionCookie) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const sessionUser = JSON.parse(sessionCookie.value);
+    if (sessionUser.role !== "admin") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
     await ensurePmbSeeded();
     const list = await db
       .select({

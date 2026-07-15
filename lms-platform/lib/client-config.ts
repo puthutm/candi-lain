@@ -23,3 +23,6 @@ export const SSO_CALLBACK_URL = read("NEXT_PUBLIC_SSO_OAUTH_CALLBACK_URL", "http
 
 // Logo
 export const LOGO_URL = process.env.NEXT_PUBLIC_LOGO_URL || undefined;
+
+// Cross-Platform Service URLs
+export const BANK_KONTEN_BASE_URL = read("NEXT_PUBLIC_BANK_KONTEN_BASE_URL", "http://localhost:3007");

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { INSTITUTION_SHORT_NAME } from "@/lib/client-config";
+import { INSTITUTION_SHORT_NAME, SSO_AUTHORIZE_URL, SSO_CLIENT_ID, SSO_CALLBACK_URL } from "@/lib/client-config";
 
 type AdminPanelType =
   | "dashboard"
@@ -60,6 +60,18 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Communication & Campaign states
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [isSendingBlast, setIsSendingBlast] = useState(false);
+  const [blastName, setBlastName] = useState("");
+  const [blastSegment, setBlastSegment] = useState("Tahap 4: Unggah Berkas (Belum Bayar)");
+  const [blastChannel, setBlastChannel] = useState("email");
+  const [blastMessage, setBlastMessage] = useState("");
+  
+  // Auth state
+  const [adminUser, setAdminUser] = useState<{ name: string; username: string; role: string } | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
   // Verification panel state
   const [selectedApplicant, setSelectedApplicant] = useState<ApplicantRow | null>(null);
   const [selectedApplicantDocs, setSelectedApplicantDocs] = useState<DocumentRow[]>([]);
@@ -69,6 +81,24 @@ export default function AdminPage() {
   const [toastMessage, setToastMessage] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
+
+  const redirectToSSO = () => {
+    const array = new Uint32Array(22);
+    window.crypto.getRandomValues(array);
+    const verifier = Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
+    sessionStorage.setItem("sso_code_verifier", verifier);
+
+    let authUrl = SSO_AUTHORIZE_URL;
+    let cbUrl = SSO_CALLBACK_URL;
+    if (typeof window !== "undefined") {
+      const currentHost = window.location.host; // e.g., "10.10.20.56:3002"
+      cbUrl = `${window.location.protocol}//${currentHost}/api/auth/callback`;
+      const ssoHost = window.location.hostname; // e.g., "10.10.20.56"
+      authUrl = `${window.location.protocol}//${ssoHost}:3000/oauth/authorize`;
+    }
+
+    window.location.href = `${authUrl}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(cbUrl)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
+  };
 
   const fetchData = async () => {
     try {
@@ -81,6 +111,9 @@ export default function AdminPage() {
       const metaRes = await fetch("/api/meta");
       const metaData = await metaRes.json();
 
+      const blastRes = await fetch("/api/admin/blast");
+      const blastData = await blastRes.json();
+
       if (applicantsData.success) {
         setApplicants(applicantsData.applicants || []);
       } else {
@@ -92,6 +125,10 @@ export default function AdminPage() {
       } else {
         throw new Error(metaData.error || "Gagal mengambil metadata");
       }
+
+      if (blastData.success) {
+        setCampaigns(blastData.campaigns || []);
+      }
     } catch (err: any) {
       setError(err.message || "Gagal menghubungi API server");
     } finally {
@@ -100,7 +137,22 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/auth/session");
+        const data = await res.json();
+        if (data.success && data.authenticated && data.user && data.user.role === "admin") {
+          setAdminUser(data.user);
+          setCheckingAuth(false);
+          fetchData();
+        } else {
+          redirectToSSO();
+        }
+      } catch (err) {
+        redirectToSSO();
+      }
+    };
+    checkSession();
   }, []);
 
   // Fetch documents when applicant is selected
@@ -200,6 +252,46 @@ export default function AdminPage() {
     }
   };
 
+  const handleSendBlast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!blastName || !blastMessage) {
+      triggerToast("Semua kolom wajib diisi!");
+      return;
+    }
+    setIsSendingBlast(true);
+    try {
+      const res = await fetch("/api/admin/blast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: blastName,
+          segment: blastSegment,
+          channel: blastChannel,
+          message: blastMessage,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast(data.message || "Kampanye Blast berhasil dikirim!");
+        setBlastName("");
+        setBlastMessage("");
+        
+        // Refresh campaign history
+        const blastRes = await fetch("/api/admin/blast");
+        const blastData = await blastRes.json();
+        if (blastData.success) {
+          setCampaigns(blastData.campaigns || []);
+        }
+      } else {
+        triggerToast("Gagal: " + data.error);
+      }
+    } catch (err: any) {
+      triggerToast("Galat: " + err.message);
+    } finally {
+      setIsSendingBlast(false);
+    }
+  };
+
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(""), 3000);
@@ -293,12 +385,14 @@ export default function AdminPage() {
     year: "numeric",
   }).format(new Date());
 
-  if (loading) {
+  if (checkingAuth || loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#f4f7f9] text-[#0f487b]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-12 h-12 border-4 border-t-transparent border-[#0f487b] rounded-full animate-spin"></div>
-          <span className="font-bold text-sm tracking-wide">Memuat data panel admin...</span>
+          <span className="font-bold text-sm tracking-wide">
+            {checkingAuth ? "Memvalidasi sesi admin..." : "Memuat data panel admin..."}
+          </span>
         </div>
       </div>
     );
@@ -321,6 +415,8 @@ export default function AdminPage() {
       </div>
     );
   }
+
+  const initials = adminUser ? adminUser.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "AD";
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f4f7f9] text-slate-800 font-sans">
@@ -351,12 +447,12 @@ export default function AdminPage() {
         <div className="px-6 py-4 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#ecc94b] border-2 border-white/20 shadow-md flex items-center justify-center font-bold text-[#0f487b]">
-              AW
+              {initials}
             </div>
             <div className="overflow-hidden flex-1">
-              <h3 className="font-bold text-white truncate text-sm">Aris Wijaya</h3>
+              <h3 className="font-bold text-white truncate text-sm">{adminUser?.name || "Admin"}</h3>
               <p className="text-[10px] text-[#ecc94b] font-bold tracking-wider uppercase font-mono">
-                Super Admin BPPTI
+                {adminUser?.role === "admin" ? "Super Admin" : adminUser?.role}
               </p>
             </div>
           </div>
@@ -501,11 +597,11 @@ export default function AdminPage() {
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-slate-800">Aris Wijaya</p>
-              <p className="text-[10px] text-slate-500">Super Admin</p>
+              <p className="text-xs font-bold text-slate-800">{adminUser?.name || "Admin"}</p>
+              <p className="text-[10px] text-slate-500">{adminUser?.role === "admin" ? "Super Admin" : adminUser?.role}</p>
             </div>
             <img
-              src="https://ui-avatars.com/api/?name=Aris+Wijaya&background=f0f4f8&color=0f487b&rounded=true&bold=true"
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(adminUser?.name || "Admin")}&background=f0f4f8&color=0f487b&rounded=true&bold=true`}
               className="w-9 h-9 rounded-full border border-slate-200"
             />
           </div>
@@ -520,7 +616,7 @@ export default function AdminPage() {
                 <div>
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{todayFormatted}</p>
                   <h2 className="font-display text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
-                    Selamat siang, Aris 👋
+                    Selamat siang, {adminUser?.name ? adminUser.name.split(" ")[0] : "Admin"} 👋
                   </h2>
                   <p className="text-sm text-slate-500 mt-1">Berikut ringkasan pendaftaran hari ini.</p>
                 </div>
@@ -793,34 +889,107 @@ export default function AdminPage() {
 
           {/* PANEL 5: KOMUNIKASI */}
           {activePanel === "komunikasi" && (
-            <div className="space-y-6 max-w-4xl mx-auto fade-in">
+            <div className="space-y-6 max-w-5xl mx-auto fade-in">
               <h2 className="text-lg font-bold text-slate-800">Komunikasi Massal & Kampanye</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                  <h3 className="text-sm font-bold text-slate-800">Kirim WhatsApp/Email Blast</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <form onSubmit={handleSendBlast} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 lg:col-span-1">
+                  <h3 className="text-sm font-bold text-slate-800 border-b pb-2">Buat Kampanye Baru</h3>
                   <div className="space-y-3 text-xs">
                     <div>
+                      <label className="font-bold text-slate-500">Nama Kampanye</label>
+                      <input
+                        type="text"
+                        required
+                        value={blastName}
+                        onChange={(e) => setBlastName(e.target.value)}
+                        placeholder="Mis. Reminder Pembayaran Gel 1"
+                        className="w-full p-2.5 border border-slate-200 rounded-xl mt-1 text-xs outline-none focus:border-[#0f487b]"
+                      />
+                    </div>
+                    <div>
                       <label className="font-bold text-slate-500">Segmen Penerima</label>
-                      <select className="w-full p-2.5 border border-slate-200 rounded-xl mt-1 text-xs">
+                      <select
+                        value={blastSegment}
+                        onChange={(e) => setBlastSegment(e.target.value)}
+                        className="w-full p-2.5 border border-slate-200 rounded-xl mt-1 text-xs outline-none focus:border-[#0f487b]"
+                      >
                         <option>Tahap 4: Unggah Berkas (Belum Bayar)</option>
                         <option>Tahap 7: Selesai Ujian (Menunggu Kelulusan)</option>
                         <option>Semua Pendaftar Aktif</option>
                       </select>
                     </div>
                     <div>
+                      <label className="font-bold text-slate-500">Saluran Pengiriman</label>
+                      <select
+                        value={blastChannel}
+                        onChange={(e) => setBlastChannel(e.target.value)}
+                        className="w-full p-2.5 border border-slate-200 rounded-xl mt-1 text-xs outline-none focus:border-[#0f487b]"
+                      >
+                        <option value="email">📧 Email Massal</option>
+                        <option value="whatsapp">💬 WhatsApp Blast</option>
+                      </select>
+                    </div>
+                    <div>
                       <label className="font-bold text-slate-500">Pesan Kampanye</label>
                       <textarea
-                        rows={4}
-                        placeholder="Mis. Halo, selesaikan pembayaran biaya formulir Anda sebelum gelombang ditutup..."
-                        className="w-full p-3 border border-slate-200 rounded-xl mt-1 text-xs outline-none"
+                        rows={5}
+                        required
+                        value={blastMessage}
+                        onChange={(e) => setBlastMessage(e.target.value)}
+                        placeholder="Mis. Halo {nama}, harap segera selesaikan pembayaran biaya formulir pendaftaran Anda..."
+                        className="w-full p-3 border border-slate-200 rounded-xl mt-1 text-xs outline-none focus:border-[#0f487b]"
                       />
                     </div>
                     <button
-                      onClick={() => triggerToast("Kampanye Blast berhasil ditambahkan ke antrean kirim!")}
-                      className="w-full py-2.5 bg-[#0f487b] text-white hover:bg-[#00719f] font-bold rounded-xl text-xs"
+                      type="submit"
+                      disabled={isSendingBlast}
+                      className="w-full py-2.5 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold rounded-xl text-xs disabled:opacity-50 transition"
                     >
-                      Kirim Blast Sekarang
+                      {isSendingBlast ? "Mengirim Blast..." : "Kirim Blast Sekarang"}
                     </button>
+                  </div>
+                </form>
+
+                {/* Campaign History Log */}
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 className="text-sm font-bold text-slate-800 border-b pb-2">Riwayat Pengiriman Kampanye</h3>
+                    {campaigns.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic py-6 text-center">Belum ada riwayat pengiriman kampanye blast.</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs text-slate-600">
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold uppercase text-slate-500 tracking-wider">
+                              <th className="px-4 py-3">Nama Kampanye</th>
+                              <th className="px-4 py-3">Saluran</th>
+                              <th className="px-4 py-3">Penerima</th>
+                              <th className="px-4 py-3">Waktu Kirim</th>
+                              <th className="px-4 py-3">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {campaigns.map((camp) => (
+                              <tr key={camp.id} className="hover:bg-slate-50/50">
+                                <td className="px-4 py-3 font-semibold text-slate-800">{camp.name}</td>
+                                <td className="px-4 py-3 uppercase font-mono text-[10px]">
+                                  {camp.channel === "email" ? "📧 Email" : "💬 WA"}
+                                </td>
+                                <td className="px-4 py-3 font-bold text-slate-700">{camp.sentCount} Orang</td>
+                                <td className="px-4 py-3 text-slate-400">
+                                  {new Date(camp.scheduledAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="px-2 py-0.5 bg-green-100 text-green-700 font-bold rounded uppercase text-[9px]">
+                                    {camp.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

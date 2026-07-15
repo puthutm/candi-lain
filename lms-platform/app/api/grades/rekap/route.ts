@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { lmsGrades } from "@/db/schema/grades";
 import { classEnrollments } from "@/db/schema/classes";
 import { eq, and } from "drizzle-orm";
+import { ssoUsers } from "@/db/schema/sso";
 
 export async function GET(req: Request) {
   try {
@@ -15,15 +16,32 @@ export async function GET(req: Request) {
 
     // 1. Fetch grades from lmsGrades table
     const gradesList = await db
-      .select()
+      .select({
+        id: lmsGrades.id,
+        classId: lmsGrades.classId,
+        studentUserId: lmsGrades.studentUserId,
+        studentName: ssoUsers.fullName,
+        attendanceScore: lmsGrades.attendanceScore,
+        assignmentScore: lmsGrades.assignmentScore,
+        utsScore: lmsGrades.utsScore,
+        uasScore: lmsGrades.uasScore,
+        finalScore: lmsGrades.finalScore,
+        letterGrade: lmsGrades.letterGrade,
+        publishedToSiakad: lmsGrades.publishedToSiakad,
+      })
       .from(lmsGrades)
+      .leftJoin(ssoUsers, eq(lmsGrades.studentUserId, ssoUsers.id))
       .where(eq(lmsGrades.classId, classId));
 
     // 2. If empty, generate dynamic mock grades based on active students to make it non-hardcoded!
     if (gradesList.length === 0) {
       const students = await db
-        .select()
+        .select({
+          userId: classEnrollments.userId,
+          fullName: ssoUsers.fullName,
+        })
         .from(classEnrollments)
+        .leftJoin(ssoUsers, eq(classEnrollments.userId, ssoUsers.id))
         .where(
           and(
             eq(classEnrollments.classId, classId),
@@ -34,6 +52,7 @@ export async function GET(req: Request) {
       const generated = students.map((student: any) => ({
         classId,
         studentUserId: student.userId,
+        studentName: student.fullName,
         attendanceScore: "95.00",
         assignmentScore: "85.00",
         utsScore: "80.00",

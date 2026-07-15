@@ -16,6 +16,11 @@ export async function GET() {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
+    const sessionUser = JSON.parse(sessionCookie.value);
+    if (sessionUser.role !== "admin" && sessionUser.role !== "dosen") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
     // Get active period
     const [activePeriod] = await db
       .select()
@@ -93,6 +98,9 @@ export async function POST(req: Request) {
     }
 
     const sessionUser = JSON.parse(sessionCookie.value);
+    if (sessionUser.role !== "admin" && sessionUser.role !== "dosen") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
     const body = await req.json();
     const { krsId, action, note } = body;
 

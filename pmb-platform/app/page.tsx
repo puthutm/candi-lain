@@ -218,7 +218,17 @@ export default function PmbPublikPage() {
     window.crypto.getRandomValues(array);
     const verifier = Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
     sessionStorage.setItem("sso_code_verifier", verifier);
-    window.location.href = `${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
+
+    let authUrl = SSO_AUTHORIZE_URL;
+    let cbUrl = SSO_CALLBACK_URL;
+    if (typeof window !== "undefined") {
+      const currentHost = window.location.host; // e.g., "10.10.20.56:3002"
+      cbUrl = `${window.location.protocol}//${currentHost}/api/auth/callback`;
+      const ssoHost = window.location.hostname; // e.g., "10.10.20.56"
+      authUrl = `${window.location.protocol}//${ssoHost}:3000/oauth/authorize`;
+    }
+
+    window.location.href = `${authUrl}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(cbUrl)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
   };
 
   const handlePrev = () => {

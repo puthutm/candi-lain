@@ -3,7 +3,7 @@
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRole } from "../../context/RoleContext";
-import { INSTITUTION_NAME, INSTITUTION_SHORT_NAME, APP_NAME } from "@/lib/client-config";
+import { INSTITUTION_NAME, INSTITUTION_SHORT_NAME, APP_NAME, BANK_KONTEN_BASE_URL } from "@/lib/client-config";
 
 interface LMSClass {
   id: string;
@@ -33,10 +33,24 @@ interface LMSMaterial {
 }
 
 function getStudentProfile(userId: string) {
-  if (userId === "26090182" || userId === "mahasiswa") return { name: "Budi Santoso", initial: "BS", color: "blue" };
-  if (userId === "25090127" || userId.endsWith("7") || userId.endsWith("1")) return { name: "Citra Lestari", initial: "CL", color: "emerald" };
-  if (userId === "25090129" || userId.endsWith("9") || userId.endsWith("2")) return { name: "Dewi Maharani", initial: "DM", color: "violet" };
-  return { name: `Mahasiswa (${userId.slice(-4)})`, initial: "M", color: "slate" };
+  const colors = ["blue", "emerald", "violet", "indigo", "rose", "amber", "teal"];
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const color = colors[Math.abs(hash) % colors.length];
+
+  const knownNames: Record<string, string> = {
+    "26090182": "Budi Santoso",
+    "mahasiswa": "Budi Santoso",
+    "25090127": "Citra Lestari",
+    "25090129": "Dewi Maharani",
+  };
+
+  const name = knownNames[userId] || `Mahasiswa (${userId.slice(-4)})`;
+  const initial = name.split(" ").filter(Boolean).map(n => n[0]).join("").toUpperCase().slice(0, 2);
+
+  return { name, initial, color };
 }
 
 export default function CourseDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -113,7 +127,7 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
 
   const fetchBankMaterials = async (courseCode: string) => {
     try {
-      const res = await fetch(`http://localhost:3007/api/materi?courseCode=${courseCode}&status=terbit`);
+      const res = await fetch(`${BANK_KONTEN_BASE_URL}/api/materi?courseCode=${courseCode}&status=terbit`);
       const data = await res.json();
       if (data.success) {
         setBankMaterials(data.materials || []);
@@ -1054,14 +1068,18 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                             <tbody>
                               {submissions.map((sub: any) => {
                                 const profile = getStudentProfile(sub.studentUserId);
+                                const displayName = sub.studentName || profile.name;
+                                const displayInitial = sub.studentName
+                                  ? sub.studentName.split(" ").filter(Boolean).map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+                                  : profile.initial;
                                 return (
                                   <tr key={sub.id} className="border-b border-slate-100 hover:bg-slate-50">
                                     <td className="px-5 py-3.5">
                                       <div className="flex items-center gap-2">
                                         <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-[10px]">
-                                          {profile.initial}
+                                          {displayInitial}
                                         </div>
-                                        <span className="font-bold text-xs text-slate-800">{profile.name}</span>
+                                        <span className="font-bold text-xs text-slate-800">{displayName}</span>
                                       </div>
                                     </td>
                                     <td className="px-5 py-3.5 text-xs font-semibold text-slate-500">{sub.studentUserId}</td>
@@ -1365,9 +1383,10 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                         <tbody>
                           {grades.map((n: any) => {
                             const profile = getStudentProfile(n.studentUserId);
+                            const displayName = n.studentName || profile.name;
                             return (
                               <tr key={n.id || n.studentUserId} className="border-b border-slate-100 hover:bg-slate-50 text-xs">
-                                <td className="px-5 py-3.5 font-bold text-slate-800">{profile.name} ({n.studentUserId})</td>
+                                <td className="px-5 py-3.5 font-bold text-slate-800">{displayName} ({n.studentUserId})</td>
                                 <td className="px-5 py-3.5 font-semibold text-slate-500">{n.attendanceScore}%</td>
                                 <td className="px-5 py-3.5 font-bold text-slate-800">{n.assignmentScore}</td>
                                 <td className="px-5 py-3.5 font-bold text-slate-800">{n.utsScore}</td>
@@ -1395,13 +1414,17 @@ export default function CourseDetail({ params }: { params: Promise<{ id: string 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {grades.map((p: any) => {
                         const profile = getStudentProfile(p.studentUserId);
+                        const displayName = p.studentName || profile.name;
+                        const displayInitial = p.studentName
+                          ? p.studentName.split(" ").filter(Boolean).map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+                          : profile.initial;
                         return (
                           <div key={p.studentUserId} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                             <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-display font-black text-xs">
-                              {profile.initial}
+                              {displayInitial}
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-slate-800">{profile.name}</p>
+                              <p className="text-sm font-bold text-slate-800">{displayName}</p>
                               <p className="text-[10px] text-slate-500 font-semibold">{p.studentUserId}</p>
                             </div>
                             <span className="ml-auto px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold uppercase rounded-full">Aktif</span>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { INSTITUTION_SHORT_NAME } from "@/lib/client-config";
+import { INSTITUTION_SHORT_NAME, SSO_AUTHORIZE_URL, SSO_CLIENT_ID, SSO_CALLBACK_URL } from "@/lib/client-config";
 type AdminTab = "dashboard" | "krs_validation" | "pddikti" | "audit";
 
 interface KrsSubmission {
@@ -21,8 +21,35 @@ export default function AcademicAdminPage() {
   const [toastMessage, setToastMessage] = useState("");
   const [rejectNote, setRejectNote] = useState("");
 
+  // Auth state
+  const [adminUser, setAdminUser] = useState<{ name: string; username: string; role: string } | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const redirectToSSO = () => {
+    const array = new Uint32Array(22);
+    window.crypto.getRandomValues(array);
+    const verifier = Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
+    sessionStorage.setItem("sso_code_verifier", verifier);
+    window.location.href = `${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
+  };
+
   useEffect(() => {
-    fetchSubmissions();
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/auth/session");
+        const data = await res.json();
+        if (data.success && data.authenticated && data.user && (data.user.role === "admin" || data.user.role === "dosen")) {
+          setAdminUser(data.user);
+          setCheckingAuth(false);
+          fetchSubmissions();
+        } else {
+          redirectToSSO();
+        }
+      } catch (err) {
+        redirectToSSO();
+      }
+    };
+    checkSession();
   }, []);
 
   const fetchSubmissions = async () => {
@@ -91,6 +118,19 @@ export default function AcademicAdminPage() {
 
   const currentYear = new Date().getFullYear();
 
+  if (checkingAuth) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#f4f7f9] text-[#0f487b]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 border-4 border-t-transparent border-[#0f487b] rounded-full animate-spin"></div>
+          <span className="font-bold text-sm tracking-wide">Memvalidasi sesi admin akademis...</span>
+        </div>
+      </div>
+    );
+  }
+
+  const initials = adminUser ? adminUser.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "AD";
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#f4f7f9] text-slate-800 font-sans">
       {/* Sidebar Overlay (Mobile) */}
@@ -119,11 +159,13 @@ export default function AcademicAdminPage() {
         <div className="px-6 py-4 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#FED524] border-2 border-white/20 shadow-md flex items-center justify-center font-bold text-[#0f487b]">
-              AW
+              {initials}
             </div>
             <div className="overflow-hidden flex-1">
-              <h3 className="font-bold text-white truncate text-sm">Aris Wijaya</h3>
-              <p className="text-[10px] text-[#FED524] font-bold tracking-wider uppercase font-mono">Super Admin BAAK</p>
+              <h3 className="font-bold text-white truncate text-sm">{adminUser?.name || "Admin"}</h3>
+              <p className="text-[10px] text-[#FED524] font-bold tracking-wider uppercase font-mono">
+                {adminUser?.role === "admin" ? "Super Admin BAAK" : `Dosen (${adminUser?.role})`}
+              </p>
             </div>
           </div>
         </div>
@@ -217,7 +259,7 @@ export default function AcademicAdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-500 font-bold">Aris Wijaya</span>
+            <span className="text-xs text-slate-500 font-bold">{adminUser?.name || "Admin"}</span>
             <span className="h-8 w-px bg-slate-200"></span>
             <span className="text-slate-400 cursor-pointer">🔔</span>
           </div>

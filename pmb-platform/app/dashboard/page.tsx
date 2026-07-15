@@ -460,16 +460,38 @@ export default function ApplicantDashboard() {
                     </div>
 
                     <button
-                      disabled={!selectedVa}
+                      disabled={!selectedVa || paymentStatus === "processing"}
                       onClick={() => {
                         setPaymentStatus("processing");
-                        setTimeout(() => {
-                          setPaymentStatus("paid");
-                          triggerToast("Pembayaran berhasil dikonfirmasi!");
-                        }, 1200);
+                        if (candidateId) {
+                          fetch(`/api/applicants/${candidateId}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ paymentStatus: "lunas", currentStage: "unggah_berkas" })
+                          })
+                          .then(res => res.json())
+                          .then(data => {
+                            if (data.success) {
+                              setPaymentStatus("paid");
+                              triggerToast("Pembayaran berhasil dikonfirmasi!");
+                            } else {
+                              setPaymentStatus("unpaid");
+                              triggerToast("Gagal mengonfirmasi pembayaran: " + data.error);
+                            }
+                          })
+                          .catch(() => {
+                            setPaymentStatus("unpaid");
+                            triggerToast("Gagal menghubungi server");
+                          });
+                        } else {
+                          setTimeout(() => {
+                            setPaymentStatus("paid");
+                            triggerToast("Pembayaran berhasil dikonfirmasi!");
+                          }, 1200);
+                        }
                       }}
                       className={`w-full py-3 rounded-xl font-bold text-white transition-all text-sm ${
-                        selectedVa
+                        selectedVa && paymentStatus !== "processing"
                           ? "bg-[#0f487b] hover:bg-[#00719f] cursor-pointer shadow-md"
                           : "bg-slate-200 text-slate-400 cursor-not-allowed"
                       }`}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { SSO_AUTHORIZE_URL, SSO_CLIENT_ID, SSO_CALLBACK_URL } from "@/lib/client-config";
 
 interface OrgUnit {
   id: string;
@@ -41,6 +42,18 @@ export default function HrisAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState("");
 
+  // Auth state
+  const [adminUser, setAdminUser] = useState<{ name: string; username: string; role: string } | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const redirectToSSO = () => {
+    const array = new Uint32Array(22);
+    window.crypto.getRandomValues(array);
+    const verifier = Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
+    sessionStorage.setItem("sso_code_verifier", verifier);
+    window.location.href = `${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
+  };
+
   const fetchData = async () => {
     try {
       const res = await fetch("/api/admin/data");
@@ -59,7 +72,22 @@ export default function HrisAdminDashboard() {
   };
 
   useEffect(() => {
-    fetchData();
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/auth/session");
+        const data = await res.json();
+        if (data.success && data.authenticated && data.user && data.user.role === "admin") {
+          setAdminUser(data.user);
+          setCheckingAuth(false);
+          fetchData();
+        } else {
+          redirectToSSO();
+        }
+      } catch (err) {
+        redirectToSSO();
+      }
+    };
+    checkSession();
   }, []);
 
   const triggerNotice = (msg: string) => {
@@ -157,12 +185,14 @@ export default function HrisAdminDashboard() {
     l.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading) {
+  if (checkingAuth || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-[#FED524] border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Memuat Data HRIS...</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+            {checkingAuth ? "Memvalidasi Sesi HRIS..." : "Memuat Data HRIS..."}
+          </span>
         </div>
       </div>
     );

@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { lmsSessions, lmsAssignments, assignmentSubmissions } from "@/db/schema/sessions";
 import { classEnrollments } from "@/db/schema/classes";
 import { eq, and } from "drizzle-orm";
+import { ssoUsers } from "@/db/schema/sso";
 
 export async function GET(req: Request) {
   try {
@@ -39,8 +40,21 @@ export async function GET(req: Request) {
 
     // 2. Fetch submissions for this assignment
     let submissionsList = await db
-      .select()
+      .select({
+        id: assignmentSubmissions.id,
+        assignmentId: assignmentSubmissions.assignmentId,
+        studentUserId: assignmentSubmissions.studentUserId,
+        studentName: ssoUsers.fullName,
+        answerText: assignmentSubmissions.answerText,
+        score: assignmentSubmissions.score,
+        gradeLetter: assignmentSubmissions.gradeLetter,
+        graderUserId: assignmentSubmissions.graderUserId,
+        status: assignmentSubmissions.status,
+        gradedAt: assignmentSubmissions.gradedAt,
+        submittedAt: assignmentSubmissions.submittedAt,
+      })
       .from(assignmentSubmissions)
+      .leftJoin(ssoUsers, eq(assignmentSubmissions.studentUserId, ssoUsers.id))
       .where(eq(assignmentSubmissions.assignmentId, assignment.id));
 
     // 3. If no submissions exist, populate them dynamically from class enrollments!
