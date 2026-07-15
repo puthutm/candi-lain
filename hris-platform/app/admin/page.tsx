@@ -43,7 +43,7 @@ export default function HrisAdminDashboard() {
   const [toastMsg, setToastMsg] = useState("");
 
   // Auth state
-  const [adminUser, setAdminUser] = useState<{ name: string; username: string; role: string } | null>(null);
+  const [_adminUser, setAdminUser] = useState<{ name: string; username: string; role: string } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   const redirectToSSO = () => {
