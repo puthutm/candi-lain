@@ -85,28 +85,55 @@ export default async function HomePage() {
         <aside className="w-[56px] shrink-0 border-r border-white/10 bg-slate-950/60 backdrop-blur-md">
           <div className="flex h-full flex-col items-center gap-3 py-6 text-white">
             {isUserAdmin && (
-              <Link
-                href="/admin"
-                className="group inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] transition-all hover:-translate-y-0.5 hover:border-indigo-500/30 hover:bg-white/[0.04]"
-                aria-label="Admin Dashboard"
-              >
-                {/* gear icon */}
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-white group-hover:text-indigo-300"
-                  aria-hidden="true"
+              <>
+                <Link
+                  href="/admin"
+                  className="group inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] transition-all hover:-translate-y-0.5 hover:border-indigo-500/30 hover:bg-white/[0.04]"
+                  aria-label="Admin Dashboard"
                 >
-                  <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
-                  <path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1a2 2 0 0 1-1.4 3.4h-.2a1.8 1.8 0 0 0-2 1.2 2 2 0 0 1-3.9 0 1.8 1.8 0 0 0-2-1.2h-.2a2 2 0 0 1-1.4-3.4l.1-.1a1.8 1.8 0 0 0 .4-2 1.8 1.8 0 0 0-1.6-1H4.7a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.1a1.8 1.8 0 0 0 1.6-1 1.8 1.8 0 0 0-.4-2l-.1-.1A2 2 0 0 1 7.4 2.5h.2a1.8 1.8 0 0 0 2-1.2 2 2 0 0 1 3.9 0 1.8 1.8 0 0 0 2 1.2h.2a2 2 0 0 1 1.4 3.4l-.1.1a1.8 1.8 0 0 0-.4 2 1.8 1.8 0 0 0 1.6 1h.1a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.1a1.8 1.8 0 0 0-1.6 1z" />
-                </svg>
-              </Link>
+                  {/* dashboard icon */}
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-white group-hover:text-indigo-300"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="3" width="7" height="9" rx="1" />
+                    <rect x="14" y="3" width="7" height="5" rx="1" />
+                    <rect x="14" y="12" width="7" height="9" rx="1" />
+                    <rect x="3" y="16" width="7" height="5" rx="1" />
+                  </svg>
+                </Link>
+                
+                <Link
+                  href="/admin/settings"
+                  className="group inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] transition-all hover:-translate-y-0.5 hover:border-indigo-500/30 hover:bg-white/[0.04]"
+                  aria-label="SSO Settings"
+                >
+                  {/* gear icon */}
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-white group-hover:text-indigo-300"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
+                    <path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1a2 2 0 0 1-1.4 3.4h-.2a1.8 1.8 0 0 0-2 1.2 2 2 0 0 1-3.9 0 1.8 1.8 0 0 0-2-1.2h-.2a2 2 0 0 1-1.4-3.4l.1-.1a1.8 1.8 0 0 0 .4-2 1.8 1.8 0 0 0-1.6-1H4.7a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.1a1.8 1.8 0 0 0 1.6-1 1.8 1.8 0 0 0-.4-2l-.1-.1A2 2 0 0 1 7.4 2.5h.2a1.8 1.8 0 0 0 2-1.2 2 2 0 0 1 3.9 0 1.8 1.8 0 0 0 2 1.2h.2a2 2 0 0 1 1.4 3.4l-.1.1a1.8 1.8 0 0 0-.4 2 1.8 1.8 0 0 0 1.6 1h.1a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.1a1.8 1.8 0 0 0-1.6 1z" />
+                  </svg>
+                </Link>
+              </>
             )}
 
             {/* Profile icon */}
