@@ -50,7 +50,6 @@ export async function POST(req: Request) {
     }
 
     // 1. Fetch matching applicants based on segment selection
-    let query = db.select().from(pmbApplicants);
     let applicantsList = [];
 
     if (segment === "Tahap 4: Unggah Berkas (Belum Bayar)") {
