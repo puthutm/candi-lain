@@ -6,7 +6,7 @@ import { applications } from "@/db/schema/applications";
 import { eq, sql } from "drizzle-orm";
 import { RBACService } from "@/lib/services/rbac";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const sessionUser = await getSessionUser();
   if (!sessionUser || !isSuperAdmin(sessionUser)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { applications } from "@/db/schema/applications";
 import { desc } from "drizzle-orm";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const sessionUser = await getSessionUser();
   if (!sessionUser || !isSuperAdmin(sessionUser)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
