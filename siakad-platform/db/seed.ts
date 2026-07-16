@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { siakadStudyPrograms, siakadCurricula, siakadAcademicPeriods, siakadCourses, siakadCurriculumCourses } from "@/db/schema/master";
 import { siakadLecturers, siakadStudents } from "@/db/schema/civitas";
 import { ssoUsers } from "@/db/schema/sso";
-import { siakadClasses } from "@/db/schema/classes";
+import { siakadClasses, siakadClassSchedules } from "@/db/schema/classes";
 import { eq } from "drizzle-orm";
 
 export async function ensureSiakadSeeded() {
@@ -143,7 +143,7 @@ export async function ensureSiakadSeeded() {
     if (classesCount.length === 0 && periodId && infId && lecturerId) {
       const courses = await db.select().from(siakadCourses);
       for (const course of courses) {
-        await db.insert(siakadClasses).values({
+        const [insertedClass] = await db.insert(siakadClasses).values({
           courseId: course.id,
           academicPeriodId: periodId,
           studyProgramId: infId,
@@ -153,7 +153,39 @@ export async function ensureSiakadSeeded() {
           enrolledCount: 0,
           mode: "async" as const,
           status: "aktif" as const,
-        });
+        }).returning();
+
+        if (insertedClass) {
+          // Generate 16 sessions of weekly schedules starting from 2026-09-07
+          const schedules = Array.from({ length: 16 }, (_, i) => {
+            const dateObj = new Date("2026-09-07");
+            dateObj.setDate(dateObj.getDate() + (i * 7));
+            const sessionDate = dateObj.toISOString().split("T")[0]!;
+
+            let sessionType = "reguler" as const;
+            let topic = `Pertemuan ke-${i + 1} - Pembahasan Materi Utama`;
+            if (i === 7) {
+              sessionType = "uts" as const;
+              topic = "Ujian Tengah Semester (UTS)";
+            } else if (i === 15) {
+              sessionType = "uas" as const;
+              topic = "Ujian Akhir Semester (UAS)";
+            }
+
+            return {
+              classId: insertedClass.id,
+              sessionNumber: i + 1,
+              topic,
+              sessionDate,
+              startTime: "08:00",
+              endTime: "10:30",
+              sessionType,
+              vcLink: "https://meet.jit.si/unsia-pjj-kelas-virtual",
+            };
+          });
+
+          await db.insert(siakadClassSchedules).values(schedules);
+        }
       }
     }
   } catch (error) {
