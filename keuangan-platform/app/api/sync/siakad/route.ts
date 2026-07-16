@@ -3,8 +3,25 @@ import { db } from "@/db";
 import { studentInvoices, studentInvoiceItems, tuitionRates, financeClearanceStatus } from "@/db/schema/schema";
 import { siakadStudents, siakadStudyPrograms } from "@/db/schema/siakad";
 import { eq, and } from "drizzle-orm";
+import { pgTable, uuid, text } from "drizzle-orm/pg-core";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+
+const remoteStudyPrograms = pgTable("siakad_study_programs", {
+  id: uuid("id").primaryKey(),
+  name: text("name").notNull(),
+});
+
+const remoteStudents = pgTable("siakad_students", {
+  id: uuid("id").primaryKey(),
+  userId: uuid("user_id"),
+  fullName: text("full_name").notNull(),
+  studyProgramId: uuid("study_program_id").notNull(),
+  academicStatus: text("academic_status").notNull(),
+});
 
 export async function POST(request: NextRequest) {
+  let siakadClient;
   try {
     const body = await request.json();
     const { academicPeriodLabel } = body;
@@ -13,7 +30,56 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "academicPeriodLabel is required" }, { status: 400 });
     }
 
-    // 1. Fetch active students from the central SIAKAD database tables
+    // 1. Establish connection and sync master caches from siakad_platform database
+    const hrisUrl = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/hris_platform";
+    const siakadUrl = hrisUrl.replace("/hris_platform", "/siakad_platform").replace("/keuangan_platform", "/siakad_platform");
+    
+    try {
+      siakadClient = postgres(siakadUrl, { prepare: false });
+      const siakadDb = drizzle(siakadClient);
+      
+      const remoteProgs = await siakadDb.select().from(remoteStudyPrograms);
+      const remoteStus = await siakadDb.select().from(remoteStudents);
+      
+      // Upsert into local siakadStudyPrograms cache
+      for (const prog of remoteProgs) {
+        await db.insert(siakadStudyPrograms).values({
+          id: prog.id,
+          name: prog.name,
+        }).onConflictDoUpdate({
+          target: siakadStudyPrograms.id,
+          set: { name: prog.name }
+        });
+      }
+      
+      // Upsert into local siakadStudents cache
+      for (const stu of remoteStus) {
+        if (!stu.userId) continue;
+        await db.insert(siakadStudents).values({
+          id: stu.id,
+          userId: stu.userId,
+          fullName: stu.fullName,
+          studyProgramId: stu.studyProgramId,
+          academicStatus: stu.academicStatus,
+        }).onConflictDoUpdate({
+          target: siakadStudents.id,
+          set: {
+            fullName: stu.fullName,
+            studyProgramId: stu.studyProgramId,
+            academicStatus: stu.academicStatus,
+            userId: stu.userId,
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("Could not query central siakad_platform database, using local cache fallback.", e);
+    } finally {
+      if (siakadClient) {
+        await siakadClient.end();
+      }
+    }
+
+    // 2. Fetch active students from the cached SIAKAD tables
     const activeStudents = await db
       .select({
         userId: siakadStudents.userId,
@@ -31,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     const results = [];
 
-    // 2. Loop through active students and generate invoices
+    // 3. Loop through active students and generate invoices
     for (const student of activeStudents) {
       if (!student.userId) continue;
 
@@ -47,8 +113,8 @@ export async function POST(request: NextRequest) {
         )
         .limit(1);
 
-      const spp = rates[0] ? parseFloat(rates[0].sppAmount) : 2500000.00;
-      const bop = rates[0] ? parseFloat(rates[0].bopAmount) : 1500000.00;
+      const spp = rates[0] ? parseFloat(rates[0].sppAmount) : 5500000.00;
+      const bop = rates[0] ? parseFloat(rates[0].bopAmount) : 2500000.00;
       const total = spp + bop;
 
       // Check if invoice already exists to ensure idempotency

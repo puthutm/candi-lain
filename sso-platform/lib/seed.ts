@@ -75,41 +75,51 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     }).returning();
 
     // 3. Seed Applications
+    const baseDomain = process.env.SEED_DOMAIN_BASE;
+    const protocol = process.env.SEED_DOMAIN_PROTOCOL || "http";
+
+    const getRedirectUris = (defaultUri: string, subdomainPrefix: string) => {
+      if (baseDomain) {
+        return [`${protocol}://${subdomainPrefix}.${baseDomain}/api/auth/callback`];
+      }
+      return [defaultUri];
+    };
+
     const defaultApps = [
       {
         clientId: env.SEED_SIAKAD_CLIENT_ID,
         clientSecret: env.SEED_SIAKAD_CLIENT_SECRET,
         name: "SIAKAD Platform",
         description: "Sistem Informasi Akademik",
-        redirectUris: [env.SEED_SIAKAD_CALLBACK_URL],
+        redirectUris: getRedirectUris(env.SEED_SIAKAD_CALLBACK_URL, "siakad"),
       },
       {
         clientId: env.SEED_LMS_CLIENT_ID,
         clientSecret: env.SEED_LMS_CLIENT_SECRET,
         name: "LMS Platform",
         description: "Learning Management System",
-        redirectUris: [env.SEED_LMS_CALLBACK_URL],
+        redirectUris: getRedirectUris(env.SEED_LMS_CALLBACK_URL, "lms"),
       },
       {
         clientId: env.SEED_PMB_CLIENT_ID,
         clientSecret: env.SEED_PMB_CLIENT_SECRET,
         name: "PMB Platform",
         description: "Penerimaan Mahasiswa Baru",
-        redirectUris: [env.SEED_PMB_CALLBACK_URL],
+        redirectUris: getRedirectUris(env.SEED_PMB_CALLBACK_URL, "pmb"),
       },
       {
         clientId: env.SEED_KEUANGAN_CLIENT_ID,
         clientSecret: env.SEED_KEUANGAN_CLIENT_SECRET,
         name: "Keuangan Platform",
         description: "Sistem Keuangan Terpadu",
-        redirectUris: [env.SEED_KEUANGAN_CALLBACK_URL],
+        redirectUris: getRedirectUris(env.SEED_KEUANGAN_CALLBACK_URL, "keuangan"),
       },
       {
         clientId: env.SEED_HRIS_CLIENT_ID,
         clientSecret: env.SEED_HRIS_CLIENT_SECRET,
         name: "HRIS Platform",
         description: "Human Resources Information System",
-        redirectUris: [env.SEED_HRIS_CALLBACK_URL],
+        redirectUris: getRedirectUris(env.SEED_HRIS_CALLBACK_URL, "hris"),
       }
     ];
 

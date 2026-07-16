@@ -48,9 +48,104 @@ export default function DosenPage() {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [grades, setGrades] = useState<StudentGrade[]>([]);
 
+  // Advisor States
+  interface KrsItemDetail {
+    itemId: string;
+    itemStatus: string;
+    classId: string;
+    className: string;
+    courseCode: string;
+    courseName: string;
+    sks: number;
+    courseType: string;
+  }
+
+  interface KrsDetails {
+    id: string;
+    status: string;
+    totalSks: number;
+    maxSksAllowed: number;
+    submittedAt: string | null;
+    items: KrsItemDetail[];
+  }
+
+  interface AdvisingStudent {
+    studentId: string;
+    nim: string | null;
+    fullName: string;
+    angkatan: number;
+    currentSemester: number;
+    academicStatus: string;
+    ipk: string;
+    totalSksLulus: number;
+    studyProgramId: string;
+    studyProgramName: string;
+    krs: KrsDetails | null;
+  }
+
+  const [advisingStudents, setAdvisingStudents] = useState<AdvisingStudent[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<AdvisingStudent | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [rejectNote, setRejectNote] = useState("");
+  const [submittingKrs, setSubmittingKrs] = useState(false);
+
   useEffect(() => {
     fetchSchedule();
+    fetchAdvising();
   }, []);
+
+  const fetchAdvising = async () => {
+    try {
+      const res = await fetch("/api/dosen/perwalian");
+      const data = await res.json();
+      if (data.success) {
+        setAdvisingStudents(data.students || []);
+      }
+    } catch {}
+  };
+
+  const handleKrsDecision = async (krsId: string, action: "approve" | "reject") => {
+    if (action === "reject" && !rejectNote.trim()) {
+      triggerToast("Catatan penolakan wajib diisi!");
+      return;
+    }
+
+    setSubmittingKrs(true);
+    try {
+      const res = await fetch("/api/dosen/perwalian", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          krsId,
+          action,
+          note: action === "reject" ? rejectNote : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        triggerToast(action === "approve" ? "KRS berhasil disetujui!" : "KRS berhasil ditolak.");
+        setRejectNote("");
+        
+        // Refresh advising list and preserve selected student detail view
+        const resRefresh = await fetch("/api/dosen/perwalian");
+        const refreshData = await resRefresh.json();
+        if (refreshData.success) {
+          setAdvisingStudents(refreshData.students || []);
+          if (selectedStudent) {
+            const updated = refreshData.students.find((s: any) => s.studentId === selectedStudent.studentId);
+            setSelectedStudent(updated || null);
+          }
+        }
+      } else {
+        triggerToast(data.error || "Gagal memproses keputusan KRS.");
+      }
+    } catch (err: any) {
+      triggerToast("Galat: " + err.message);
+    } finally {
+      setSubmittingKrs(false);
+    }
+  };
 
   useEffect(() => {
     if (selectedClassId) {
@@ -377,15 +472,226 @@ export default function DosenPage() {
 
           {/* TAB 4: PERWALIAN KRS */}
           {activeTab === "krs_perwalian" && (
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm max-w-5xl flex flex-col gap-6">
-              <div>
-                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Perwalian KRS</h3>
-                <p className="text-xs text-slate-400">Persetujuan rencana studi mahasiswa bimbingan</p>
-              </div>
-              <div className="divide-y divide-slate-100">
-                <div className="py-8 text-center text-sm text-slate-400">
-                  Data perwalian KRS akan ditampilkan dari API secara dinamis.
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl fade-in">
+              {/* Advising Student List */}
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col gap-4 h-[600px]">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Mahasiswa Bimbingan</h3>
+                  <p className="text-[11px] text-slate-400">Total bimbingan aktif: {advisingStudents.length}</p>
                 </div>
+                
+                {/* Search Bar */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Cari nama atau NIM..."
+                    className="w-full text-xs pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0f487b] transition-all"
+                  />
+                  <span className="absolute right-2.5 top-2.5 text-xs text-slate-400">🔍</span>
+                </div>
+
+                {/* List Container */}
+                <div className="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar">
+                  {advisingStudents.filter(s => 
+                    s.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                    (s.nim && s.nim.includes(searchQuery))
+                  ).length === 0 ? (
+                    <div className="py-12 text-center text-xs text-slate-400 font-bold">
+                      Tidak ada data mahasiswa bimbingan.
+                    </div>
+                  ) : (
+                    advisingStudents
+                      .filter(s => 
+                        s.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        (s.nim && s.nim.includes(searchQuery))
+                      )
+                      .map((student) => {
+                        const isSelected = selectedStudent?.studentId === student.studentId;
+                        const status = student.krs?.status;
+                        
+                        let badgeColor = "bg-slate-100 text-slate-500 border-slate-200";
+                        let badgeText = "Belum Mengajukan";
+                        
+                        if (status === "diajukan") {
+                          badgeColor = "bg-amber-100 text-amber-800 border-amber-200";
+                          badgeText = "Menunggu PA";
+                        } else if (status === "disetujui_pa") {
+                          badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                          badgeText = "Disetujui";
+                        } else if (status === "ditolak") {
+                          badgeColor = "bg-rose-100 text-rose-800 border-rose-200";
+                          badgeText = "Ditolak";
+                        }
+
+                        return (
+                          <button
+                            key={student.studentId}
+                            onClick={() => {
+                              setSelectedStudent(student);
+                              setRejectNote("");
+                            }}
+                            className={`w-full text-left p-4 rounded-2xl border transition-all flex flex-col gap-1.5 ${
+                              isSelected
+                                ? "border-[#0f487b] bg-blue-50/50"
+                                : "border-slate-100 hover:border-slate-200 bg-white"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between w-full gap-2">
+                              <span className="font-bold text-slate-800 text-xs truncate max-w-[130px]">
+                                {student.fullName}
+                              </span>
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                                {badgeText}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between w-full text-[10px] text-slate-400 font-mono">
+                              <span>{student.nim || "Calon Mhs"}</span>
+                              <span>Semester {student.currentSemester}</span>
+                            </div>
+                          </button>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+
+              {/* Student Detail Pane */}
+              <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col h-[600px] overflow-hidden">
+                {selectedStudent ? (
+                  <div className="flex flex-col h-full overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-start justify-between pb-4 border-b border-slate-100 shrink-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-[#FED524]/20 border-2 border-[#FED524]/30 flex items-center justify-center font-bold text-[#0f487b] text-base shrink-0">
+                          {selectedStudent.fullName.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-800 text-sm">{selectedStudent.fullName}</h4>
+                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            NIM: {selectedStudent.nim || "Belum Terbit"} • {selectedStudent.studyProgramName}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wide">IPK Kumulatif</span>
+                        <span className="text-lg font-black text-[#0f487b]">{selectedStudent.ipk || "0.00"}</span>
+                      </div>
+                    </div>
+
+                    {/* Content Scroll Area */}
+                    <div className="flex-1 overflow-y-auto py-4 space-y-4 no-scrollbar">
+                      {/* Grid Stats */}
+                      <div className="grid grid-cols-4 gap-3">
+                        <div className="bg-slate-50 border border-slate-100 p-3 rounded-2xl text-center">
+                          <span className="text-[9px] font-bold text-slate-400 block uppercase">Semester</span>
+                          <span className="text-xs font-bold text-slate-700">{selectedStudent.currentSemester}</span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-100 p-3 rounded-2xl text-center">
+                          <span className="text-[9px] font-bold text-slate-400 block uppercase">Angkatan</span>
+                          <span className="text-xs font-bold text-slate-700">{selectedStudent.angkatan}</span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-100 p-3 rounded-2xl text-center">
+                          <span className="text-[9px] font-bold text-slate-400 block uppercase">SKS Lulus</span>
+                          <span className="text-xs font-bold text-slate-700">{selectedStudent.totalSksLulus}</span>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-100 p-3 rounded-2xl text-center">
+                          <span className="text-[9px] font-bold text-slate-400 block uppercase">Status KRS</span>
+                          <span className="text-[10px] font-bold text-[#0f487b] capitalize mt-0.5 block">
+                            {selectedStudent.krs?.status.replace("_pa", "").replace("disetujui", "Disetujui").replace("ditolak", "Ditolak") || "Draft"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* KRS Section */}
+                      {selectedStudent.krs ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                              Mata Kuliah Yang Diajukan
+                            </h5>
+                            <span className="text-xs font-bold text-slate-700">
+                              {selectedStudent.krs.totalSks} SKS / Max {selectedStudent.krs.maxSksAllowed} SKS
+                            </span>
+                          </div>
+
+                          <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
+                            {selectedStudent.krs.items.map((item) => (
+                              <div key={item.itemId} className="p-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors bg-white">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-mono font-bold text-[#0f487b]">{item.courseCode}</span>
+                                    <span className="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-bold uppercase">{item.className}</span>
+                                  </div>
+                                  <h6 className="text-xs font-bold text-slate-800 mt-1">{item.courseName}</h6>
+                                </div>
+                                <span className="text-[10px] bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 text-slate-500 font-bold">
+                                  {item.sks} SKS
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Rejection comment display if already rejected */}
+                          {selectedStudent.krs.status === "ditolak" && (
+                            <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex flex-col gap-1">
+                              <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wide">Catatan Penolakan</span>
+                              <p className="text-xs text-rose-700 leading-relaxed font-medium">
+                                Silakan sesuaikan mata kuliah sesuai saran Pembimbing Akademik.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="py-12 border border-dashed border-slate-200 rounded-3xl text-center text-slate-400 text-xs font-bold">
+                          Mahasiswa ini belum menyusun rencana studi untuk semester berjalan.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer Actions */}
+                    {selectedStudent.krs && selectedStudent.krs.status === "diajukan" && (
+                      <div className="border-t border-slate-100 pt-4 shrink-0 space-y-3">
+                        <textarea
+                          rows={2}
+                          value={rejectNote}
+                          onChange={(e) => setRejectNote(e.target.value)}
+                          placeholder="Tulis catatan penolakan di sini (wajib diisi apabila menolak KRS)..."
+                          className="w-full text-xs p-3 border border-slate-200 rounded-xl outline-none focus:border-rose-500 transition-all resize-none"
+                        />
+                        <div className="flex gap-3 justify-end">
+                          <button
+                            onClick={() => handleKrsDecision(selectedStudent.krs!.id, "reject")}
+                            disabled={submittingKrs || !rejectNote.trim()}
+                            className={`px-6 py-2.5 rounded-xl font-bold text-xs border text-center transition-all ${
+                              rejectNote.trim() && !submittingKrs
+                                ? "bg-rose-600 border-rose-600 text-white hover:bg-rose-700 cursor-pointer shadow-md"
+                                : "bg-slate-55 border-slate-200 text-slate-300 cursor-not-allowed"
+                            }`}
+                          >
+                            {submittingKrs ? "Memproses..." : "Tolak KRS"}
+                          </button>
+                          <button
+                            onClick={() => handleKrsDecision(selectedStudent.krs!.id, "approve")}
+                            disabled={submittingKrs}
+                            className={`px-6 py-2.5 rounded-xl font-bold text-xs bg-[#0f487b] border border-[#0f487b] text-white hover:bg-[#00719f] transition-all shadow-md cursor-pointer`}
+                          >
+                            {submittingKrs ? "Memproses..." : "Setujui KRS"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex-grow flex flex-col items-center justify-center text-center p-6 text-slate-400 gap-2">
+                    <span className="text-3xl">💡</span>
+                    <h5 className="font-bold text-xs uppercase tracking-wider text-slate-400">Persetujuan Perwalian</h5>
+                    <p className="text-[11px] max-w-xs leading-relaxed">
+                      Silakan pilih salah satu mahasiswa bimbingan di panel sebelah kiri untuk meninjau dan memproses Kartu Rencana Studi (KRS) mereka.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { pmbWaves, pmbEntryPaths, pmbStudyPrograms, pmbQuotas } from "@/db/schema/master";
 import { pmbApplicants, pmbDocumentTypes, pmbApplicantProfiles, pmbApplicantDocuments } from "@/db/schema/applicants";
+import { pmbExamModules, pmbExamQuestions } from "@/db/schema/exam";
 
 export async function ensurePmbSeeded() {
   try {
@@ -186,6 +187,118 @@ export async function ensurePmbSeeded() {
           { applicantId: dediId, documentTypeId: fotoTypeId, fileUrl: "https://ui-avatars.com/api/?name=Dedi+Kurniawan&size=200", status: "terverifikasi" },
         ]);
       }
+    }
+
+    // 7. Seed Exam Modules & Questions
+    const examModulesCount = await db.select().from(pmbExamModules);
+    if (examModulesCount.length === 0) {
+      // Insert Modules
+      const insertedModules = await db.insert(pmbExamModules).values([
+        { name: "Tes Potensi Akademik", code: "tpa", durationMinutes: 60, questionCount: 3, type: "teks" },
+        { name: "Pengetahuan Umum", code: "tpu", durationMinutes: 30, questionCount: 2, type: "teks" },
+        { name: "Kewarganegaraan", code: "pkn", durationMinutes: 20, questionCount: 1, type: "teks" },
+        { name: "Bahasa Inggris", code: "ing", durationMinutes: 45, questionCount: 1, type: "teks" },
+        { name: "Tes Buta Warna", code: "color", durationMinutes: 5, questionCount: 3, type: "gambar" }
+      ]).returning();
+
+      const tpaId = insertedModules.find(m => m.code === "tpa")!.id;
+      const tpuId = insertedModules.find(m => m.code === "tpu")!.id;
+      const pknId = insertedModules.find(m => m.code === "pkn")!.id;
+      const ingId = insertedModules.find(m => m.code === "ing")!.id;
+      const colorId = insertedModules.find(m => m.code === "color")!.id;
+
+      // Seed Questions TPA
+      await db.insert(pmbExamQuestions).values([
+        {
+          examModuleId: tpaId,
+          questionText: "Jika semua burung bertelur, dan angsa adalah burung. Maka kesimpulannya adalah...",
+          questionType: "pilihan_ganda",
+          options: ["Angsa tidak bertelur", "Angsa bertelur", "Angsa kadang-kadang bertelur", "Angsa adalah burung air"],
+          correctAnswer: "Angsa bertelur"
+        },
+        {
+          examModuleId: tpaId,
+          questionText: "Pilihlah sinonim kata dari: EKSPANSI",
+          questionType: "pilihan_ganda",
+          options: ["Penyusutan", "Perluasan", "Pembagian", "Pertemuan"],
+          correctAnswer: "Perluasan"
+        },
+        {
+          examModuleId: tpaId,
+          questionText: "1, 3, 6, 10, 15, ... Angka selanjutnya dari deret tersebut adalah...",
+          questionType: "pilihan_ganda",
+          options: ["20", "21", "22", "25"],
+          correctAnswer: "21"
+        }
+      ]);
+
+      // Seed Questions TPU
+      await db.insert(pmbExamQuestions).values([
+        {
+          examModuleId: tpuId,
+          questionText: "Siapakah Presiden pertama Republik Indonesia?",
+          questionType: "pilihan_ganda",
+          options: ["Ir. Soekarno", "Drs. M. Hatta", "Soeharto", "BJ. Habibie"],
+          correctAnswer: "Ir. Soekarno"
+        },
+        {
+          examModuleId: tpuId,
+          questionText: "Apa nama ibukota negara Jepang?",
+          questionType: "pilihan_ganda",
+          options: ["Kyoto", "Tokyo", "Osaka", "Hiroshima"],
+          correctAnswer: "Tokyo"
+        }
+      ]);
+
+      // Seed Questions PKN
+      await db.insert(pmbExamQuestions).values([
+        {
+          examModuleId: pknId,
+          questionText: "Lambang sila ke-3 dalam Pancasila adalah...",
+          questionType: "pilihan_ganda",
+          options: ["Kepala Banteng", "Pohon Beringin", "Padi dan Kapas", "Rantai Emas"],
+          correctAnswer: "Pohon Beringin"
+        }
+      ]);
+
+      // Seed Questions ING
+      await db.insert(pmbExamQuestions).values([
+        {
+          examModuleId: ingId,
+          questionText: "What is the past tense of the verb 'go'?",
+          questionType: "pilihan_ganda",
+          options: ["Gone", "Went", "Goes", "Going"],
+          correctAnswer: "Went"
+        }
+      ]);
+
+      // Seed Questions COLOR
+      await db.insert(pmbExamQuestions).values([
+        {
+          examModuleId: colorId,
+          questionText: "Angka berapa yang tertera pada pelat buta warna ini?",
+          questionType: "gambar",
+          options: ["12", "15", "18", "21"],
+          correctAnswer: "12",
+          imageUrl: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Ishihara_9.png"
+        },
+        {
+          examModuleId: colorId,
+          questionText: "Angka berapa yang tertera pada pelat buta warna ini?",
+          questionType: "gambar",
+          options: ["3", "8", "6", "9"],
+          correctAnswer: "8",
+          imageUrl: "https://upload.wikimedia.org/wikipedia/commons/b/b3/Ishihara_1.png"
+        },
+        {
+          examModuleId: colorId,
+          questionText: "Angka berapa yang tertera pada pelat buta warna ini?",
+          questionType: "gambar",
+          options: ["20", "29", "30", "39"],
+          correctAnswer: "29",
+          imageUrl: "https://upload.wikimedia.org/wikipedia/commons/e/e0/Ishihara_2.png"
+        }
+      ]);
     }
   } catch (error) {
     console.error("Error seeding PMB Database:", error);

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { ssoUsers, ssoApplications, ssoApplicationRoles, ssoUserApplicationRoles, ssoOauthAuthorizationCodes } from "@/db/schema/sso";
+import { pmbApplicants } from "@/db/schema/applicants";
+import { pmbWaves, pmbEntryPaths, pmbStudyPrograms } from "@/db/schema/master";
 import { eq, and } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { env } from "@/lib/env";
@@ -90,11 +92,82 @@ export async function GET(req: Request) {
       }
     }
 
+    if (role === "pendaftar") {
+      const existingCandidate = await db
+        .select()
+        .from(pmbApplicants)
+        .where(eq(pmbApplicants.email, user.email))
+        .limit(1);
+
+      let candidateRecord;
+      if (existingCandidate.length > 0) {
+        candidateRecord = existingCandidate[0]!;
+      } else {
+        const activeWaves = await db
+          .select()
+          .from(pmbWaves)
+          .where(eq(pmbWaves.status, "aktif"))
+          .limit(1);
+        const waveId = activeWaves[0]?.id;
+
+        const entryPaths = await db
+          .select()
+          .from(pmbEntryPaths)
+          .limit(1);
+        const entryPathId = entryPaths[0]?.id;
+
+        const studyPrograms = await db
+          .select()
+          .from(pmbStudyPrograms)
+          .limit(1);
+        const studyProgramId = studyPrograms[0]?.id;
+
+        if (!waveId || !entryPathId || !studyProgramId) {
+          return NextResponse.redirect(new URL("/?error=sso_meta_not_seeded", req.url));
+        }
+
+        const registrationNum = `PMB26-${Math.floor(10000 + Math.random() * 90000)}`;
+
+        const [newCandidate] = await db
+          .insert(pmbApplicants)
+          .values({
+            registrationNumber: registrationNum,
+            fullName: user.fullName,
+            email: user.email,
+            phone: "08000000000",
+            passwordHash: user.passwordHash || "SSO_AUTHENTICATED",
+            waveId,
+            entryPathId,
+            studyProgramId,
+            currentStage: "peminat",
+            paymentStatus: "belum_bayar",
+          })
+          .returning();
+        candidateRecord = newCandidate!;
+      }
+
+      const cookieStore = await cookies();
+      cookieStore.set("pmb_user", JSON.stringify({
+        userId: candidateRecord.id,
+        name: candidateRecord.fullName,
+        email: candidateRecord.email,
+        role: "applicant",
+        registrationNumber: candidateRecord.registrationNumber,
+      }), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 86400,
+      });
+
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
     if (role !== "admin") {
       return NextResponse.redirect(new URL("/?error=sso_only_for_staff", req.url));
     }
 
-    // 4. Save session cookie
+    // 4. Save session cookie for admin
     const cookieStore = await cookies();
     cookieStore.set("pmb_user", JSON.stringify({
       userId: user.id,
@@ -108,7 +181,6 @@ export async function GET(req: Request) {
       maxAge: 86400,
     });
 
-    // 5. Redirect to target dashboard
     const redirectUrl = new URL("/admin", req.url);
     return NextResponse.redirect(redirectUrl.toString());
 

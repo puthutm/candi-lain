@@ -3,12 +3,26 @@ import { db } from "@/db";
 import { employees, organizationUnits, positions } from "@/db/schema/schema";
 import { ssoUsers } from "@/db/schema/sso";
 import { eq } from "drizzle-orm";
+import { pgTable, uuid, text, numeric } from "drizzle-orm/pg-core";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+
+const siakadLecturers = pgTable("siakad_lecturers", {
+  id: uuid("id").primaryKey(),
+  nidn: text("nidn").unique().notNull(),
+  fullName: text("full_name").notNull(),
+  studyProgramId: uuid("study_program_id").notNull(),
+  position: text("position"),
+  bkdLoad: numeric("bkd_load").default("0.00").notNull(),
+  userId: uuid("user_id"),
+});
 
 export async function POST() {
+  let siakadClient;
   try {
     // 1. Get default organization unit and position
-    const unitsList = await db.select().from(organizationUnits).limit(1);
-    const positionsList = await db.select().from(positions).limit(1);
+    const unitsList = await db.select().from(organizationUnits);
+    const positionsList = await db.select().from(positions);
 
     if (unitsList.length === 0 || positionsList.length === 0) {
       return NextResponse.json({ 
@@ -17,10 +31,26 @@ export async function POST() {
       }, { status: 400 });
     }
 
-    const defaultUnitId = unitsList[0]!.id;
-    const defaultPositionId = positionsList[0]!.id;
+    // Default bindings
+    const defaultUnitId = unitsList.find(u => u.code === "IF")?.id || unitsList[0]!.id;
+    const defaultPositionId = positionsList.find(p => p.abbreviation === "DOS-IF")?.id || positionsList[0]!.id;
+    const staffPositionId = positionsList.find(p => p.abbreviation === "STAF-ADM")?.id || positionsList[0]!.id;
 
-    // 2. Fetch all users from SSO database
+    // 2. Fetch lecturers from siakad_platform database
+    const hrisUrl = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/hris_platform";
+    const siakadUrl = hrisUrl.replace("/hris_platform", "/siakad_platform");
+    
+    siakadClient = postgres(siakadUrl, { prepare: false });
+    const siakadDb = drizzle(siakadClient);
+    
+    let activeLecturers: any[] = [];
+    try {
+      activeLecturers = await siakadDb.select().from(siakadLecturers);
+    } catch (e) {
+      console.warn("Could not read siakad_lecturers table, falling back to empty list.", e);
+    }
+
+    // 3. Fetch all users from SSO database
     const usersList = await db.select().from(ssoUsers);
     
     let createdCount = 0;
@@ -39,18 +69,38 @@ export async function POST() {
         continue;
       }
 
-      // Determine employee type (dosen or tendik)
-      const employeeType = ssoUser.username === "dosen" ? "dosen" : "tendik";
-      const randomNip = `19${Math.floor(Math.random() * 20) + 80}0528${Math.floor(Math.random() * 900000) + 100000}`;
+      // Check if this SSO user matches a SIAKAD lecturer
+      const matchedLecturer = activeLecturers.find(l => l.userId === ssoUser.id || l.nidn === ssoUser.username);
+
+      let employeeType: "dosen" | "tendik" = "tendik";
+      let employeeNumber = ssoUser.username;
+      let fullName = ssoUser.fullName;
+      let positionId = staffPositionId;
+
+      if (matchedLecturer) {
+        employeeType = "dosen";
+        employeeNumber = matchedLecturer.nidn;
+        fullName = matchedLecturer.fullName;
+        positionId = defaultPositionId;
+      } else if (ssoUser.username === "dosen") {
+        employeeType = "dosen";
+        employeeNumber = "0428058203"; // standard lecturer NIDN fallback
+        positionId = defaultPositionId;
+      }
+
+      // Generate a clean NIP for tendik if username is not a numeric NIP
+      if (employeeType === "tendik" && !/^\d+$/.test(employeeNumber)) {
+        employeeNumber = `19850512201012${Math.floor(1000 + Math.random() * 9000)}`;
+      }
 
       await db.insert(employees).values({
-        employeeNumber: randomNip,
-        fullName: ssoUser.fullName,
+        employeeNumber,
+        fullName,
         employeeType,
         organizationUnitId: defaultUnitId,
-        positionId: defaultPositionId,
+        positionId,
         rankGroup: "III/b",
-        baseSalary: 4500000,
+        baseSalary: employeeType === "dosen" ? 5500000 : 4500000,
         status: "aktif",
         bankAccountNumber: "1234567890",
         bankName: "Mandiri",
@@ -69,6 +119,10 @@ export async function POST() {
   } catch (error: any) {
     console.error("HRIS Sync error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } finally {
+    if (siakadClient) {
+      await siakadClient.end();
+    }
   }
 }
 export const dynamic = "force-dynamic";

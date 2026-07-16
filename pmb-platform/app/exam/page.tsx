@@ -4,91 +4,50 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { INSTITUTION_NAME, INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
-interface ExamModule {
-  id: string;
-  name: string;
-  durationMinutes: number;
-  questionCount: number;
-  icon: string;
-  status: "available" | "completed" | "ongoing";
-}
-
-interface Question {
-  id: number;
-  text: string;
-  options: { key: string; val: string }[];
-  correct: string;
-}
-
-const MODULES_DATA: ExamModule[] = [
-  { id: "tpa", name: "Tes Potensi Akademik", durationMinutes: 60, questionCount: 15, icon: "🧠", status: "available" },
-  { id: "tpu", name: "Pengetahuan Umum", durationMinutes: 30, questionCount: 10, icon: "🌍", status: "available" },
-  { id: "pkn", name: "Kewarganegaraan", durationMinutes: 20, questionCount: 10, icon: "🇲🇨", status: "available" },
-  { id: "ing", name: "Bahasa Inggris", durationMinutes: 45, questionCount: 10, icon: "🗣️", status: "available" },
-  { id: "color", name: "Tes Buta Warna", durationMinutes: 5, questionCount: 5, icon: "👁️", status: "available" },
-];
-
-const QUESTIONS_TPA: Question[] = [
-  {
-    id: 1,
-    text: "Jika semua burung bertelur, dan angsa adalah burung. Maka Kesimpulannya adalah...",
-    options: [
-      { key: "A", val: "Angsa tidak bertelur" },
-      { key: "B", val: "Angsa bertelur" },
-      { key: "C", val: "Angsa kadang-kadang bertelur" },
-      { key: "D", val: "Angsa adalah burung air" },
-    ],
-    correct: "B",
-  },
-  {
-    id: 2,
-    text: "Pilihlah sinonim kata dari: EKSPANSI",
-    options: [
-      { key: "A", val: "Penyusutan" },
-      { key: "B", val: "Perluasan" },
-      { key: "C", val: "Pembagian" },
-      { key: "D", val: "Pertemuan" },
-    ],
-    correct: "B",
-  },
-  {
-    id: 3,
-    text: "1, 3, 6, 10, 15, ... Angka selanjutnya dari deret tersebut adalah...",
-    options: [
-      { key: "A", val: "20" },
-      { key: "B", val: "21" },
-      { key: "C", val: "22" },
-      { key: "D", val: "25" },
-    ],
-    correct: "B",
-  },
-];
-
-const PLATES_COLOR = [
-  { id: 1, num: "12", img: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Ishihara_9.png" },
-  { id: 2, num: "8", img: "https://upload.wikimedia.org/wikipedia/commons/b/b3/Ishihara_1.png" },
-  { id: 3, num: "29", img: "https://upload.wikimedia.org/wikipedia/commons/e/e0/Ishihara_2.png" },
-];
 
 export default function ExamPage() {
   const [view, setView] = useState<"lobby" | "briefing" | "exam_text" | "exam_color">("lobby");
-  const [modules, setModules] = useState<ExamModule[]>(MODULES_DATA);
-  const [activeModule, setActiveModule] = useState<ExamModule | null>(null);
+  const [modules, setModules] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeModule, setActiveModule] = useState<any | null>(null);
+  
+  // Dynamic questions & answers
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<{ [key: number]: string }>({});
-  const [raguStatus, setRaguStatus] = useState<{ [key: number]: boolean }>({});
+  const [answers, setAnswers] = useState<{ [key: string]: string }>({}); // mapped by questionId
+  const [raguStatus, setRaguStatus] = useState<{ [key: string]: boolean }>({}); // mapped by questionId
+  
   const [timeLeft, setTimeLeft] = useState(0);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [colorInput, setColorInput] = useState("");
   const [colorPlateIndex, setColorPlateIndex] = useState(0);
   const [plateTimer, setPlateTimer] = useState(10);
   const plateTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [candidateName, setCandidateName] = useState("Calon Mahasiswa");
+  const [candidateName, setCandidateName] = useState("");
 
-  // Load applicant identity
+  const [candidateId, setCandidateId] = useState("");
+
+  const fetchModules = (appId: string) => {
+    setLoading(true);
+    fetch(`/api/exam/modules?applicantId=${appId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setModules(data.modules || []);
+        }
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  };
+
+  // Load applicant identity and fetch modules
   useEffect(() => {
     const id = localStorage.getItem("pmb_applicant_id");
     if (id) {
+      setCandidateId(id);
+      fetchModules(id);
+      
       fetch(`/api/applicants/${id}`)
         .then((res) => res.json())
         .then((data) => {
@@ -139,33 +98,46 @@ export default function ExamPage() {
     }
   }, [view, colorPlateIndex]);
 
-  const handleSelectModule = (mod: ExamModule) => {
-    if (mod.status === "completed") return;
+  const handleSelectModule = (mod: any) => {
+    if (mod.status === "selesai_dikumpulkan") return;
     setActiveModule(mod);
     setView("briefing");
   };
 
   const handleStartExam = () => {
-    if (!activeModule) return;
-    setTimeLeft(activeModule.durationMinutes * 60);
+    if (!activeModule || !activeModule.sessionId) return;
+    setLoadingQuestions(true);
 
-    if (activeModule.id === "color") {
-      setColorPlateIndex(0);
-      setColorInput("");
-      setView("exam_color");
-    } else {
-      setCurrentQuestionIndex(0);
-      setAnswers({});
-      setRaguStatus({});
-      setView("exam_text");
-    }
+    fetch(`/api/exam/questions?moduleId=${activeModule.id}&sessionId=${activeModule.sessionId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setQuestions(data.questions || []);
+          setTimeLeft(activeModule.durationMinutes * 60);
+          setCurrentQuestionIndex(0);
+          setAnswers({});
+          setRaguStatus({});
+
+          if (activeModule.code === "color") {
+            setColorPlateIndex(0);
+            setColorInput("");
+            setView("exam_color");
+          } else {
+            setView("exam_text");
+          }
+        } else {
+          alert("Gagal memuat soal: " + data.error);
+        }
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoadingQuestions(false));
   };
 
-  const handleSelectAnswer = (qId: number, optionKey: string) => {
+  const handleSelectAnswer = (qId: string | number, optionKey: string) => {
     setAnswers((prev) => ({ ...prev, [qId]: optionKey }));
   };
 
-  const handleToggleRagu = (qId: number) => {
+  const handleToggleRagu = (qId: string | number) => {
     setRaguStatus((prev) => ({
       ...prev,
       [qId]: !prev[qId],
@@ -173,45 +145,60 @@ export default function ExamPage() {
   };
 
   const handleColorNext = () => {
-    if (colorPlateIndex < PLATES_COLOR.length - 1) {
+    const currentQuestionId = questions[colorPlateIndex]?.id;
+    if (currentQuestionId) {
+      setAnswers((prev) => ({ ...prev, [currentQuestionId]: colorInput }));
+    }
+
+    if (colorPlateIndex < questions.length - 1) {
       setColorPlateIndex((prev) => prev + 1);
       setColorInput("");
     } else {
-      handleFinishModule();
+      // Direct finish
+      // For color test, we need to pass the updated answers immediately, so we pass it or wait for setAnswers
+      // To be safe, we can build the direct answer payload:
+      const updatedAnswers = { ...answers };
+      if (currentQuestionId) {
+        updatedAnswers[currentQuestionId] = colorInput;
+      }
+      submitModuleExam(updatedAnswers);
     }
+  };
+
+  const submitModuleExam = (finalAnswers: any) => {
+    if (plateTimerRef.current) clearInterval(plateTimerRef.current);
+    if (!activeModule || !activeModule.sessionId) return;
+    setShowConfirmModal(false);
+
+    fetch("/api/exam/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: activeModule.sessionId,
+        answers: finalAnswers,
+        timeRemainingSeconds: timeLeft,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          if (candidateId) {
+            fetchModules(candidateId);
+          }
+          setView("lobby");
+          setActiveModule(null);
+        } else {
+          alert("Gagal menyimpan jawaban: " + data.error);
+        }
+      })
+      .catch((err) => console.error("Gagal menyimpan progress ujian:", err));
   };
 
   const handleFinishModule = () => {
-    if (plateTimerRef.current) clearInterval(plateTimerRef.current);
-    if (!activeModule) return;
-    setShowConfirmModal(false);
-
-    const updatedModules = modules.map((m) => (m.id === activeModule.id ? { ...m, status: "completed" as const } : m));
-    setModules(updatedModules);
-    setView("lobby");
-    setActiveModule(null);
-
-    const allDone = updatedModules.every(m => m.status === "completed");
-    if (allDone) {
-      const id = localStorage.getItem("pmb_applicant_id");
-      if (id) {
-        fetch(`/api/applicants/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ currentStage: "selesai_ujian" })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            console.log("Status ujian selesai berhasil disimpan!");
-          }
-        })
-        .catch(err => console.error("Gagal menyimpan progress ujian:", err));
-      }
-    }
+    submitModuleExam(answers);
   };
 
-  const allCompleted = modules.every((m) => m.status === "completed");
+  const allCompleted = modules.length > 0 && modules.every((m) => m.status === "selesai_dikumpulkan");
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -265,20 +252,25 @@ export default function ExamPage() {
                 </p>
               </div>
 
-              {!allCompleted ? (
+              {loading ? (
+                <div className="text-center text-slate-400 py-12">Memuat modul ujian...</div>
+              ) : !allCompleted ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {modules.map((m) => {
-                    const completed = m.status === "completed";
+                    const completed = m.status === "selesai_dikumpulkan";
+                    const icon = m.icon || "📝";
+
                     return (
                       <button
                         key={m.id}
+                        disabled={completed}
                         onClick={() => handleSelectModule(m)}
                         className={`text-left p-6 rounded-2xl border transition-all ${completed
                             ? "bg-emerald-50 border-emerald-200 cursor-not-allowed opacity-80"
                             : "bg-white border-slate-200 hover:border-[#0f487b]/40 hover:shadow-md cursor-pointer"
                           }`}
                       >
-                        <span className="text-3xl">{m.icon}</span>
+                        <span className="text-3xl">{icon}</span>
                         <h3 className="font-display text-base font-bold text-slate-800 mt-4">{m.name}</h3>
                         <div className="flex justify-between items-center mt-6 pt-4 border-t border-dashed border-slate-100 text-xs">
                           <span className="text-slate-400">{m.durationMinutes} Menit</span>
@@ -370,16 +362,25 @@ export default function ExamPage() {
 
               {/* Questions Area */}
               <div className="flex-1 overflow-y-auto p-6 sm:p-10">
+                {loadingQuestions ? (
+                  <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+                    Memuat soal...
+                  </div>
+                ) : (
+                  <>
                 <p className="text-base sm:text-lg font-medium text-slate-800 leading-relaxed mb-6">
-                  {QUESTIONS_TPA[currentQuestionIndex]?.text}
+                  {questions[currentQuestionIndex]?.questionText}
                 </p>
                 <div className="space-y-3">
-                  {QUESTIONS_TPA[currentQuestionIndex]?.options.map((opt) => {
-                    const isSelected = answers[currentQuestionIndex] === opt.key;
+                  {questions[currentQuestionIndex]?.options.map((opt: string, idx: number) => {
+                    const optLabels = ["A", "B", "C", "D", "E"];
+                    const label = optLabels[idx] || String.fromCharCode(65 + idx);
+                    const qId = questions[currentQuestionIndex]?.id;
+                    const isSelected = answers[qId] === opt;
                     return (
                       <button
-                        key={opt.key}
-                        onClick={() => handleSelectAnswer(currentQuestionIndex, opt.key)}
+                        key={opt}
+                        onClick={() => handleSelectAnswer(qId, opt)}
                         className={`w-full text-left p-4 rounded-xl border flex items-start gap-3 transition-colors ${isSelected
                             ? "border-[#0f487b] bg-blue-50/50"
                             : "border-slate-200 hover:bg-slate-50"
@@ -389,13 +390,15 @@ export default function ExamPage() {
                           className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border ${isSelected ? "bg-[#0f487b] text-white border-[#0f487b]" : "bg-slate-100 text-slate-500"
                             }`}
                         >
-                          {opt.key}
+                          {label}
                         </span>
-                        <span className="text-slate-700 font-medium text-sm pt-0.5">{opt.val}</span>
+                        <span className="text-slate-700 font-medium text-sm pt-0.5">{opt}</span>
                       </button>
                     );
                   })}
                 </div>
+                  </>
+                )}
               </div>
 
               {/* Navigation Actions */}
@@ -410,13 +413,13 @@ export default function ExamPage() {
                 <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-yellow-700 bg-yellow-50 px-4 py-2 rounded-xl border border-yellow-200 select-none">
                   <input
                     type="checkbox"
-                    checked={!!raguStatus[currentQuestionIndex]}
-                    onChange={() => handleToggleRagu(currentQuestionIndex)}
+                    checked={!!raguStatus[questions[currentQuestionIndex]?.id]}
+                    onChange={() => handleToggleRagu(questions[currentQuestionIndex]?.id)}
                     className="w-4 h-4 rounded text-yellow-500"
                   />
                   Ragu-ragu
                 </label>
-                {currentQuestionIndex < QUESTIONS_TPA.length - 1 ? (
+                {currentQuestionIndex < questions.length - 1 ? (
                   <button
                     onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
                     className="px-5 py-2 bg-[#0f487b] text-white font-bold rounded-xl hover:bg-[#00719f] text-xs"
@@ -440,13 +443,13 @@ export default function ExamPage() {
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Daftar Soal</h3>
               </div>
               <div className="flex-1 p-4 grid grid-cols-5 gap-2 overflow-y-auto">
-                {QUESTIONS_TPA.map((_, i) => {
-                  const answered = answers[i] !== undefined;
+                {questions.map((q, i) => {
+                  const answered = answers[q.id] !== undefined;
                   const active = currentQuestionIndex === i;
-                  const ragu = !!raguStatus[i];
+                  const ragu = !!raguStatus[q.id];
                   return (
                     <button
-                      key={i}
+                      key={q.id}
                       onClick={() => setCurrentQuestionIndex(i)}
                       className={`w-10 h-10 rounded-lg border font-bold text-sm flex items-center justify-center transition-all ${active
                           ? "border-[#0f487b] ring-2 ring-[#0f487b]/20 bg-blue-50 text-[#0f487b]"
@@ -491,11 +494,17 @@ export default function ExamPage() {
               </h3>
 
               <div className="w-60 h-60 rounded-full border-4 border-slate-100 overflow-hidden mb-6 relative shadow-inner">
-                <img
-                  src={PLATES_COLOR[colorPlateIndex]?.img}
-                  alt="Ishihara Plate"
-                  className="w-full h-full object-cover"
-                />
+                {questions[colorPlateIndex]?.imageUrl ? (
+                  <img
+                    src={questions[colorPlateIndex]?.imageUrl}
+                    alt="Ishihara Plate"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-slate-100 flex items-center justify-center text-xs text-slate-400">
+                    Memuat gambar...
+                  </div>
+                )}
               </div>
 
               <div className="w-full max-w-xs space-y-4">

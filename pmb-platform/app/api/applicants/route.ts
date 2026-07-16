@@ -4,8 +4,9 @@ import { pmbApplicants, pmbApplicantDocuments, pmbApplicantStatusHistory } from 
 import { pmbWaves, pmbEntryPaths, pmbStudyPrograms, pmbQuotas } from "@/db/schema/master";
 import { eq, desc, sql, and } from "drizzle-orm";
 import { ensurePmbSeeded } from "@/db/seed";
-
 import { cookies } from "next/headers";
+import bcrypt from "bcrypt";
+import { env } from "@/lib/env";
 
 // List all applicants
 export async function GET() {
@@ -66,6 +67,8 @@ export async function POST(req: Request) {
     if (!fullName || !email || !phone || !waveId || !entryPathId || !studyProgramId) {
       return NextResponse.json({ success: false, error: "Semua kolom wajib diisi" }, { status: 400 });
     }
+
+    const hashedPassword = await bcrypt.hash(password || env.DEFAULT_APPLICANT_PASSWORD, env.BCRYPT_ROUNDS);
 
     const result = await db.transaction(async (tx) => {
       // 1. Lock and get Wave & Entry Path info
@@ -153,7 +156,7 @@ export async function POST(req: Request) {
           fullName,
           email,
           phone,
-          passwordHash: password || "placeholder_hash",
+          passwordHash: hashedPassword,
           waveId,
           entryPathId,
           studyProgramId,
@@ -177,6 +180,20 @@ export async function POST(req: Request) {
         });
 
       return newApplicant;
+    });
+
+    // Write session cookie
+    const cookieStore = await cookies();
+    cookieStore.set("pmb_user", JSON.stringify({
+      userId: result.id,
+      name: result.fullName,
+      role: "applicant",
+      registrationNumber: result.registrationNumber,
+    }), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 86400,
     });
 
     return NextResponse.json({

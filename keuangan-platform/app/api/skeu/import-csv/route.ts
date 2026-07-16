@@ -1,75 +1,68 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { tuitionRates } from "@/db/schema/master";
-import { eq, and } from "drizzle-orm";
+import { tuitionRates } from "@/db/schema/schema";
+import { siakadStudyPrograms } from "@/db/schema/siakad";
+import { cookies } from "next/headers";
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const { csvText } = body;
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("keuangan_user");
+    if (!sessionCookie) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const sessionUser = JSON.parse(sessionCookie.value);
+    if (sessionUser.role === "mahasiswa") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
+    const { csvText } = await req.json();
     if (!csvText) {
       return NextResponse.json({ success: false, error: "csvText is required" }, { status: 400 });
     }
 
-    const lines = csvText.split("\n").map((line: string) => line.trim()).filter((line: string) => line.length > 0);
-    if (lines.length <= 1) {
-      return NextResponse.json({ success: false, error: "CSV file is empty" }, { status: 400 });
-    }
+    const lines = csvText.split("\n").filter((l: string) => l.trim() !== "");
+    const progs = await db.select().from(siakadStudyPrograms);
 
-    // Expected format:
-    // studyProgramRef,studyProgramNameSnapshot,academicPeriodLabel,sppAmount,bopAmount
     let count = 0;
+
+    // Skip header line
     for (let i = 1; i < lines.length; i++) {
-      const parts = lines[i]!.split(",").map((p: string) => p.trim());
-      if (parts.length < 5) continue;
+      const line = lines[i]!;
+      const parts = line.split(",").map((p: string) => p.trim());
+      if (parts.length < 4) continue;
 
-      const studyProgramRef = parts[0]!;
-      const studyProgramNameSnapshot = parts[1]!;
-      const academicPeriodLabel = parts[2]!;
-      const sppAmount = parseFloat(parts[3] || "0");
-      const bopAmount = parseFloat(parts[4] || "0");
-      const totalAmount = sppAmount + bopAmount;
+      const [progName, sppText, bopText, period] = parts;
+      if (!progName || !sppText || !bopText || !period) continue;
 
-      if (!studyProgramRef || !studyProgramNameSnapshot || !academicPeriodLabel) continue;
+      const spp = parseFloat(sppText);
+      const bop = parseFloat(bopText);
+      const total = spp + bop;
 
-      // Update if exists for the same prodi + period, otherwise insert
-      const [existing] = await db
-        .select()
-        .from(tuitionRates)
-        .where(
-          and(
-            eq(tuitionRates.studyProgramRef, studyProgramRef),
-            eq(tuitionRates.academicPeriodLabel, academicPeriodLabel)
-          )
-        )
-        .limit(1);
-
-      if (existing) {
-        await db
-          .update(tuitionRates)
-          .set({
-            studyProgramNameSnapshot,
-            sppAmount: sppAmount.toFixed(2),
-            bopAmount: bopAmount.toFixed(2),
-            totalAmount: totalAmount.toFixed(2),
-          })
-          .where(eq(tuitionRates.id, existing.id));
-      } else {
-        await db.insert(tuitionRates).values({
-          studyProgramRef,
-          studyProgramNameSnapshot,
-          academicPeriodLabel,
-          sppAmount: sppAmount.toFixed(2),
-          bopAmount: bopAmount.toFixed(2),
-          totalAmount: totalAmount.toFixed(2),
-        });
+      // Find matching prodi from cache
+      let matchedProg = progs.find(p => p.name.toLowerCase() === progName.toLowerCase());
+      
+      let studyProgramRef = matchedProg?.id;
+      if (!studyProgramRef) {
+        // If not found in cache, generate a random one to map it
+        studyProgramRef = "00000000-0000-0000-0000-000000000000";
       }
+
+      await db.insert(tuitionRates).values({
+        studyProgramRef,
+        studyProgramNameSnapshot: progName,
+        academicPeriodLabel: period,
+        sppAmount: spp.toFixed(2),
+        bopAmount: bop.toFixed(2),
+        totalAmount: total.toFixed(2),
+        requiresYayasanApproval: false,
+      });
+
       count++;
     }
 
     return NextResponse.json({ success: true, count });
   } catch (error: any) {
-    console.error("CSV import error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

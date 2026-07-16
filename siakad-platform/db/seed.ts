@@ -1,6 +1,9 @@
 import { db } from "@/db";
 import { siakadStudyPrograms, siakadCurricula, siakadAcademicPeriods, siakadCourses, siakadCurriculumCourses } from "@/db/schema/master";
-import { siakadLecturers } from "@/db/schema/civitas";
+import { siakadLecturers, siakadStudents } from "@/db/schema/civitas";
+import { ssoUsers } from "@/db/schema/sso";
+import { siakadClasses } from "@/db/schema/classes";
+import { eq } from "drizzle-orm";
 
 export async function ensureSiakadSeeded() {
   try {
@@ -17,12 +20,32 @@ export async function ensureSiakadSeeded() {
       infId = prodisCount.find(p => p.name.includes("Informatika"))?.id || "";
     }
 
+    // Resolve SSO user for dosen and mahasiswa
+    const ssoDosen = await db.select().from(ssoUsers).where(eq(ssoUsers.username, "dosen")).limit(1);
+    const dosenUserId = ssoDosen[0]?.id || null;
+
+    const ssoMhs = await db.select().from(ssoUsers).where(eq(ssoUsers.username, "mahasiswa")).limit(1);
+    const mhsUserId = ssoMhs[0]?.id || null;
+
     // 2. Seed Lecturers
     const lecturersCount = await db.select().from(siakadLecturers);
+    let lecturerId = "";
     if (lecturersCount.length === 0 && infId) {
-      await db.insert(siakadLecturers).values([
-        { nidn: "0421098501", fullName: "Dr. Hendra Setiawan, M.Kom.", studyProgramId: infId, position: "Lektor Kepala" }
-      ]);
+      const [insertedLecturer] = await db.insert(siakadLecturers).values([
+        { 
+          nidn: "0421098501", 
+          fullName: "Dr. Hendra Setiawan, M.Kom.", 
+          studyProgramId: infId, 
+          position: "Lektor Kepala",
+          userId: dosenUserId
+        }
+      ]).returning();
+      lecturerId = insertedLecturer?.id || "";
+    } else {
+      lecturerId = lecturersCount[0]?.id || "";
+      if (lecturerId && lecturersCount[0]?.userId !== dosenUserId && dosenUserId) {
+        await db.update(siakadLecturers).set({ userId: dosenUserId }).where(eq(siakadLecturers.id, lecturerId));
+      }
     }
 
     // 3. Seed Curricula
@@ -39,13 +62,52 @@ export async function ensureSiakadSeeded() {
 
     // 4. Seed Academic Periods
     const periodsCount = await db.select().from(siakadAcademicPeriods);
+    let periodId = "";
     if (periodsCount.length === 0) {
-      await db.insert(siakadAcademicPeriods).values([
+      const [insertedPeriod] = await db.insert(siakadAcademicPeriods).values([
         { name: "Semester Ganjil 2026/2027", startDate: "2026-09-01", endDate: "2027-02-28", status: "berjalan" }
-      ]);
+      ]).returning();
+      periodId = insertedPeriod?.id || "";
+    } else {
+      periodId = periodsCount[0]?.id || "";
     }
 
-    // 5. Seed Courses & curriculum mappings
+    // 5. Seed Students
+    const studentsCount = await db.select().from(siakadStudents);
+    if (studentsCount.length === 0 && infId && currId && lecturerId) {
+      await db.insert(siakadStudents).values([
+        {
+          nim: "26090182",
+          fullName: "Budi Santoso",
+          birthPlace: "Jakarta",
+          birthDate: "2004-05-15",
+          gender: "L" as const,
+          religion: "Islam",
+          address: "Jl. Siber Asia No. 10, Jakarta",
+          studyProgramId: infId,
+          angkatan: 2026,
+          currentSemester: 1,
+          academicStatus: "aktif" as const,
+          dosenPaId: lecturerId,
+          entryPath: "mandiri" as const,
+          ipk: "0.00",
+          totalSksLulus: 0,
+          curriculumId: currId,
+          personalEmail: "mahasiswa@example.com",
+          phone: "081234567890",
+          userId: mhsUserId,
+        }
+      ]);
+    } else if (studentsCount.length > 0 && mhsUserId) {
+      const mhs = studentsCount[0]!;
+      if (mhs.userId !== mhsUserId || mhs.dosenPaId !== lecturerId) {
+        await db.update(siakadStudents)
+          .set({ userId: mhsUserId, dosenPaId: lecturerId })
+          .where(eq(siakadStudents.id, mhs.id));
+      }
+    }
+
+    // 6. Seed Courses & curriculum mappings
     const coursesCount = await db.select().from(siakadCourses);
     if (coursesCount.length === 0 && currId) {
       const coursesData = [
@@ -73,6 +135,25 @@ export async function ensureSiakadSeeded() {
             courseType: "wajib_prodi"
           });
         }
+      }
+    }
+
+    // 7. Seed Classes
+    const classesCount = await db.select().from(siakadClasses);
+    if (classesCount.length === 0 && periodId && infId && lecturerId) {
+      const courses = await db.select().from(siakadCourses);
+      for (const course of courses) {
+        await db.insert(siakadClasses).values({
+          courseId: course.id,
+          academicPeriodId: periodId,
+          studyProgramId: infId,
+          dosenUtamaId: lecturerId,
+          className: "Kelas A PJJ",
+          capacity: 40,
+          enrolledCount: 0,
+          mode: "async" as const,
+          status: "aktif" as const,
+        });
       }
     }
   } catch (error) {

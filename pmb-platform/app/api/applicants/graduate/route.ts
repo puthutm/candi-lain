@@ -80,23 +80,19 @@ export async function POST(req: Request) {
     if (finalStage === "diterima" && applicant.paymentStatus === "lunas") {
       try {
         const payload = {
-          pmb_applicant_id: applicant.id,
-          registrationNumber: applicant.registrationNumber,
-          fullName: applicant.fullName,
-          email: applicant.email,
-          phone: applicant.phone,
-          birthPlace: applicant.birthPlace || "Jakarta",
-          birthDate: applicant.birthDate || "2007-01-01",
-          gender: applicant.gender || "L",
-          address: applicant.address || "Jl. Raya",
-          studyProgramCode: applicant.studyProgramCode,
-          entryPath: applicant.entryPathCode === "BEAS" ? "beasiswa" : "mandiri",
+          event: "applicant.accepted_and_paid",
+          data: {
+            pmb_applicant_id: applicant.id,
+            full_name: applicant.fullName,
+            email: applicant.email,
+            phone: applicant.phone || "",
+          }
         };
 
-        const siakadCallbackUrl = env.SIAKAD_CALLBACK_URL;
+        const siakadWebhookUrl = env.SIAKAD_WEBHOOK_URL || env.SIAKAD_CALLBACK_URL;
         
         // Non-blocking fire-and-forget or await the callback
-        const response = await fetch(siakadCallbackUrl, {
+        const response = await fetch(siakadWebhookUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

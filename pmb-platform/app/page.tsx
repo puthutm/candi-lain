@@ -7,7 +7,6 @@ import {
   SSO_AUTHORIZE_URL,
   SSO_CLIENT_ID,
   SSO_CALLBACK_URL,
-  ENTRY_PATH_FEE,
   DEFAULT_APPLICANT_PASSWORD,
 } from "@/lib/client-config";
 
@@ -35,28 +34,6 @@ interface ProdiItem {
   icon: string;
 }
 
-const GELOMBANG: GelombangItem[] = [
-  { id: "g1", name: "Gelombang 1 — Ganjil", period: "01 Okt — 31 Des 2025", quota: "Kuota tersedia", status: "active" },
-  { id: "g2", name: "Gelombang 2 — Ganjil", period: "02 Jan — 28 Feb 2026", quota: "Belum dibuka", status: "disabled" },
-  { id: "alih", name: "Alih Jenjang", period: "Tertutup sementara", quota: "Akan dibuka kembali", status: "closed" },
-];
-
-const JALUR: JalurItem[] = [
-  { id: "reguler", name: "Reguler", desc: "Jalur umum tanpa syarat khusus", price: ENTRY_PATH_FEE["reguler"] ?? 250000, icon: "✨" },
-  { id: "prestasi", name: "Prestasi", desc: "Diskon biaya untuk pencapaian akademik / non-akademik", price: ENTRY_PATH_FEE["prestasi"] ?? 150000, icon: "🏆" },
-  { id: "mitra", name: "Mitra", desc: "Untuk siswa dari sekolah / lembaga mitra resmi", price: ENTRY_PATH_FEE["mitra"] ?? 200000, icon: "🤝" },
-  { id: "beasiswa", name: "Beasiswa", desc: "Pembebasan biaya pendaftaran", price: ENTRY_PATH_FEE["beasiswa"] ?? 0, free: true, icon: "🎁" },
-];
-
-const PRODI: ProdiItem[] = [
-  { id: "if", name: "Informatika", faculty: "Fakultas Sains & Teknologi", icon: "💻" },
-  { id: "si", name: "Sistem Informasi", faculty: "Fakultas Sains & Teknologi", icon: "📊" },
-  { id: "mn", name: "Manajemen", faculty: "Fakultas Bisnis", icon: "💼" },
-  { id: "ak", name: "Akuntansi", faculty: "Fakultas Bisnis", icon: "🧮" },
-  { id: "ik", name: "Ilmu Komunikasi", faculty: "Fakultas Humaniora", icon: "📢" },
-  { id: "ds", name: "Desain", faculty: "Fakultas Seni & Desain", icon: "🎨" },
-];
-
 const STEPS = [
   { id: 1, label: "Gelombang", sub: "Pilih periode pendaftaran" },
   { id: 2, label: "Jalur", sub: "Tentukan jalur masuk" },
@@ -64,11 +41,13 @@ const STEPS = [
   { id: 4, label: "Data Diri", sub: "Lengkapi identitas" },
 ];
 
+
 export default function PmbPublikPage() {
   const [step, setStep] = useState(1);
-  const [waves, setWaves] = useState<GelombangItem[]>(GELOMBANG);
-  const [entryPaths, setEntryPaths] = useState<JalurItem[]>(JALUR);
-  const [studyPrograms, setStudyPrograms] = useState<ProdiItem[]>(PRODI);
+  const [waves, setWaves] = useState<GelombangItem[]>([]);
+  const [entryPaths, setEntryPaths] = useState<JalurItem[]>([]);
+  const [studyPrograms, setStudyPrograms] = useState<ProdiItem[]>([]);
+
   const [selGelombang, setSelGelombang] = useState<GelombangItem | null>(null);
   const [selJalur, setSelJalur] = useState<JalurItem | null>(null);
   const [selProdi, setSelProdi] = useState<ProdiItem | null>(null);
@@ -89,33 +68,40 @@ export default function PmbPublikPage() {
   useEffect(() => {
     async function loadMetadata() {
       try {
-        await fetch("/api/seed");
         const res = await fetch("/api/meta");
         const json = await res.json();
         if (json.success) {
-          setWaves(json.waves.map((w: any) => ({
-            id: w.id,
-            name: w.name,
-            period: `${new Date(w.startDate).toLocaleDateString("id-ID")} - ${new Date(w.endDate).toLocaleDateString("id-ID")}`,
-            quota: "Kuota tersedia",
-            status: w.status === "aktif" ? "active" : "disabled",
-          })));
+          // NOTE: ikon/label sebaiknya datang dari API bila tersedia.
+          // Saat ini, kita tetap render data meta dari DB tanpa memanggil seed mock dari client.
+          setWaves(
+            json.waves.map((w: any) => ({
+              id: w.id,
+              name: w.name,
+              period: `${new Date(w.startDate).toLocaleDateString("id-ID")} - ${new Date(w.endDate).toLocaleDateString("id-ID")}`,
+              quota: "Kuota tersedia",
+              status: w.status === "aktif" ? "active" : "disabled",
+            }))
+          );
 
-          setEntryPaths(json.entryPaths.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            desc: p.isFree ? "Pembebasan biaya pendaftaran" : "Jalur pendaftaran berbayar",
-            price: parseFloat(p.formFee),
-            free: p.isFree,
-            icon: p.code === "BEAS" ? "🎁" : p.code === "PRES" ? "🏆" : "✨",
-          })));
+          setEntryPaths(
+            json.entryPaths.map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              desc: p.isFree ? "Pembebasan biaya pendaftaran" : "Jalur pendaftaran berbayar",
+              price: parseFloat(p.formFee),
+              free: p.isFree,
+              icon: p.code === "BEAS" ? "🎁" : p.code === "PRES" ? "🏆" : "✨",
+            }))
+          );
 
-          setStudyPrograms(json.studyPrograms.map((p: any) => ({
-            id: p.id,
-            name: p.name.replace("S1 ", ""),
-            faculty: p.faculty === "FTI" ? "Fakultas Sains & Teknologi" : "Fakultas Bisnis",
-            icon: p.code === "INF" ? "💻" : p.code === "SI" ? "📊" : "💼",
-          })));
+          setStudyPrograms(
+            json.studyPrograms.map((p: any) => ({
+              id: p.id,
+              name: p.name.replace("S1 ", ""),
+              faculty: p.faculty === "FTI" ? "Fakultas Sains & Teknologi" : "Fakultas Bisnis",
+              icon: p.code === "INF" ? "💻" : p.code === "SI" ? "📊" : "💼",
+            }))
+          );
         }
       } catch (err) {
         console.error("Gagal load metadata", err);
@@ -123,6 +109,7 @@ export default function PmbPublikPage() {
     }
     loadMetadata();
   }, []);
+
 
   useEffect(() => {
     let nameErr = "";
@@ -222,10 +209,12 @@ export default function PmbPublikPage() {
     let authUrl = SSO_AUTHORIZE_URL;
     let cbUrl = SSO_CALLBACK_URL;
     if (typeof window !== "undefined") {
-      const currentHost = window.location.host; // e.g., "10.10.20.56:3002"
+      const host = window.location.hostname;
+      if (host !== "localhost" && host !== "127.0.0.1" && authUrl.includes("localhost")) {
+        authUrl = authUrl.replace("localhost", host);
+      }
+      const currentHost = window.location.host;
       cbUrl = `${window.location.protocol}//${currentHost}/api/auth/callback`;
-      const ssoHost = window.location.hostname; // e.g., "10.10.20.56"
-      authUrl = `${window.location.protocol}//${ssoHost}:3000/oauth/authorize`;
     }
 
     window.location.href = `${authUrl}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(cbUrl)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
@@ -243,26 +232,25 @@ export default function PmbPublikPage() {
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/applicants");
+      const res = await fetch("/api/applicants/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
       const json = await res.json();
       if (json.success) {
-        const found = json.applicants.find((a: any) => a.email.toLowerCase() === loginEmail.toLowerCase());
-        if (found) {
-          localStorage.setItem("pmb_applicant_id", found.id);
-          localStorage.setItem("pmb_applicant_name", found.fullName);
-          localStorage.setItem("pmb_applicant_ref", found.registrationNumber);
-          localStorage.setItem("pmb_applicant_stage", found.currentStage);
-          triggerToast("Login sukses!");
-          setIsLoginOpen(false);
-          window.location.href = "/dashboard";
-        } else {
-          // Fallback to random simulation if not found, to keep UX smooth
-          triggerToast("Akun belum terdaftar. Menyalurkan sesi simulasi...");
-          window.location.href = "/dashboard";
-        }
+        localStorage.setItem("pmb_applicant_id", json.applicant.id);
+        localStorage.setItem("pmb_applicant_name", json.applicant.fullName);
+        localStorage.setItem("pmb_applicant_ref", json.applicant.registrationNumber);
+        localStorage.setItem("pmb_applicant_stage", json.applicant.currentStage);
+        triggerToast("Login sukses!");
+        setIsLoginOpen(false);
+        window.location.href = "/dashboard";
+      } else {
+        triggerToast(json.error || "Kata sandi salah atau akun tidak terdaftar.");
       }
     } catch (err) {
-      window.location.href = "/dashboard";
+      triggerToast("Gagal menghubungi server. Coba lagi.");
     }
   };
 
@@ -703,6 +691,7 @@ export default function PmbPublikPage() {
 
                 <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-sm">
                   <div className="flex items-center justify-between border-b border-dashed border-slate-200 pb-4">
+
                     <div>
                       <div className="text-[11px] uppercase tracking-wider text-slate-400">Nomor Referensi</div>
                       <div className="font-mono text-lg font-semibold text-[#0f487b] mt-0.5">{refNumber}</div>
@@ -710,6 +699,7 @@ export default function PmbPublikPage() {
                     <button
                       onClick={handleCopyRef}
                       className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors border border-slate-200 text-xs"
+                      type="button"
                     >
                       Salin Ref
                     </button>

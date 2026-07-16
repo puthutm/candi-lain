@@ -57,6 +57,9 @@ export default function AdminPage() {
   const [activePanel, setActivePanel] = useState<AdminPanelType>("dashboard");
   const [applicants, setApplicants] = useState<ApplicantRow[]>([]);
   const [waves, setWaves] = useState<WaveRow[]>([]);
+  const [quotas, setQuotas] = useState<any[]>([]);
+  const [editingQuotaId, setEditingQuotaId] = useState<string | null>(null);
+  const [editingQuotaValue, setEditingQuotaValue] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,6 +81,13 @@ export default function AdminPage() {
   const [docEvaluations, setDocEvaluations] = useState<Record<string, DocEvaluation>>({});
   const [isSubmittingVerif, setIsSubmittingVerif] = useState(false);
 
+  // Applicant detail & graduation decision states
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailApplicant, setDetailApplicant] = useState<any | null>(null);
+  const [detailExamResults, setDetailExamResults] = useState<any[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [submittingGraduation, setSubmittingGraduation] = useState(false);
+
   const [toastMessage, setToastMessage] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
@@ -91,10 +101,12 @@ export default function AdminPage() {
     let authUrl = SSO_AUTHORIZE_URL;
     let cbUrl = SSO_CALLBACK_URL;
     if (typeof window !== "undefined") {
-      const currentHost = window.location.host; // e.g., "10.10.20.56:3002"
+      const host = window.location.hostname;
+      if (host !== "localhost" && host !== "127.0.0.1" && authUrl.includes("localhost")) {
+        authUrl = authUrl.replace("localhost", host);
+      }
+      const currentHost = window.location.host;
       cbUrl = `${window.location.protocol}//${currentHost}/api/auth/callback`;
-      const ssoHost = window.location.hostname; // e.g., "10.10.20.56"
-      authUrl = `${window.location.protocol}//${ssoHost}:3000/oauth/authorize`;
     }
 
     window.location.href = `${authUrl}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(cbUrl)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
@@ -122,6 +134,7 @@ export default function AdminPage() {
 
       if (metaData.success) {
         setWaves(metaData.waves || []);
+        setQuotas(metaData.quotas || []);
       } else {
         throw new Error(metaData.error || "Gagal mengambil metadata");
       }
@@ -292,9 +305,76 @@ export default function AdminPage() {
     }
   };
 
+  const handleUpdateQuota = async (quotaId: string, newValue: number) => {
+    try {
+      const res = await fetch("/api/admin/kuota", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quotaId, quotaTotal: newValue }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast("Kuota berhasil diperbarui!");
+        setEditingQuotaId(null);
+        // Refresh metadata
+        const metaRes = await fetch("/api/meta");
+        const metaData = await metaRes.json();
+        if (metaData.success) {
+          setWaves(metaData.waves || []);
+          setQuotas(metaData.quotas || []);
+        }
+      } else {
+        triggerToast("Gagal memperbarui kuota: " + data.error);
+      }
+    } catch (err: any) {
+      triggerToast("Galat: " + err.message);
+    }
+  };
+
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(""), 3000);
+  };
+
+  const handleViewDetail = (id: string) => {
+    setDetailLoading(true);
+    setDetailApplicant(null);
+    setDetailExamResults([]);
+    setDetailModalOpen(true);
+
+    fetch(`/api/applicants/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setDetailApplicant(data.applicant);
+          setDetailExamResults(data.examResults || []);
+        } else {
+          triggerToast("Gagal memuat detail: " + data.error);
+        }
+      })
+      .catch((err) => triggerToast("Galat: " + err.message))
+      .finally(() => setDetailLoading(false));
+  };
+
+  const handleGraduationDecision = (applicantId: string, status: "lulus" | "tidak_lulus") => {
+    setSubmittingGraduation(true);
+    fetch("/api/applicants/graduate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ applicantId, status }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          triggerToast(data.message || "Keputusan berhasil disimpan!");
+          setDetailModalOpen(false);
+          fetchData();
+        } else {
+          triggerToast("Gagal menyimpan keputusan: " + data.error);
+        }
+      })
+      .catch((err) => triggerToast("Galat: " + err.message))
+      .finally(() => setSubmittingGraduation(false));
   };
 
   const getStageLabel = (stage: string) => {
@@ -694,6 +774,7 @@ export default function AdminPage() {
                       <th className="px-6 py-4">Program Studi</th>
                       <th className="px-6 py-4">Tahapan</th>
                       <th className="px-6 py-4">Biaya</th>
+                      <th className="px-6 py-4 text-center">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -718,6 +799,14 @@ export default function AdminPage() {
                           >
                             {a.paymentStatus === "lunas" ? "Lunas" : "Belum Lunas"}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <button
+                            onClick={() => handleViewDetail(a.id)}
+                            className="px-3 py-1.5 bg-[#0f487b] hover:bg-[#00719f] text-white rounded-lg text-xs font-bold transition-all"
+                          >
+                            Detail & Keputusan
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -996,42 +1085,229 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* PANEL 6: GELOMBANG */}
+          {/* PANEL 6: GELOMBANG & KUOTA */}
           {activePanel === "gelombang" && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm fade-in">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 text-slate-500 uppercase tracking-widest text-[10px] font-bold border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-4">Gelombang</th>
-                    <th className="px-6 py-4">Periode</th>
-                    <th className="px-6 py-4">Kode Ref</th>
-                    <th className="px-6 py-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {waves.map((w) => (
-                    <tr key={w.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4 font-bold text-slate-800">{w.name}</td>
-                      <td className="px-6 py-4">
-                        {new Date(w.startDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })} - {new Date(w.endDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                      </td>
-                      <td className="px-6 py-4 font-semibold font-mono">{w.code}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 text-xs font-bold rounded ${
-                          w.status === "aktif" ? "bg-emerald-100 text-emerald-700" :
-                          w.status === "belum_dibuka" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"
+            <div className="space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-800">Manajemen Gelombang & Kuota Seleksi</h2>
+              </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {waves.map((w) => {
+                  const waveQuotas = quotas.filter((q) => q.waveId === w.id);
+                  return (
+                    <div key={w.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between">
+                      {/* Wave Header */}
+                      <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div>
+                          <h3 className="font-bold text-slate-800 text-base">{w.name}</h3>
+                          <p className="text-xs text-slate-400 font-mono mt-0.5">{w.code}</p>
+                        </div>
+                        <span className={`px-2.5 py-0.5 text-xs font-bold rounded ${
+                          w.status === "aktif" ? "bg-emerald-100 text-emerald-700 border border-emerald-200" :
+                          w.status === "belum_dibuka" ? "bg-amber-100 text-amber-700 border border-amber-200" : "bg-slate-100 text-slate-500 border border-slate-200"
                         }`}>
                           {w.status === "aktif" ? "Aktif" : w.status === "belum_dibuka" ? "Belum Dibuka" : "Tutup"}
                         </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+
+                      {/* Wave Body / Quotas list */}
+                      <div className="p-5 space-y-4 flex-1">
+                        <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">Kuota Program Studi</div>
+                        {waveQuotas.length === 0 ? (
+                          <div className="text-xs text-slate-400 italic text-center py-6">Belum ada kuota prodi dikonfigurasi untuk gelombang ini.</div>
+                        ) : (
+                          <div className="space-y-2">
+                            {waveQuotas.map((q) => {
+                              const isEditing = editingQuotaId === q.id;
+                              return (
+                                <div key={q.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs">
+                                  <span className="font-semibold text-slate-700">{q.studyProgramName}</span>
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-slate-400">Terisi: <b className="text-slate-700">{q.quotaFilled}</b></span>
+                                    <span className="text-slate-200">|</span>
+                                    {isEditing ? (
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-slate-400">Total:</span>
+                                        <input
+                                          type="number"
+                                          className="w-16 px-2 py-1 bg-white border border-slate-200 rounded text-center font-bold text-slate-800 outline-none focus:border-[#0f487b]"
+                                          value={editingQuotaValue}
+                                          onChange={(e) => setEditingQuotaValue(Math.max(0, parseInt(e.target.value) || 0))}
+                                        />
+                                        <button
+                                          onClick={() => handleUpdateQuota(q.id, editingQuotaValue)}
+                                          className="px-2 py-1 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold rounded cursor-pointer"
+                                        >
+                                          Simpan
+                                        </button>
+                                        <button
+                                          onClick={() => setEditingQuotaId(null)}
+                                          className="px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded cursor-pointer"
+                                        >
+                                          Batal
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-slate-400">Total: <b className="text-slate-700">{q.quotaTotal}</b></span>
+                                        <button
+                                          onClick={() => {
+                                            setEditingQuotaId(q.id);
+                                            setEditingQuotaValue(q.quotaTotal);
+                                          }}
+                                          className="text-blue-500 hover:text-blue-750 font-semibold p-1 hover:bg-blue-50 rounded cursor-pointer"
+                                        >
+                                          ✏️ Edit
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Wave Footer */}
+                      <div className="p-4 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-400 flex justify-between">
+                        <span>Mulai: {new Date(w.startDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+                        <span>Berakhir: {new Date(w.endDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
-      </main>
+          </main>
+
+      {/* DETAIL & GRADUATION DECISION DRAWER / MODAL */}
+      {detailModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] flex justify-end transition-opacity duration-300">
+          <div className="bg-white w-full max-w-lg h-full shadow-2xl flex flex-col justify-between border-l border-slate-100 animate-slide-left overflow-hidden">
+            {/* Drawer Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div>
+                <h3 className="font-display font-bold text-lg text-slate-800">Detail & Keputusan Seleksi</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Evaluasi berkas dan hasil ujian masuk seleksi pendaftar</p>
+              </div>
+              <button
+                onClick={() => setDetailModalOpen(false)}
+                className="w-8 h-8 rounded-full hover:bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-sm transition-all"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Drawer Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {detailLoading ? (
+                <div className="text-center text-slate-400 py-12">
+                  <div className="w-8 h-8 border-2 border-t-transparent border-[#0f487b] rounded-full animate-spin mx-auto mb-3"></div>
+                  Memuat rincian data...
+                </div>
+              ) : detailApplicant ? (
+                <div className="space-y-6">
+                  {/* Profil Singkat */}
+                  <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-display font-bold text-base text-slate-800">{detailApplicant.fullName}</h4>
+                        <p className="text-xs text-slate-400 font-mono mt-0.5">{detailApplicant.registrationNumber}</p>
+                      </div>
+                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${getStageColor(detailApplicant.currentStage)}`}>
+                        {getStageLabel(detailApplicant.currentStage)}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-slate-200/60 text-xs">
+                      <div>
+                        <span className="text-slate-400 block font-semibold mb-0.5">Email</span>
+                        <span className="text-slate-700 font-medium">{detailApplicant.email}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block font-semibold mb-0.5">Telepon</span>
+                        <span className="text-slate-700 font-medium">{detailApplicant.phone || "-"}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block font-semibold mb-0.5">Status Pembayaran</span>
+                        <span className={`font-bold ${detailApplicant.paymentStatus === "lunas" ? "text-emerald-600" : "text-rose-600"}`}>
+                          {detailApplicant.paymentStatus === "lunas" ? "Lunas" : "Belum Lunas"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Nilai Ujian CBT */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Hasil Ujian Masuk (CBT)</h4>
+                    {detailExamResults.length === 0 ? (
+                      <div className="bg-slate-50/50 rounded-xl p-4 text-center text-xs text-slate-400 italic border border-slate-100">
+                        Belum ada riwayat pengerjaan modul ujian untuk pendaftar ini.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {detailExamResults.map((res: any) => (
+                          <div key={res.id} className="p-3 bg-white rounded-xl border border-slate-100 flex items-center justify-between text-xs hover:shadow-sm transition-all">
+                            <div>
+                              <p className="font-bold text-slate-800">{res.moduleName}</p>
+                              <p className="text-[10px] text-slate-400 mt-0.5">Modul: {res.moduleCode.toUpperCase()}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="font-mono font-bold text-sm text-slate-800 block">{parseFloat(res.score).toFixed(0)} / 100</span>
+                              <span className={`font-bold text-[9px] uppercase tracking-wider ${res.passed ? "text-green-600" : "text-red-500"}`}>
+                                {res.passed ? "Lulus" : "Tidak Lulus"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-slate-400 py-12 italic text-xs">Gagal menampilkan data.</div>
+              )}
+            </div>
+
+            {/* Drawer Action Bar */}
+            <div className="p-6 border-t border-slate-100 bg-slate-50/50">
+              {detailApplicant && detailApplicant.currentStage === "selesai_ujian" ? (
+                <div className="space-y-3">
+                  <div className="bg-blue-50/60 border border-blue-100 rounded-xl p-3 text-[11px] text-slate-500 leading-relaxed">
+                    📝 <b>Catatan Keputusan:</b> Menyetujui kelulusan pendaftar ini akan otomatis mendaftarkan profil akademiknya ke database SIAKAD serta membuat Nomor Induk Mahasiswa (NIM) baru.
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleGraduationDecision(detailApplicant.id, "tidak_lulus")}
+                      disabled={submittingGraduation}
+                      className="flex-1 py-3 border border-rose-200 text-rose-600 hover:bg-rose-50/50 transition font-bold rounded-xl text-xs disabled:opacity-50"
+                    >
+                      Dinyatakan Tidak Lulus
+                    </button>
+                    <button
+                      onClick={() => handleGraduationDecision(detailApplicant.id, "lulus")}
+                      disabled={submittingGraduation}
+                      className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs disabled:opacity-50 shadow-md transition"
+                    >
+                      {submittingGraduation ? "Memproses..." : "Lulus & Terima →"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setDetailModalOpen(false)}
+                  className="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition"
+                >
+                  Tutup Rincian
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* TOAST NOTIFICATION */}
       {toastMessage && (

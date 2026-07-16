@@ -12,6 +12,8 @@ async function seed() {
     { code: "GENDER", name: "Jenis Kelamin", description: "Standar gender pendaftar" },
     { code: "METODE_PEMBAYARAN", name: "Metode Pembayaran", description: "Channel pembayaran transaksi keuangan" },
     { code: "DOKUMEN_PERSYARATAN", name: "Dokumen Persyaratan", description: "Jenis dokumen kelengkapan berkas PMB" },
+    { code: "PROVINSI", name: "Provinsi", description: "Daftar Provinsi di Indonesia" },
+    { code: "KOTA", name: "Kota / Kabupaten", description: "Daftar Kota dan Kabupaten di Indonesia" },
   ];
 
   for (const cat of categoriesList) {
@@ -87,7 +89,81 @@ async function seed() {
     }
   }
 
-  console.log("Seeding complete! Database successfully populated with PMB lookup categories & items.");
+  // 3. Seed Provinces and Cities dynamically
+  console.log("Seeding Provinces and Cities...");
+  const provinces = ["DKI Jakarta", "Jawa Barat", "Banten", "Jawa Tengah", "Jawa Timur", "DI Yogyakarta"];
+  const provIdMap = new Map<string, string>();
+
+  const provCatId = catMap.get("PROVINSI");
+  if (provCatId) {
+    for (const provName of provinces) {
+      const code = provName.toUpperCase().replace(/\s+/g, "_");
+      const existing = await db
+        .select()
+        .from(refItems)
+        .where(eq(refItems.code, code))
+        .limit(1);
+
+      let itemId: string | undefined = existing[0]?.id;
+      if (existing.length === 0) {
+        const insertedList = await db.insert(refItems).values({
+          categoryId: provCatId,
+          code,
+          name: provName,
+          sortOrder: 1,
+          isActive: true,
+        }).returning({ id: refItems.id });
+        
+        if (insertedList[0]) {
+          itemId = insertedList[0].id;
+          console.log(`Created Province: ${provName}`);
+        }
+      }
+      if (itemId) {
+        provIdMap.set(provName, itemId);
+      }
+    }
+  }
+
+  const citiesData: Record<string, string[]> = {
+    "DKI Jakarta": ["Jakarta Pusat", "Jakarta Utara", "Jakarta Barat", "Jakarta Selatan", "Jakarta Timur", "Kepulauan Seribu"],
+    "Jawa Barat": ["Bandung", "Bogor", "Depok", "Bekasi", "Cimahi", "Tasikmalaya", "Cirebon", "Sukabumi", "Garut"],
+    "Banten": ["Tangerang", "Tangerang Selatan", "Serang", "Cilegon", "Pandeglang", "Lebak"],
+    "Jawa Tengah": ["Semarang", "Surakarta", "Magelang", "Pekalongan", "Tegal", "Salatiga"],
+    "Jawa Timur": ["Surabaya", "Malang", "Madiun", "Kediri", "Blitar", "Pasuruan", "Probolinggo", "Batu"],
+    "DI Yogyakarta": ["Yogyakarta", "Sleman", "Bantul", "Kulon Progo", "Gunungkidul"]
+  };
+
+  const kotaCatId = catMap.get("KOTA");
+  if (kotaCatId) {
+    for (const [provName, cities] of Object.entries(citiesData)) {
+      const parentId = provIdMap.get(provName);
+      if (!parentId) continue;
+
+      for (const cityName of cities) {
+        const code = cityName.toUpperCase().replace(/\s+/g, "_");
+        const existing = await db
+          .select()
+          .from(refItems)
+          .where(eq(refItems.code, code))
+          .limit(1);
+
+        if (existing.length === 0) {
+          await db.insert(refItems).values({
+            categoryId: kotaCatId,
+            parentId,
+            code,
+            name: cityName,
+            sortOrder: 1,
+            isActive: true,
+          });
+          console.log(`Created City: ${cityName} (Parent: ${provName})`);
+        }
+      }
+    }
+  }
+
+  console.log("Seeding complete! Database successfully populated with PMB & Region lookup categories & items.");
   process.exit(0);
 }
 
