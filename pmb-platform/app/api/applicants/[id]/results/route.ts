@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbApplicants } from "@/db/schema/applicants";
 import { pmbExamResults, pmbExamModules } from "@/db/schema/exam";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export async function GET(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
