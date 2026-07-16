@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbApplicants } from "@/db/schema/applicants";
 import { pmbInvoices, pmbPaymentTransactions } from "@/db/schema/payment";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 export async function GET() {
   try {
