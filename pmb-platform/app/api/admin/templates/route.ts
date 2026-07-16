@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbMessageTemplates } from "@/db/schema/communication";
-import { desc } from "drizzle-orm";
 import { cookies } from "next/headers";
 
 export async function GET() {
@@ -17,8 +16,7 @@ export async function GET() {
 
     const templates = await db
       .select()
-      .from(pmbMessageTemplates)
-      .orderBy(desc(pmbMessageTemplates.createdAt));
+      .from(pmbMessageTemplates);
 
     return NextResponse.json({ success: true, templates });
   } catch (error: any) {
