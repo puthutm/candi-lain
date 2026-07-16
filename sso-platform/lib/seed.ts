@@ -2,14 +2,59 @@ import { db } from "@/db";
 import { users } from "@/db/schema/users";
 import { applications, scopes } from "@/db/schema/applications";
 import { applicationRoles, userApplicationRoles } from "@/db/schema/rbac";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { env } from "./env";
+
+async function getOrInsertRole(applicationId: string, roleKey: string, roleName: string, description: string, isDefault: boolean) {
+  const existing = await db
+    .select()
+    .from(applicationRoles)
+    .where(
+      and(
+        eq(applicationRoles.applicationId, applicationId),
+        eq(applicationRoles.roleKey, roleKey)
+      )
+    )
+    .limit(1);
+  if (existing.length === 0) {
+    const [inserted] = await db.insert(applicationRoles).values({
+      applicationId,
+      roleKey,
+      roleName,
+      description,
+      isDefault,
+    }).returning();
+    return inserted;
+  }
+  return existing[0];
+}
+
+async function assignUserRole(userId: string, applicationId: string, roleId: string) {
+  const existing = await db
+    .select()
+    .from(userApplicationRoles)
+    .where(
+      and(
+        eq(userApplicationRoles.userId, userId),
+        eq(userApplicationRoles.applicationId, applicationId),
+        eq(userApplicationRoles.roleId, roleId)
+      )
+    )
+    .limit(1);
+  if (existing.length === 0) {
+    await db.insert(userApplicationRoles).values({
+      userId,
+      applicationId,
+      roleId,
+      status: "active",
+    });
+  }
+}
 
 export async function ensureDatabaseSeeded(force?: boolean) {
   try {
     const adminEmail = env.SUPER_ADMIN_EMAIL || "admin@example.com";
-    const existingUsers = await db.select().from(users).where(eq(users.email, adminEmail)).limit(1);
     
     if (force) {
       console.log("Force option enabled. Clearing database tables...");
@@ -18,12 +63,9 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       await db.delete(applications);
       await db.delete(users);
       await db.delete(scopes);
-    } else if (existingUsers.length > 0) {
-      // Database has already been seeded or has data
-      return;
     }
 
-    console.log("Seeding SSO Platform Database...");
+    console.log("Seeding SSO Platform Database (Idempotent)...");
 
     const saltRounds = env.BCRYPT_ROUNDS || 12;
 
@@ -43,36 +85,57 @@ export async function ensureDatabaseSeeded(force?: boolean) {
 
     // 2. Seed Users
     // admin
-    const adminPasswordHash = await bcrypt.hash(env.SUPER_ADMIN_PASSWORD || "admin-password-123", saltRounds);
-    const [adminUser] = await db.insert(users).values({
-      username: "admin",
-      email: adminEmail,
-      passwordHash: adminPasswordHash,
-      fullName: "Super Admin",
-      status: "active",
-    }).returning();
+    let adminUser;
+    const existingAdmin = await db.select().from(users).where(eq(users.username, "admin")).limit(1);
+    if (existingAdmin.length === 0) {
+      const adminPasswordHash = await bcrypt.hash(env.SUPER_ADMIN_PASSWORD || "admin-password-123", saltRounds);
+      const [inserted] = await db.insert(users).values({
+        username: "admin",
+        email: adminEmail,
+        passwordHash: adminPasswordHash,
+        fullName: "Super Admin",
+        status: "active",
+      }).returning();
+      adminUser = inserted;
+    } else {
+      adminUser = existingAdmin[0];
+    }
 
     // mahasiswa
-    const mahasiswapsd = "mahasiswa-password-123";
-    const mahasiswaPasswordHash = await bcrypt.hash(mahasiswapsd, saltRounds);
-    const [mahasiswaUser] = await db.insert(users).values({
-      username: "mahasiswa",
-      email: "mahasiswa@example.com",
-      passwordHash: mahasiswaPasswordHash,
-      fullName: "Budi Santoso",
-      status: "active",
-    }).returning();
+    let mahasiswaUser;
+    const existingMahasiswa = await db.select().from(users).where(eq(users.username, "mahasiswa")).limit(1);
+    if (existingMahasiswa.length === 0) {
+      const mahasiswapsd = "mahasiswa-password-123";
+      const mahasiswaPasswordHash = await bcrypt.hash(mahasiswapsd, saltRounds);
+      const [inserted] = await db.insert(users).values({
+        username: "mahasiswa",
+        email: "mahasiswa@example.com",
+        passwordHash: mahasiswaPasswordHash,
+        fullName: "Budi Santoso",
+        status: "active",
+      }).returning();
+      mahasiswaUser = inserted;
+    } else {
+      mahasiswaUser = existingMahasiswa[0];
+    }
 
     // dosen
-    const dosenpsd = "dosen-password-123";
-    const dosenPasswordHash = await bcrypt.hash(dosenpsd, saltRounds);
-    const [dosenUser] = await db.insert(users).values({
-      username: "dosen",
-      email: "dosen@example.com",
-      passwordHash: dosenPasswordHash,
-      fullName: "Dr. Hendra Setiawan, M.Kom.",
-      status: "active",
-    }).returning();
+    let dosenUser;
+    const existingDosen = await db.select().from(users).where(eq(users.username, "dosen")).limit(1);
+    if (existingDosen.length === 0) {
+      const dosenpsd = "dosen-password-123";
+      const dosenPasswordHash = await bcrypt.hash(dosenpsd, saltRounds);
+      const [inserted] = await db.insert(users).values({
+        username: "dosen",
+        email: "dosen@example.com",
+        passwordHash: dosenPasswordHash,
+        fullName: "Dr. Hendra Setiawan, M.Kom.",
+        status: "active",
+      }).returning();
+      dosenUser = inserted;
+    } else {
+      dosenUser = existingDosen[0];
+    }
 
     // 3. Seed Applications
     const baseDomain = process.env.SEED_DOMAIN_BASE;
@@ -120,265 +183,95 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         name: "HRIS Platform",
         description: "Human Resources Information System",
         redirectUris: getRedirectUris(env.SEED_HRIS_CALLBACK_URL, "hris"),
+      },
+      {
+        clientId: env.SEED_BANK_KONTEN_CLIENT_ID,
+        clientSecret: env.SEED_BANK_KONTEN_CLIENT_SECRET,
+        name: "Bank Konten Platform",
+        description: "Bank Soal dan Materi Konten",
+        redirectUris: getRedirectUris(env.SEED_BANK_KONTEN_CALLBACK_URL, "bank-konten"),
       }
     ];
 
     for (const appData of defaultApps) {
-      const secretHash = await bcrypt.hash(appData.clientSecret, saltRounds);
-      const [insertedApp] = await db.insert(applications).values({
-        clientId: appData.clientId,
-        clientSecretHash: secretHash,
-        name: appData.name,
-        description: appData.description,
-        redirectUris: appData.redirectUris,
-        allowedGrantTypes: ["authorization_code", "refresh_token"],
-        status: "active",
-      }).returning();
+      let insertedApp;
+      const existingApp = await db.select().from(applications).where(eq(applications.clientId, appData.clientId)).limit(1);
+      if (existingApp.length === 0) {
+        const secretHash = await bcrypt.hash(appData.clientSecret, saltRounds);
+        const [inserted] = await db.insert(applications).values({
+          clientId: appData.clientId,
+          clientSecretHash: secretHash,
+          name: appData.name,
+          description: appData.description,
+          redirectUris: appData.redirectUris,
+          allowedGrantTypes: ["authorization_code", "refresh_token"],
+          status: "active",
+        }).returning();
+        insertedApp = inserted;
+      } else {
+        insertedApp = existingApp[0];
+      }
+
+      if (!insertedApp) continue;
 
       // 4. Seed Roles per application and assign to users
       if (appData.clientId === "siakad-platform") {
-        const [mhsRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "mahasiswa",
-          roleName: "Mahasiswa",
-          description: "Student role in SIAKAD",
-          isDefault: true,
-        }).returning();
-
-        const [dsnRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "dosen",
-          roleName: "Dosen",
-          description: "Lecturer role in SIAKAD",
-          isDefault: false,
-        }).returning();
-
-        await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "kaprodi",
-          roleName: "Kaprodi",
-          description: "Head of Study Program role in SIAKAD",
-          isDefault: false,
-        });
-
-        const [adminRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "admin",
-          roleName: "Admin",
-          description: "Administrator in SIAKAD",
-          isDefault: false,
-        }).returning();
+        const mhsRole = await getOrInsertRole(insertedApp.id, "mahasiswa", "Mahasiswa", "Student role in SIAKAD", true);
+        const dsnRole = await getOrInsertRole(insertedApp.id, "dosen", "Dosen", "Lecturer role in SIAKAD", false);
+        const _kaprodiRole = await getOrInsertRole(insertedApp.id, "kaprodi", "Kaprodi", "Head of Study Program role in SIAKAD", false);
+        const adminRole = await getOrInsertRole(insertedApp.id, "admin", "Admin", "Administrator in SIAKAD", false);
 
         // Assignments
-        await db.insert(userApplicationRoles).values({
-          userId: adminUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: adminRole!.id,
-          status: "active",
-        });
+        if (adminUser && adminRole) await assignUserRole(adminUser.id, insertedApp.id, adminRole.id);
+        if (mahasiswaUser && mhsRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, mhsRole.id);
+        if (dosenUser && dsnRole) await assignUserRole(dosenUser.id, insertedApp.id, dsnRole.id);
 
-        await db.insert(userApplicationRoles).values({
-          userId: mahasiswaUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: mhsRole!.id,
-          status: "active",
-        });
-
-        await db.insert(userApplicationRoles).values({
-          userId: dosenUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: dsnRole!.id,
-          status: "active",
-        });
       } else if (appData.clientId === "lms-platform") {
-        const [mhsRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "mahasiswa",
-          roleName: "Mahasiswa",
-          description: "Student role in LMS",
-          isDefault: true,
-        }).returning();
+        const mhsRole = await getOrInsertRole(insertedApp.id, "mahasiswa", "Mahasiswa", "Student role in LMS", true);
+        const dsnRole = await getOrInsertRole(insertedApp.id, "dosen", "Dosen", "Lecturer role in LMS", false);
 
-        const [dsnRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "dosen",
-          roleName: "Dosen",
-          description: "Lecturer role in LMS",
-          isDefault: false,
-        }).returning();
+        if (adminUser && mhsRole) await assignUserRole(adminUser.id, insertedApp.id, mhsRole.id);
+        if (mahasiswaUser && mhsRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, mhsRole.id);
+        if (dosenUser && dsnRole) await assignUserRole(dosenUser.id, insertedApp.id, dsnRole.id);
 
-        await db.insert(userApplicationRoles).values({
-          userId: adminUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: mhsRole!.id,
-          status: "active",
-        });
-
-        await db.insert(userApplicationRoles).values({
-          userId: mahasiswaUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: mhsRole!.id,
-          status: "active",
-        });
-
-        await db.insert(userApplicationRoles).values({
-          userId: dosenUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: dsnRole!.id,
-          status: "active",
-        });
       } else if (appData.clientId === "pmb-platform") {
-        const [adminRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "admin",
-          roleName: "Admin PMB",
-          description: "Administrator role in PMB",
-          isDefault: false,
-        }).returning();
+        const adminRole = await getOrInsertRole(insertedApp.id, "admin", "Admin PMB", "Administrator role in PMB", false);
+        const pendaftarRole = await getOrInsertRole(insertedApp.id, "pendaftar", "Pendaftar", "Applicant role in PMB", true);
 
-        const [pendaftarRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "pendaftar",
-          roleName: "Pendaftar",
-          description: "Applicant role in PMB",
-          isDefault: true,
-        }).returning();
+        if (adminUser && adminRole) await assignUserRole(adminUser.id, insertedApp.id, adminRole.id);
+        if (mahasiswaUser && pendaftarRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, pendaftarRole.id);
 
-        // Assign adminUser to adminRole
-        await db.insert(userApplicationRoles).values({
-          userId: adminUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: adminRole!.id,
-          status: "active",
-        });
-
-        // Assign mahasiswaUser to pendaftarRole
-        await db.insert(userApplicationRoles).values({
-          userId: mahasiswaUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: pendaftarRole!.id,
-          status: "active",
-        });
       } else if (appData.clientId === "keuangan-platform") {
-        const [kepalaBiroRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "kepala_biro",
-          roleName: "Kepala Biro Keuangan",
-          description: "Chief Financial Officer",
-          isDefault: false,
-        }).returning();
+        const kepalaBiroRole = await getOrInsertRole(insertedApp.id, "kepala_biro", "Kepala Biro Keuangan", "Chief Financial Officer", false);
+        const stafPenerimaanRole = await getOrInsertRole(insertedApp.id, "staf_penerimaan", "Staf Penerimaan", "Receivables staff", false);
+        const _stafPengeluaranRole = await getOrInsertRole(insertedApp.id, "staf_pengeluaran", "Staf Pengeluaran", "Payables and PO staff", false);
+        const _stafAkuntansiRole = await getOrInsertRole(insertedApp.id, "staf_akuntansi", "Staf Akuntansi", "Ledger and CoA staff", false);
+        const mahasiswaRole = await getOrInsertRole(insertedApp.id, "mahasiswa", "Mahasiswa", "Student finance access", true);
 
-        const [stafPenerimaanRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "staf_penerimaan",
-          roleName: "Staf Penerimaan",
-          description: "Receivables staff",
-          isDefault: false,
-        }).returning();
+        if (adminUser && kepalaBiroRole) await assignUserRole(adminUser.id, insertedApp.id, kepalaBiroRole.id);
+        if (mahasiswaUser && mahasiswaRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, mahasiswaRole.id);
+        if (dosenUser && stafPenerimaanRole) await assignUserRole(dosenUser.id, insertedApp.id, stafPenerimaanRole.id);
 
-        await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "staf_pengeluaran",
-          roleName: "Staf Pengeluaran",
-          description: "Payables and PO staff",
-          isDefault: false,
-        });
-
-        await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "staf_akuntansi",
-          roleName: "Staf Akuntansi",
-          description: "Ledger and CoA staff",
-          isDefault: false,
-        });
-
-        const [mahasiswaRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "mahasiswa",
-          roleName: "Mahasiswa",
-          description: "Student finance access",
-          isDefault: true,
-        }).returning();
-
-        // Assign adminUser to kepalaBiroRole
-        await db.insert(userApplicationRoles).values({
-          userId: adminUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: kepalaBiroRole!.id,
-          status: "active",
-        });
-
-        // Assign mahasiswaUser to mahasiswaRole
-        await db.insert(userApplicationRoles).values({
-          userId: mahasiswaUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: mahasiswaRole!.id,
-          status: "active",
-        });
-
-        // Assign dosenUser to stafPenerimaanRole
-        await db.insert(userApplicationRoles).values({
-          userId: dosenUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: stafPenerimaanRole!.id,
-          status: "active",
-        });
       } else if (appData.clientId === "hris-platform") {
-        const [superAdminSdmRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "super_admin_sdm",
-          roleName: "Super Admin SDM",
-          description: "Full configuration control of HRIS",
-          isDefault: false,
-        }).returning();
+        const superAdminSdmRole = await getOrInsertRole(insertedApp.id, "super_admin_sdm", "Super Admin SDM", "Full configuration control of HRIS", false);
+        const _adminDataSdmRole = await getOrInsertRole(insertedApp.id, "admin_data_sdm", "Admin Data SDM", "Employee directories management", false);
+        const _adminPayrollRole = await getOrInsertRole(insertedApp.id, "admin_payroll", "Admin Payroll & Pajak", "Payroll calculations and tax filings", false);
+        const _approverRole = await getOrInsertRole(insertedApp.id, "approver", "Approver SDM", "Line managers and approvers", false);
+        const pegawaiRole = await getOrInsertRole(insertedApp.id, "pegawai", "Pegawai", "Standard employee access", true);
 
-        await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "admin_data_sdm",
-          roleName: "Admin Data SDM",
-          description: "Employee directories management",
-          isDefault: false,
-        });
+        if (adminUser && superAdminSdmRole) await assignUserRole(adminUser.id, insertedApp.id, superAdminSdmRole.id);
+        if (mahasiswaUser && pegawaiRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, pegawaiRole.id);
 
-        await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "admin_payroll",
-          roleName: "Admin Payroll & Pajak",
-          description: "Payroll calculations and tax filings",
-          isDefault: false,
-        });
+      } else if (appData.clientId === "bank-konten-platform") {
+        const dosenRole = await getOrInsertRole(insertedApp.id, "dosen", "Dosen", "Lecturer role in Bank Konten", true);
+        const verifikatorProdiRole = await getOrInsertRole(insertedApp.id, "verifikator_prodi", "Verifikator Prodi", "Study Program Verifier", false);
+        const verifikatorBpmRole = await getOrInsertRole(insertedApp.id, "verifikator_bpm", "Verifikator BPM", "BPM Quality Assurance Verifier", false);
+        const adminBankKontenRole = await getOrInsertRole(insertedApp.id, "admin_bank_konten", "Admin Bank Konten", "Administrator role in Bank Soal & Materi", false);
 
-        await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "approver",
-          roleName: "Approver SDM",
-          description: "Line managers and approvers",
-          isDefault: false,
-        });
-
-        const [pegawaiRole] = await db.insert(applicationRoles).values({
-          applicationId: insertedApp!.id,
-          roleKey: "pegawai",
-          roleName: "Pegawai",
-          description: "Standard employee access",
-          isDefault: true,
-        }).returning();
-
-        // Assign adminUser to superAdminSdmRole
-        await db.insert(userApplicationRoles).values({
-          userId: adminUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: superAdminSdmRole!.id,
-          status: "active",
-        });
-
-        // Assign mahasiswaUser to pegawaiRole
-        await db.insert(userApplicationRoles).values({
-          userId: mahasiswaUser!.id,
-          applicationId: insertedApp!.id,
-          roleId: pegawaiRole!.id,
-          status: "active",
-        });
+        if (adminUser && adminBankKontenRole) await assignUserRole(adminUser.id, insertedApp.id, adminBankKontenRole.id);
+        if (adminUser && verifikatorProdiRole) await assignUserRole(adminUser.id, insertedApp.id, verifikatorProdiRole.id);
+        if (adminUser && verifikatorBpmRole) await assignUserRole(adminUser.id, insertedApp.id, verifikatorBpmRole.id);
+        if (dosenUser && dosenRole) await assignUserRole(dosenUser.id, insertedApp.id, dosenRole.id);
       }
     }
 

@@ -65,6 +65,9 @@ const envSchema = z.object({
   SEED_HRIS_CLIENT_ID: z.string().default("hris-platform"),
   SEED_HRIS_CLIENT_SECRET: z.string().default("hris-platform-client-secret-key-2026"),
   SEED_HRIS_CALLBACK_URL: z.string().default("http://localhost:3006/api/auth/callback"),
+  SEED_BANK_KONTEN_CLIENT_ID: z.string().default("bank-konten-platform"),
+  SEED_BANK_KONTEN_CLIENT_SECRET: z.string().default("bank-konten-platform-client-secret-key-2026"),
+  SEED_BANK_KONTEN_CALLBACK_URL: z.string().default("http://localhost:3007/api/auth/callback"),
 
   // CORS
   ALLOWED_ORIGINS: z.string().optional(),
