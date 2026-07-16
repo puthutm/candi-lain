@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { siakadLecturers, siakadStudents } from "@/db/schema/civitas";
 import { siakadKrs, siakadKrsItems, siakadKrsApprovals } from "@/db/schema/krs";
 import { siakadClasses } from "@/db/schema/classes";
-import { siakadCourses, siakadAcademicPeriods, siakadStudyPrograms } from "@/db/schema/master";
+import { siakadAcademicPeriods, siakadStudyPrograms } from "@/db/schema/master";
 import { eq, and, sql } from "drizzle-orm";
 import { env } from "@/lib/env";
 
