@@ -162,7 +162,7 @@ export async function ensureSiakadSeeded() {
             dateObj.setDate(dateObj.getDate() + (i * 7));
             const sessionDate = dateObj.toISOString().split("T")[0]!;
 
-            let sessionType = "reguler" as const;
+            let sessionType: "reguler" | "libur" | "uts" | "uas" = "reguler";
             let topic = `Pertemuan ke-${i + 1} - Pembahasan Materi Utama`;
             if (i === 7) {
               sessionType = "uts" as const;
