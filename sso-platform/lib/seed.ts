@@ -218,7 +218,7 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       if (appData.clientId === "siakad-platform") {
         const mhsRole = await getOrInsertRole(insertedApp.id, "mahasiswa", "Mahasiswa", "Student role in SIAKAD", true);
         const dsnRole = await getOrInsertRole(insertedApp.id, "dosen", "Dosen", "Lecturer role in SIAKAD", false);
-        const _kaprodiRole = await getOrInsertRole(insertedApp.id, "kaprodi", "Kaprodi", "Head of Study Program role in SIAKAD", false);
+        await getOrInsertRole(insertedApp.id, "kaprodi", "Kaprodi", "Head of Study Program role in SIAKAD", false);
         const adminRole = await getOrInsertRole(insertedApp.id, "admin", "Admin", "Administrator in SIAKAD", false);
 
         // Assignments
@@ -244,8 +244,8 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       } else if (appData.clientId === "keuangan-platform") {
         const kepalaBiroRole = await getOrInsertRole(insertedApp.id, "kepala_biro", "Kepala Biro Keuangan", "Chief Financial Officer", false);
         const stafPenerimaanRole = await getOrInsertRole(insertedApp.id, "staf_penerimaan", "Staf Penerimaan", "Receivables staff", false);
-        const _stafPengeluaranRole = await getOrInsertRole(insertedApp.id, "staf_pengeluaran", "Staf Pengeluaran", "Payables and PO staff", false);
-        const _stafAkuntansiRole = await getOrInsertRole(insertedApp.id, "staf_akuntansi", "Staf Akuntansi", "Ledger and CoA staff", false);
+        await getOrInsertRole(insertedApp.id, "staf_pengeluaran", "Staf Pengeluaran", "Payables and PO staff", false);
+        await getOrInsertRole(insertedApp.id, "staf_akuntansi", "Staf Akuntansi", "Ledger and CoA staff", false);
         const mahasiswaRole = await getOrInsertRole(insertedApp.id, "mahasiswa", "Mahasiswa", "Student finance access", true);
 
         if (adminUser && kepalaBiroRole) await assignUserRole(adminUser.id, insertedApp.id, kepalaBiroRole.id);
@@ -254,9 +254,9 @@ export async function ensureDatabaseSeeded(force?: boolean) {
 
       } else if (appData.clientId === "hris-platform") {
         const superAdminSdmRole = await getOrInsertRole(insertedApp.id, "super_admin_sdm", "Super Admin SDM", "Full configuration control of HRIS", false);
-        const _adminDataSdmRole = await getOrInsertRole(insertedApp.id, "admin_data_sdm", "Admin Data SDM", "Employee directories management", false);
-        const _adminPayrollRole = await getOrInsertRole(insertedApp.id, "admin_payroll", "Admin Payroll & Pajak", "Payroll calculations and tax filings", false);
-        const _approverRole = await getOrInsertRole(insertedApp.id, "approver", "Approver SDM", "Line managers and approvers", false);
+        await getOrInsertRole(insertedApp.id, "admin_data_sdm", "Admin Data SDM", "Employee directories management", false);
+        await getOrInsertRole(insertedApp.id, "admin_payroll", "Admin Payroll & Pajak", "Payroll calculations and tax filings", false);
+        await getOrInsertRole(insertedApp.id, "approver", "Approver SDM", "Line managers and approvers", false);
         const pegawaiRole = await getOrInsertRole(insertedApp.id, "pegawai", "Pegawai", "Standard employee access", true);
 
         if (adminUser && superAdminSdmRole) await assignUserRole(adminUser.id, insertedApp.id, superAdminSdmRole.id);
