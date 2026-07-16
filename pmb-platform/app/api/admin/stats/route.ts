@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbApplicants } from "@/db/schema/applicants";
-import { pmbWaves, pmbStudyPrograms, pmbQuotas } from "@/db/schema/master";
+import { pmbStudyPrograms, pmbQuotas } from "@/db/schema/master";
 import { pmbExamResults, pmbExamSessions } from "@/db/schema/exam";
 import { pmbInvoices } from "@/db/schema/payment";
 import { sql, eq } from "drizzle-orm";
