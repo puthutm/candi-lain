@@ -20,4 +20,5 @@
 - [x] Step 1: Patch `sso-platform/app/home/page.tsx` (remove hardcoded PKCE; generate per-request PKCE; embed verifier into state)
 - [x] Step 2: Patch `sso-platform/app/oauth/authorize/route.ts` (decode state; append verifier to redirect fragment)
 - [x] Step 3: Patch `sso-platform/lib/services/oauth2.ts` (safe logging for INVALID reasons)
-- [ ] Step 4: Test end-to-end OAuth authorization_code -> token exchange
+- [x] Step 4: Patch `pmb-platform/app/api/auth/callback/route.ts` (fallback read `code_verifier` from `state` when cookie missing)
+- [ ] Step 5: Test end-to-end OAuth authorization_code -> token exchange (portal -> pmb callback -> token -> redirect)

@@ -20,14 +20,29 @@ export async function GET(req: Request) {
     const cookieStore = await cookies();
     let codeVerifier = cookieStore.get("sso_code_verifier")?.value;
 
-    // Fallback for IdP-initiated login (SSO Portal Direct flow)
+    // Fallback: portal direct or PKCE verifier embedded inside `state`
     const state = searchParams.get("state");
+
+    // Existing fallback for IdP-initiated login (SSO Portal Direct flow)
     if (!codeVerifier && state === "sso_portal_direct") {
       codeVerifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
     }
 
+    // New flow: PKCE verifier carried inside state as base64url(JSON) => { t: "pkce", v: "<verifier>" }
+    if (!codeVerifier && state) {
+      try {
+        const decoded = Buffer.from(state, "base64url").toString("utf8");
+        const parsed = JSON.parse(decoded);
+        if (parsed?.t === "pkce" && typeof parsed?.v === "string") {
+          codeVerifier = parsed.v;
+        }
+      } catch {
+        // ignore invalid state payload
+      }
+    }
+
     if (!codeVerifier) {
-      return NextResponse.json({ success: false, error: "Missing code verifier cookie" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Missing code verifier (cookie/state)" }, { status: 400 });
     }
 
     // 2. Call SSO token endpoint via HTTP POST (server-to-server)
