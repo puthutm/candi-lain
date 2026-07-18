@@ -22,13 +22,22 @@ export async function GET() {
   // Return the response from signIn so Set-Cookie is applied by the browser.
   const result = await signIn("unsia-sso", { redirectTo });
 
-  if (result instanceof Response) {
-    const setCookie = result.headers.get("set-cookie") || "";
+  // next-auth/Auth.js v5 beta types may not narrow to global Response cleanly in TS,
+  // so we use a duck-typing check.
+  const maybeResponse = result as any;
+  const isResponseLike =
+    maybeResponse &&
+    typeof maybeResponse === "object" &&
+    maybeResponse.headers &&
+    typeof maybeResponse.headers.get === "function";
+
+  if (isResponseLike) {
+    const setCookie = maybeResponse.headers.get("set-cookie") || "";
     console.info("[pmb][auth][login-start] signIn Response cookie flags", {
       hasSetCookieState: setCookie.includes("pmb.authjs.state="),
       hasSetCookiePkce: setCookie.includes("pmb.authjs.pkce.code_verifier="),
     });
-    return result;
+    return maybeResponse as Response;
   }
 
   return NextResponse.json({ success: true });
