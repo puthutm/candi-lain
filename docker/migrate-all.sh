@@ -11,7 +11,7 @@ run_migration() {
 
   if [ ! -d node_modules ]; then
     if [ -f package-lock.json ]; then
-      npm ci
+      npm ci --legacy-peer-deps
     elif [ -f pnpm-lock.yaml ]; then
       npm install -g pnpm
       pnpm install --no-frozen-lockfile
