@@ -340,7 +340,7 @@ export async function ensureDatabaseSeeded(force?: boolean) {
           positionItems[pos.code] = inserted.id;
         }
       } else {
-        positionItems[pos.code] = existingItem[0].id;
+        positionItems[pos.code] = existingItem[0]?.id || "";
       }
     }
 
@@ -380,7 +380,7 @@ export async function ensureDatabaseSeeded(force?: boolean) {
           divisionOrgs[div.code] = inserted.id;
         }
       } else {
-        divisionOrgs[div.code] = existingDiv[0].id;
+        divisionOrgs[div.code] = existingDiv[0]?.id || "";
       }
     }
 
@@ -401,7 +401,7 @@ export async function ensureDatabaseSeeded(force?: boolean) {
           deptOrgs[dept.code] = inserted.id;
         }
       } else {
-        deptOrgs[dept.code] = existingDept[0].id;
+        deptOrgs[dept.code] = existingDept[0]?.id || "";
       }
     }
 
