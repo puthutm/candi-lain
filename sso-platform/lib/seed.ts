@@ -59,12 +59,17 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     const adminEmail = env.SUPER_ADMIN_EMAIL || "admin@example.com";
     
     if (force) {
-      console.log("Force option enabled. Clearing database tables...");
+      console.log("Force option enabled. Clearing database tables in FK dependency order...");
+      await db.delete(userOrganizations);
       await db.delete(userApplicationRoles);
       await db.delete(applicationRoles);
       await db.delete(applications);
       await db.delete(users);
       await db.delete(scopes);
+      await db.delete(refItems);
+      await db.delete(refCategories);
+      await db.delete(organizations);
+      await db.delete(auditLogs);
     }
 
     console.log("Seeding SSO Platform Database (Idempotent)...");
