@@ -7,14 +7,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   debug: true,
 
   // Ensure secret is stable and used explicitly.
-  // Per diagnosis: runtime shows hasAUTH_SECRET=false and state/pkce can't be parsed.
-  // Make AUTH_SECRET mandatory to guarantee encrypt/decrypt consistency.
-  secret: (() => {
-    if (!env.AUTH_SECRET) {
-      throw new Error("PMB Auth.js: AUTH_SECRET is required (does not fallback to NEXTAUTH_SECRET).");
-    }
-    return env.AUTH_SECRET;
-  })(),
+  secret: env.AUTH_SECRET ?? env.NEXTAUTH_SECRET,
 
   // NextAuth/Auth.js v5: enforce PKCE checks (don't disable PKCE).
   // If your beta doesn't support `checks` at provider-level, remove it later,
