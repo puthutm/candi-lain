@@ -29,6 +29,9 @@ export async function GET(req: Request) {
     }
 
     // 2. Call SSO token endpoint via HTTP POST (server-to-server)
+    const requestUrl = new URL(req.url);
+    const callbackUrl = `${requestUrl.protocol}//${requestUrl.host}${requestUrl.pathname}`;
+
     const tokenResponse = await fetch(env.SSO_OAUTH_TOKEN_URL, {
       method: "POST",
       headers: {
@@ -40,7 +43,7 @@ export async function GET(req: Request) {
         client_secret: env.SSO_OAUTH_CLIENT_SECRET,
         code,
         code_verifier: codeVerifier,
-        redirect_uri: env.SSO_OAUTH_CALLBACK_URL,
+        redirect_uri: callbackUrl,
       }),
     });
 

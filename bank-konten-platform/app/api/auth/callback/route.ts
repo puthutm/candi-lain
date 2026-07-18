@@ -29,7 +29,8 @@ export async function GET(req: Request) {
     const clientSecret = process.env.SSO_OAUTH_CLIENT_SECRET || "bank-konten-platform-client-secret-key-2026";
     const authorizeUrlStr = process.env.SSO_OAUTH_AUTHORIZE_URL || "http://localhost:3000/oauth/authorize";
     const tokenUrl = process.env.SSO_OAUTH_TOKEN_URL || "http://localhost:3000/oauth/token";
-    const callbackUrl = process.env.SSO_OAUTH_CALLBACK_URL || "http://localhost:3007/api/auth/callback";
+    const requestUrl = new URL(req.url);
+    const callbackUrl = `${requestUrl.protocol}//${requestUrl.host}${requestUrl.pathname}`;
 
     // 2. Call SSO token endpoint via HTTP POST (server-to-server)
     const tokenResponse = await fetch(tokenUrl, {
