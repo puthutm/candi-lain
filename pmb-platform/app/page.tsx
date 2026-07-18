@@ -197,9 +197,9 @@ export default function PmbPublikPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  const handleSsoLogin = async (e: React.MouseEvent) => {
+  const handleSsoLogin = (e: React.MouseEvent) => {
     e.preventDefault();
-    await signIn("unsia-sso", undefined);
+    window.location.href = "/auth/login";
   };
 
   const handlePrev = () => {
