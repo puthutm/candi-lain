@@ -111,6 +111,7 @@ export class OAuth2Service {
 
     // Check redirect URI
     if (codeRecord.redirectUri !== redirectUri) {
+      console.warn(`[OAuth2] Redirect URI mismatch: CodeRecord="${codeRecord.redirectUri}" vs Request="${redirectUri}"`);
       return { valid: false, error: "INVALID" };
     }
 
