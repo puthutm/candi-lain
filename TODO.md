@@ -1,13 +1,23 @@
-# TODO - SSO /home 307 redirect + session stabilization
+# TODO - Fix OAuth INVALID (SSO portal utama)
 
-- [x] Investigate middleware/proxy redirect logic for `/home` and `/admin`
-- [x] Inspect login cookie/session creation flow
-- [x] Add env-controlled secure-cookie toggle for HTTP LAN deployments
-- [x] Update login action cookie policy to use env toggle instead of NODE_ENV only
-- [x] Add lightweight auth session debug endpoint (read-only)
-- [x] Ensure docker-compose SSO env explicitly sets cookie toggle for current deployment mode
-- [ ] Re-test key endpoints via curl:
-  - [ ] `/admin` unauth redirect
-  - [ ] `/home` unauth redirect
-  - [ ] `/api/auth/session-debug` visibility of cookie/session state
-- [ ] Ask user to verify browser login flow after rebuild/restart (server action stale cleanup)
+## Plan
+1. Update portal authorization link builder:
+   - `sso-platform/app/home/page.tsx`: remove hardcoded `code_challenge` and generate real PKCE verifier/challenge per login attempt.
+   - Encode/verpack `code_verifier` into `state` so callback can forward it securely (no hardcoded secrets).
+
+2. Update authorization endpoint redirect behavior:
+   - `sso-platform/app/oauth/authorize/route.ts`: decode the PKCE `state` payload and append `code_verifier` into redirect URL fragment (`#code_verifier=...`) so clients can pick it up without affecting `redirect_uri` strict string match.
+
+3. Improve observability for the root cause:
+   - `sso-platform/lib/services/oauth2.ts`: add safe logging when authorization code validation fails (especially `redirectUri` mismatch), without leaking secrets.
+
+4. Test flow:
+   - Run SSO portal and attempt redirect login to client app.
+   - Confirm error `Authorization code validation failed: INVALID` is resolved.
+   - If new error appears (e.g., `PKCE_MISMATCH`), iterate.
+
+## Status
+- [x] Step 1: Patch `sso-platform/app/home/page.tsx` (remove hardcoded PKCE; generate per-request PKCE; embed verifier into state)
+- [x] Step 2: Patch `sso-platform/app/oauth/authorize/route.ts` (decode state; append verifier to redirect fragment)
+- [x] Step 3: Patch `sso-platform/lib/services/oauth2.ts` (safe logging for INVALID reasons)
+- [ ] Step 4: Test end-to-end OAuth authorization_code -> token exchange

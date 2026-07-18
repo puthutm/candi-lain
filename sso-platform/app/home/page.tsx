@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { logoutAction } from "./actions";
 import Link from "next/link";
 import { PORTAL_NAME } from "@/lib/client-config";
+import { generateCodeVerifier, generateCodeChallenge, base64UrlEncode } from "@/lib/utils";
 
 export default async function HomePage() {
   const user = await getSessionUser();
@@ -250,57 +251,74 @@ export default async function HomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {userApps.map((app) => {
-                // Construct a default authorization redirection flow link with mockup PKCE
-                const defaultUri = app.redirectUris[0] || "";
-                
-                // Dynamically translate localhost/127.0.0.1 callback URL to the reachable host/IP used to access the portal
-                let finalUri = defaultUri;
-                try {
-                  const uriUrl = new URL(defaultUri);
-                  if (uriUrl.hostname === "localhost" || uriUrl.hostname === "127.0.0.1") {
-                    uriUrl.hostname = hostname;
-                    finalUri = uriUrl.toString();
-                  }
-                } catch {}
+              {(
+                await Promise.all(
+                  userApps.map(async (app) => {
+                    const defaultUri = app.redirectUris[0] || "";
 
-                const authUrl = `/oauth/authorize?client_id=${app.clientId}&redirect_uri=${encodeURIComponent(
-                  finalUri
-                )}&response_type=code&scope=openid+profile&code_challenge=E9Melhoa2OwvFrGMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256&state=sso_portal_direct`;
+                    let finalUri = defaultUri;
+                    try {
+                      const uriUrl = new URL(defaultUri);
+                      if (uriUrl.hostname === "localhost" || uriUrl.hostname === "127.0.0.1") {
+                        uriUrl.hostname = hostname;
+                        finalUri = uriUrl.toString();
+                      }
+                    } catch {}
 
-                return (
-                  <a
-                    key={app.id}
-                    href={authUrl}
-                    className="group relative flex flex-col justify-between rounded-xl border border-white/10 bg-white/[0.02] p-6 shadow-md transition-all hover:-translate-y-1 hover:border-indigo-500/30 hover:bg-white/[0.04]"
-                  >
-                    <div className="flex items-start gap-4">
-                      {app.logoUrl ? (
-                        <img
-                          src={app.logoUrl}
-                          alt={`${app.name} Logo`}
-                          className="h-12 w-12 rounded-lg border border-white/10 p-1 bg-white/5 object-contain"
-                        />
-                      ) : (
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-xl font-bold text-indigo-400">
-                          {app.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div>
-                        <h3 className="text-lg font-bold group-hover:text-indigo-400 transition-colors">
-                          {app.name}
-                        </h3>
-                        <p className="mt-1 text-xs text-slate-400 line-clamp-2">
-                          {app.description || "No description provided."}
-                        </p>
+                    const verifier = generateCodeVerifier();
+                    const challenge = await generateCodeChallenge(verifier);
+
+                    // Pack verifier into state so authorize endpoint can forward it to client via fragment
+                    const statePayload = JSON.stringify({
+                      t: "pkce",
+                      v: verifier,
+                    });
+
+                    const state = base64UrlEncode(new TextEncoder().encode(statePayload).buffer);
+
+                    const authUrl = `/oauth/authorize?client_id=${app.clientId}&redirect_uri=${encodeURIComponent(
+                      finalUri
+                    )}&response_type=code&scope=openid+profile&code_challenge=${encodeURIComponent(
+                      challenge
+                    )}&code_challenge_method=S256&state=${encodeURIComponent(
+                      state
+                    )}`;
+
+                    return { app, authUrl };
+                  })
+                )
+              ).map(({ app, authUrl }) => (
+                <a
+                  key={app.id}
+                  href={authUrl}
+                  className="group relative flex flex-col justify-between rounded-xl border border-white/10 bg-white/[0.02] p-6 shadow-md transition-all hover:-translate-y-1 hover:border-indigo-500/30 hover:bg-white/[0.04]"
+                >
+                  <div className="flex items-start gap-4">
+                    {app.logoUrl ? (
+                      <img
+                        src={app.logoUrl}
+                        alt={`${app.name} Logo`}
+                        className="h-12 w-12 rounded-lg border border-white/10 p-1 bg-white/5 object-contain"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-xl font-bold text-indigo-400">
+                        {app.name.charAt(0).toUpperCase()}
                       </div>
+                    )}
+                    <div>
+                      <h3 className="text-lg font-bold group-hover:text-indigo-400 transition-colors">
+                        {app.name}
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-400 line-clamp-2">
+                        {app.description || "No description provided."}
+                      </p>
                     </div>
-                    <div className="mt-6 flex items-center justify-end text-xs font-semibold text-indigo-400 group-hover:underline">
-                      Access Application &rarr;
-                    </div>
-                  </a>
-                );
-              })}
+                  </div>
+                  <div className="mt-6 flex items-center justify-end text-xs font-semibold text-indigo-400 group-hover:underline">
+                    Access Application &rarr;
+                  </div>
+                </a>
+              ))}
             </div>
           )}
         </main>

@@ -111,7 +111,11 @@ export class OAuth2Service {
 
     // Check redirect URI
     if (codeRecord.redirectUri !== redirectUri) {
-      console.warn(`[OAuth2] Redirect URI mismatch: CodeRecord="${codeRecord.redirectUri}" vs Request="${redirectUri}"`);
+      // Safe logging: do not include authorization code itself, only non-secret redirect URI + ids.
+      console.warn(
+        `[OAuth2] Redirect URI mismatch (code INVALID): codeRecordId=${codeRecord.id} applicationId=${codeRecord.applicationId} ` +
+        `storedRedirectUri="${codeRecord.redirectUri}" requestRedirectUri="${redirectUri}"`
+      );
       return { valid: false, error: "INVALID" };
     }
 
