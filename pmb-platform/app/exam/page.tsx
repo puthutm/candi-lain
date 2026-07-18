@@ -57,7 +57,30 @@ export default function ExamPage() {
         })
         .catch((err) => console.error(err));
     }
-  }, []);
+  // Tab change detection (Visibility API)
+  useEffect(() => {
+    if (view !== "exam_text" && view !== "exam_color") return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && candidateId) {
+        fetch("/api/exam/log-violation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            applicantId: candidateId,
+            reason: `Keluar dari fokus halaman ujian CBT pada modul "${activeModule?.name || "Ujian"}"`,
+          }),
+        }).catch((err) => console.error(err));
+
+        alert("⚠️ Peringatan Penting: Anda dilarang membuka tab lain atau meminimalkan browser selama ujian berlangsung! Pelanggaran ini telah dicatat sistem.");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [view, candidateId, activeModule]);
 
   // General Timer
   useEffect(() => {

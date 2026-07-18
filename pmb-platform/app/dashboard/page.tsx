@@ -1436,10 +1436,15 @@ export default function ApplicantDashboard() {
                       </div>
                       <div className="flex items-center justify-between">
                         {uploadedFiles[docCode] ? (
-                          <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
+                          <a
+                            href={`/api/applicants/documents/${encodeURIComponent(uploadedFiles[docCode])}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1.5 text-emerald-600 text-xs font-bold hover:underline"
+                          >
                             <span>✓</span>
                             <span>{uploadedFiles[docCode]}</span>
-                          </div>
+                          </a>
                         ) : (
                           <span className="text-xs text-slate-400">Belum diunggah</span>
                         )}

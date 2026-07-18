@@ -746,13 +746,31 @@ export default function AdminPage() {
           {activePanel === "monitoring" && (
             <div className="space-y-6 fade-in">
               <h2 className="text-lg font-bold text-slate-800">Funnel Pendaftaran Mahasiswa Baru (Aktif)</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {funnelStages.map((st, i) => (
-                  <div key={i} className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col justify-between">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">{st.name}</span>
-                    <p className="text-2xl font-black mt-4 text-slate-800">{st.count.toLocaleString("id-ID")}</p>
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {funnelStages.map((st, i) => {
+                  const leadsCount = funnelStages[0].count;
+                  const conversionRate = leadsCount > 0 ? Math.round((st.count / leadsCount) * 100) : 0;
+                  return (
+                    <div key={i} className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{st.name}</span>
+                        <p className="text-2xl font-black mt-2 text-slate-800">{st.count.toLocaleString("id-ID")}</p>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-slate-50">
+                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 mb-1.5">
+                          <span>Rate Konversi</span>
+                          <span>{conversionRate}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-[#0f487b] h-full rounded-full transition-all duration-300"
+                            style={{ width: `${conversionRate}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -878,7 +896,7 @@ export default function AdminPage() {
                                     {doc.documentTypeName}
                                   </p>
                                   <a
-                                    href={doc.fileUrl}
+                                    href={`/api/applicants/documents/${encodeURIComponent(doc.fileUrl)}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="text-[10px] text-[#0f487b] font-semibold hover:underline block mt-0.5"
