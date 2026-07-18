@@ -17,7 +17,7 @@ export default async function HomePage() {
 
   const headersList = await headers();
   const host = headersList.get("host") || "localhost:3000";
-  const hostname = host.split(":")[0];
+  const hostname = host.split(":")[0] || "localhost";
 
   // Fetch applications user has active roles in
   const userApps = await db
