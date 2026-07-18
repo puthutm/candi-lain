@@ -46,8 +46,10 @@ export async function GET(req: Request) {
     }
 
     // 2. Call SSO token endpoint via HTTP POST (server-to-server)
-    const requestUrl = new URL(req.url);
-    const callbackUrl = `${requestUrl.protocol}//${requestUrl.host}${requestUrl.pathname}`;
+    // IMPORTANT: redirect_uri must match EXACTLY (strict string compare) with the value stored by SSO
+    // in `sso-platform/app/oauth/authorize/route.ts`.
+    // Use the configured public callback URL instead of reconstructing from container hostname.
+    const callbackUrl = env.SSO_OAUTH_CALLBACK_URL;
 
     const tokenResponse = await fetch(env.SSO_OAUTH_TOKEN_URL, {
       method: "POST",
