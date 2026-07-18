@@ -1,7 +1,5 @@
 import NextAuth from "next-auth";
 
-const nextAuthUrl = process.env.NEXTAUTH_URL;
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // Keep host handling stable behind reverse proxy/docker
   trustHost: true,
