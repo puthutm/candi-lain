@@ -14,7 +14,7 @@ run_migration() {
       npm ci
     elif [ -f pnpm-lock.yaml ]; then
       npm install -g pnpm
-      pnpm install --frozen-lockfile
+      pnpm install --no-frozen-lockfile
     else
       npm install
     fi
