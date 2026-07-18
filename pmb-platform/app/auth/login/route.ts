@@ -25,11 +25,20 @@ export async function GET() {
     hasNEXTAUTH_SECRET: Boolean(env.NEXTAUTH_SECRET),
   });
 
-  // Auth.js v5 signIn triggers PKCE/state creation and redirects to provider authorization endpoint.
-  // Use NextAuth's built-in signIn redirect flow.
-  await signIn("unsia-sso", { redirectTo });
+  // Important: return the redirect Response from signIn so cookies are set on the browser.
+  const result = await signIn("unsia-sso", { redirectTo });
 
-  // signIn normally redirects; keep fallback.
+  // Some auth.js versions return a Response, others return void; handle both.
+  if (result instanceof Response) {
+    const setCookie = result.headers.get("set-cookie") || "";
+    console.info("[pmb][auth][login] signIn returned Response", {
+      hasSetCookieState: setCookie.includes("pmb.authjs.state="),
+      hasSetCookiePkce: setCookie.includes("pmb.authjs.pkce.code_verifier="),
+    });
+    return result;
+  }
+
+  console.info("[pmb][auth][login] signIn returned non-Response", { type: typeof result });
   return NextResponse.json({ success: true });
 }
 
