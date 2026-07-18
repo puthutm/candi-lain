@@ -69,9 +69,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "localhost:3000";
-    const proto = request.headers.get("x-forwarded-proto") || "http";
-    const clientUrl = `${proto}://${host}${request.nextUrl.pathname}${request.nextUrl.search}`;
+    // Build client origin from the actual request URL to avoid wrong host/proto behind proxies.
+    // request.url is already the correct origin for this hop (works for direct access and most proxy setups).
+    const clientUrlObj = new URL(request.url);
+
+    // Ensure we preserve Next route path/query for the current request.
+    clientUrlObj.pathname = request.nextUrl.pathname;
+    clientUrlObj.search = request.nextUrl.search;
+
+    const clientUrl = clientUrlObj.toString();
 
     if (!sessionUser) {
       // Redirect to login page, preserving request URL for post-login return
