@@ -285,17 +285,19 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     // 5. Seed Reference Data Categories & Items
     console.log("Seeding Reference Data (JABATAN)...");
     
-    let jabCategory;
     const existingCat = await db.select().from(refCategories).where(eq(refCategories.code, "JABATAN")).limit(1);
-    if (existingCat.length === 0) {
+    let jabCategory = existingCat[0];
+    if (!jabCategory) {
       const [inserted] = await db.insert(refCategories).values({
         code: "JABATAN",
         name: "Jabatan Pegawai & Dosen",
         description: "Kategori referensi untuk jabatan fungsional dan struktural di Universitas Siber Asia"
       }).returning();
       jabCategory = inserted;
-    } else {
-      jabCategory = existingCat[0];
+    }
+
+    if (!jabCategory) {
+      throw new Error("Failed to seed JABATAN category");
     }
 
     const positionsList = [
@@ -342,9 +344,9 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     // 6. Seed Organizations
     console.log("Seeding Organizations Hierarchy...");
     
-    let rektoratOrg;
     const existingRektorat = await db.select().from(organizations).where(eq(organizations.code, "REKTORAT")).limit(1);
-    if (existingRektorat.length === 0) {
+    let rektoratOrg = existingRektorat[0];
+    if (!rektoratOrg) {
       const [inserted] = await db.insert(organizations).values({
         code: "REKTORAT",
         name: "Rektorat Universitas Siber Asia",
@@ -352,8 +354,10 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         isActive: true
       }).returning();
       rektoratOrg = inserted;
-    } else {
-      rektoratOrg = existingRektorat[0];
+    }
+
+    if (!rektoratOrg) {
+      throw new Error("Failed to seed REKTORAT organization");
     }
 
     const divisionsList = [
