@@ -111,12 +111,18 @@ export function isValidRedirectUri(uri: string): boolean {
       return true;
     }
     
-    // Allow HTTP for localhost, 127.0.0.1, or private LAN IP addresses (10.x.x.x, 192.168.x.x, 172.16.x.x-172.31.x.x)
+    // Allow HTTP for localhost, 127.0.0.1, private LAN IP addresses, single-label hostnames (Docker container IDs/names), or local domains
+    const isSingleLabel = !url.hostname.includes(".");
+    const isLocalTld = url.hostname.endsWith(".local") || 
+                       url.hostname.endsWith(".internal") || 
+                       url.hostname.endsWith(".lan");
     const isLocalOrPrivate = url.hostname === "localhost" || 
                              url.hostname === "127.0.0.1" ||
                              url.hostname.startsWith("10.") ||
                              url.hostname.startsWith("192.168.") ||
-                             /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(url.hostname);
+                             /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(url.hostname) ||
+                             isSingleLabel ||
+                             isLocalTld;
 
     if (url.protocol === "http:" && isLocalOrPrivate) {
       return true;
@@ -166,13 +172,19 @@ export function isRedirectUriAllowed(registeredUris: string[], requestedUri: str
         // Compare ports
         if (reqUrl.port !== regUrl.port) continue;
         
-        // If registered is localhost/127.0.0.1, allow requested to be any private LAN IP or localhost
+        // If registered is localhost/127.0.0.1, allow requested to be any private LAN IP, local hostname, or localhost
         const isRegLocal = regUrl.hostname === "localhost" || regUrl.hostname === "127.0.0.1";
+        const isReqSingleLabel = !reqUrl.hostname.includes(".");
+        const isReqLocalTld = reqUrl.hostname.endsWith(".local") || 
+                              reqUrl.hostname.endsWith(".internal") || 
+                              reqUrl.hostname.endsWith(".lan");
         const isReqLocalOrPrivate = reqUrl.hostname === "localhost" || 
                                     reqUrl.hostname === "127.0.0.1" ||
                                     reqUrl.hostname.startsWith("10.") ||
                                     reqUrl.hostname.startsWith("192.168.") ||
-                                    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(reqUrl.hostname);
+                                    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(reqUrl.hostname) ||
+                                    isReqSingleLabel ||
+                                    isReqLocalTld;
                                     
         if (isRegLocal && isReqLocalOrPrivate) {
           return true;
