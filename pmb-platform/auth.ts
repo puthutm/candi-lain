@@ -39,30 +39,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 
   cookies: {
-    sessionToken: {
-      name: "pmb.authjs.session-token",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false },
-    },
-    callbackUrl: {
-      name: "pmb.authjs.callback-url",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false },
-    },
-    csrfToken: {
-      name: "pmb.authjs.csrf-token",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false },
-    },
-    pkceCodeVerifier: {
-      name: "pmb.authjs.pkce.code_verifier",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false, maxAge: 900 },
-    },
-    state: {
-      name: "pmb.authjs.state",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false, maxAge: 900 },
-    },
-    nonce: {
-      name: "pmb.authjs.nonce",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false },
-    },
+    sessionToken: { name: "pmb.authjs.session-token" },
+    callbackUrl: { name: "pmb.authjs.callback-url" },
+    csrfToken: { name: "pmb.authjs.csrf-token" },
+    pkceCodeVerifier: { name: "pmb.authjs.pkce.code_verifier" },
+    state: { name: "pmb.authjs.state" },
+    nonce: { name: "pmb.authjs.nonce" },
   },
 
   callbacks: {

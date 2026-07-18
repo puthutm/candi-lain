@@ -1,9 +1,24 @@
 import { NextResponse } from "next/server";
+import { env } from "@/lib/env";
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
+
+    console.info("[pmb][auth][callback-config]", {
+      AUTH_TRUST_HOST: env.AUTH_TRUST_HOST,
+      AUTH_URL: env.AUTH_URL,
+      NEXTAUTH_URL: env.NEXTAUTH_URL,
+      hasAUTH_SECRET: Boolean(env.AUTH_SECRET),
+      hasNEXTAUTH_SECRET: Boolean(env.NEXTAUTH_SECRET),
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ? "set" : "missing",
+      NEXT_PUBLIC_SSO_OAUTH_CALLBACK_URL: process.env.NEXT_PUBLIC_SSO_OAUTH_CALLBACK_URL
+        ? "set"
+        : process.env.SSO_OAUTH_CALLBACK_URL
+        ? "set"
+        : "missing",
+    });
 
     // Debug cookie presence for PKCE/state/csrf/nonces.
     // NOTE: only checks existence of cookie keys, not cookie values.
@@ -13,11 +28,14 @@ export async function GET(req: Request) {
     const hasCsrf = cookieHeader.includes("pmb.authjs.csrf-token=");
     const hasNonce = cookieHeader.includes("pmb.authjs.nonce=");
 
+    const hasDefaultPkce = cookieHeader.includes("authjs.pkce.code_verifier=");
+    const hasDefaultState = cookieHeader.includes("authjs.state=");
+    const hasDefaultCsrf = cookieHeader.includes("authjs.csrf-token=");
+    const hasDefaultNonce = cookieHeader.includes("authjs.nonce=");
+
     console.info("[pmb][auth][callback-cookie-presence]", {
-      hasPkce,
-      hasState,
-      hasCsrf,
-      hasNonce,
+      pmb: { hasPkce, hasState, hasCsrf, hasNonce },
+      default: { hasPkce: hasDefaultPkce, hasState: hasDefaultState, hasCsrf: hasDefaultCsrf, hasNonce: hasDefaultNonce },
     });
 
     if (!code) {
