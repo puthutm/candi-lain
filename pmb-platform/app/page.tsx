@@ -198,7 +198,8 @@ export default function PmbPublikPage() {
 
   const handleSsoLogin = (e: React.MouseEvent) => {
     e.preventDefault();
-    window.location.href = "/auth/login";
+    // Use Auth.js official entrypoint that generates pmb.authjs.state + pmb.authjs.pkce cookies.
+    window.location.href = "/auth/login-start";
   };
 
   const handlePrev = () => {
