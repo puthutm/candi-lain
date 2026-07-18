@@ -1,6 +1,11 @@
 import NextAuth from "next-auth";
 
+const nextAuthUrl = process.env.NEXTAUTH_URL;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Keep host handling stable behind reverse proxy/docker
+  trustHost: true,
+
   providers: [
     {
       id: "unsia-sso",
@@ -14,6 +19,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       userinfo: process.env.SSO_OAUTH_USERINFO_URL,
       clientId: process.env.SSO_OAUTH_CLIENT_ID,
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET,
+
       profile(profile: any) {
         return {
           id: profile.sub,
@@ -24,6 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     },
   ],
+
   callbacks: {
     async jwt({ token, user }: any) {
       if (user) {
@@ -38,5 +45,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
+
   secret: process.env.NEXTAUTH_SECRET,
+
+  // Temporary: help diagnose cookie/PKCE parsing issues.
+  debug: process.env.NODE_ENV !== "production",
 });
