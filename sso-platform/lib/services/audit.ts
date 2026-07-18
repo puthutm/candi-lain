@@ -25,14 +25,22 @@ export class AuditService {
     entityId: string;
     metadata?: Record<string, any>;
   }): Promise<void> {
-    await auditQueue.push({
-      actorUserId: params.actorUserId,
-      action: params.action,
-      entityType: params.entityType,
-      entityId: params.entityId,
-      metadata: params.metadata || null,
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      await auditQueue.push({
+        actorUserId: params.actorUserId,
+        action: params.action,
+        entityType: params.entityType,
+        entityId: params.entityId,
+        metadata: params.metadata || null,
+        createdAt: new Date().toISOString(),
+      });
+      // Fire-and-forget processing of the queue to write to DB immediately
+      this.processQueue().catch((err) => {
+        console.error("Audit background queue processing failed:", err);
+      });
+    } catch (err) {
+      console.error("Failed to push audit event to queue:", err);
+    }
   }
 
   /**

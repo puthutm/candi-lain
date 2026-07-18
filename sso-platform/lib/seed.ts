@@ -3,6 +3,7 @@ import { users } from "@/db/schema/users";
 import { applications, scopes } from "@/db/schema/applications";
 import { applicationRoles, userApplicationRoles } from "@/db/schema/rbac";
 import { refCategories, refItems, organizations, userOrganizations } from "@/db/schema/reference";
+import { auditLogs } from "@/db/schema/audit";
 import { eq, and } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { env } from "./env";
@@ -450,6 +451,54 @@ export async function ensureDatabaseSeeded(force?: boolean) {
           isPrimary: true
         });
       }
+    }
+
+    // 8. Seed Sample Audit Logs
+    console.log("Seeding Sample Audit Logs...");
+    const existingLogs = await db.select().from(auditLogs).limit(1);
+    if (existingLogs.length === 0 && adminUser) {
+      await db.insert(auditLogs).values([
+        {
+          actorUserId: "system",
+          action: "SYSTEM_INITIALIZED",
+          entityType: "system",
+          entityId: "sso-core",
+          metadata: { message: "SSO Platform Database seeded successfully with initial apps and roles" },
+          createdAt: new Date(Date.now() - 3600000 * 24 * 3) // 3 days ago
+        },
+        {
+          actorUserId: adminUser.id,
+          action: "APPLICATION_CREATED",
+          entityType: "application",
+          entityId: env.SEED_SIAKAD_CLIENT_ID || "siakad-platform",
+          metadata: { name: "SIAKAD Platform" },
+          createdAt: new Date(Date.now() - 3600000 * 24 * 2) // 2 days ago
+        },
+        {
+          actorUserId: adminUser.id,
+          action: "APPLICATION_CREATED",
+          entityType: "application",
+          entityId: env.SEED_LMS_CLIENT_ID || "lms-platform",
+          metadata: { name: "LMS Platform" },
+          createdAt: new Date(Date.now() - 3600000 * 24 * 2)
+        },
+        {
+          actorUserId: adminUser.id,
+          action: "ROLE_ASSIGNED",
+          entityType: "user_role",
+          entityId: adminUser.id,
+          metadata: { role: "admin", target_app: "siakad-platform" },
+          createdAt: new Date(Date.now() - 3600000 * 12) // 12 hours ago
+        },
+        {
+          actorUserId: adminUser.id,
+          action: "LOGIN_SUCCESS",
+          entityType: "user",
+          entityId: adminUser.id,
+          metadata: { ip: "127.0.0.1", user_agent: "Mozilla/5.0" },
+          createdAt: new Date(Date.now() - 3600000 * 2) // 2 hours ago
+        }
+      ]);
     }
 
     console.log("SSO Platform Database seeded successfully!");
