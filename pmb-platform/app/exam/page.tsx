@@ -57,6 +57,8 @@ export default function ExamPage() {
         })
         .catch((err) => console.error(err));
     }
+  }, []);
+
   // Tab change detection (Visibility API)
   useEffect(() => {
     if (view !== "exam_text" && view !== "exam_color") return;
