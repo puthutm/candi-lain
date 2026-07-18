@@ -2,11 +2,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import {
-  SSO_AUTHORIZE_URL,
-  SSO_CLIENT_ID,
-  SSO_CALLBACK_URL,
-} from "@/lib/client-config";
 
 interface UserProfile {
   userId: string;

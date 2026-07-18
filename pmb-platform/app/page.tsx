@@ -4,9 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   INSTITUTION_NAME,
-  SSO_AUTHORIZE_URL,
-  SSO_CLIENT_ID,
-  SSO_CALLBACK_URL,
   DEFAULT_APPLICANT_PASSWORD,
 } from "@/lib/client-config";
 

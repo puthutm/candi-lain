@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { INSTITUTION_SHORT_NAME, SSO_AUTHORIZE_URL, SSO_CLIENT_ID, SSO_CALLBACK_URL } from "@/lib/client-config";
+import { INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 type AdminTab = "dashboard" | "krs_validation" | "pddikti" | "audit";
 
 interface KrsSubmission {
