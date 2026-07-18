@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
+import crypto from "crypto";
 import { pmbApplicants } from "@/db/schema/applicants";
 import { pmbWaves, pmbEntryPaths, pmbStudyPrograms } from "@/db/schema/master";
 import { eq } from "drizzle-orm";
@@ -16,8 +17,21 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: "Missing authorization code" }, { status: 400 });
     }
 
-    // 1. Get code verifier from cookies
     const cookieStore = await cookies();
+
+    // Idempotency: prevent exchanging the same authorization code multiple times
+    // (reload/multi-request can cause EXPIRED/ALREADY_USED issues)
+    const codeHash = crypto.createHash("sha256").update(code).digest("base64url");
+    const usedFlagKey = `sso_oauth_code_used_${codeHash}`;
+    const usedAlready = cookieStore.get(usedFlagKey)?.value === "1";
+    if (usedAlready) {
+      return NextResponse.json(
+        { success: false, error: "Authorization code already processed" },
+        { status: 400 }
+      );
+    }
+
+    // 1. Get code verifier from cookies
     let codeVerifier = cookieStore.get("sso_code_verifier")?.value;
 
     // Fallback: portal direct or PKCE verifier embedded inside `state`
@@ -65,6 +79,18 @@ export async function GET(req: Request) {
         redirect_uri: callbackUrl,
       }),
     });
+
+    if (tokenResponse.ok) {
+      // Mark code as processed only after token exchange succeeds
+      cookieStore.set(usedFlagKey, "1", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/api/auth/callback",
+        // align with typical auth code expiry; SSO default 600s
+        maxAge: 600,
+      });
+    }
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json().catch(() => ({}));
