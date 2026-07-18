@@ -5,6 +5,21 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
 
+    // Debug cookie presence for PKCE/state/csrf/nonces.
+    // NOTE: only checks existence of cookie keys, not cookie values.
+    const cookieHeader = req.headers.get("cookie") || "";
+    const hasPkce = cookieHeader.includes("pmb.authjs.pkce.code_verifier=");
+    const hasState = cookieHeader.includes("pmb.authjs.state=");
+    const hasCsrf = cookieHeader.includes("pmb.authjs.csrf-token=");
+    const hasNonce = cookieHeader.includes("pmb.authjs.nonce=");
+
+    console.info("[pmb][auth][callback-cookie-presence]", {
+      hasPkce,
+      hasState,
+      hasCsrf,
+      hasNonce,
+    });
+
     if (!code) {
       return NextResponse.json({ success: false, error: "Missing authorization code" }, { status: 400 });
     }

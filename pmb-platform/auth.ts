@@ -1,8 +1,17 @@
 import NextAuth from "next-auth";
 
+const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  // Keep host handling stable behind reverse proxy/docker
   trustHost: true,
+
+  // We're on HTTP in local/intranet deployment.
+  useSecureCookies: false,
+
+  // Ensure secret is stable and used explicitly.
+  secret,
+
+  debug: true,
 
   providers: [
     {
@@ -29,6 +38,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   ],
 
+  // Use unique cookie names to avoid collisions across apps on same host:port family.
+  // Keep this conservative (name only) to minimize schema mismatch in next-auth beta.
+  cookies: {
+    sessionToken: { name: "pmb.authjs.session-token" },
+    callbackUrl: { name: "pmb.authjs.callback-url" },
+    csrfToken: { name: "pmb.authjs.csrf-token" },
+    pkceCodeVerifier: { name: "pmb.authjs.pkce.code_verifier" },
+    state: { name: "pmb.authjs.state" },
+    nonce: { name: "pmb.authjs.nonce" },
+  },
+
   callbacks: {
     async jwt({ token, user }: any) {
       if (user) {
@@ -43,9 +63,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
-
-  secret: process.env.NEXTAUTH_SECRET,
-
-  // Temporary: help diagnose cookie/PKCE parsing issues.
-  debug: process.env.NODE_ENV !== "production",
 });
