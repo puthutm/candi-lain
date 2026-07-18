@@ -78,7 +78,7 @@ export default function SkeuDashboard() {
     const array = new Uint32Array(22);
     window.crypto.getRandomValues(array);
     const verifier = Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
-    sessionStorage.setItem("sso_code_verifier", verifier);
+    document.cookie = `sso_code_verifier=${verifier}; path=/; max-age=600; SameSite=Lax`;
 
     let authUrl = SSO_AUTHORIZE_URL;
     let cbUrl = SSO_CALLBACK_URL;

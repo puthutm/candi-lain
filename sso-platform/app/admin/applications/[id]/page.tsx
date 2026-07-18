@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { userApplicationRoles, applicationRoles } from "@/db/schema/rbac";
 import { users } from "@/db/schema/users";
 import { eq, and } from "drizzle-orm";
-import Link from "next/link";
+import AdminSidebar from "@/components/AdminSidebar";
 import AppActions from "./AppActions";
 import RolesManager from "./RolesManager";
 import AssignmentsManager from "./AssignmentsManager";
@@ -68,21 +68,7 @@ export default async function AppDetailPage({ params }: PageProps) {
   return (
     <div className="flex min-h-screen bg-slate-950 font-sans text-white">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-white/10 bg-slate-900/50 p-6 flex flex-col justify-between">
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-xl font-bold tracking-tight text-transparent">
-            SSO Platform
-          </div>
-          <nav className="flex flex-col gap-2">
-            <Link
-              href={userIsAdmin ? "/admin" : "/home"}
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-            >
-              &larr; Back
-            </Link>
-          </nav>
-        </div>
-      </aside>
+      <AdminSidebar activeTab="applications" adminName={user.fullName} />
 
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto max-w-6xl mx-auto w-full">

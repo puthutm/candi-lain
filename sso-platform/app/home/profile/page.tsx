@@ -1,6 +1,7 @@
 import { getSessionUser } from "@/lib/auth-helper";
 import { redirect } from "next/navigation";
 import ProfileForm from "./ProfileForm";
+import AuthorizedApps from "./AuthorizedApps";
 
 export default async function ProfilePage() {
   const user = await getSessionUser();
@@ -16,8 +17,9 @@ export default async function ProfilePage() {
           Kelola data profil Anda secara mandiri di SSO Platform.
         </p>
 
-        <div className="mt-8">
+        <div className="mt-8 space-y-10">
           <ProfileForm initialUser={{ fullName: user.fullName, email: user.email, photoUrl: user.photoUrl }} />
+          <AuthorizedApps />
         </div>
       </div>
     </div>
