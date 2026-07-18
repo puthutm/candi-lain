@@ -748,7 +748,7 @@ export default function AdminPage() {
               <h2 className="text-lg font-bold text-slate-800">Funnel Pendaftaran Mahasiswa Baru (Aktif)</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {funnelStages.map((st, i) => {
-                  const leadsCount = funnelStages[0].count;
+                  const leadsCount = funnelStages[0]?.count ?? 0;
                   const conversionRate = leadsCount > 0 ? Math.round((st.count / leadsCount) * 100) : 0;
                   return (
                     <div key={i} className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition">
