@@ -328,14 +328,17 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         .limit(1);
       
       if (existingItem.length === 0) {
-        const [inserted] = await db.insert(refItems).values({
+        const insertedList = await db.insert(refItems).values({
           categoryId: jabCategory.id,
           code: pos.code,
           name: pos.name,
           sortOrder: pos.sortOrder,
           isActive: true
         }).returning();
-        positionItems[pos.code] = inserted.id;
+        const inserted = insertedList[0];
+        if (inserted) {
+          positionItems[pos.code] = inserted.id;
+        }
       } else {
         positionItems[pos.code] = existingItem[0].id;
       }
@@ -371,8 +374,11 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     for (const div of divisionsList) {
       const existingDiv = await db.select().from(organizations).where(eq(organizations.code, div.code)).limit(1);
       if (existingDiv.length === 0) {
-        const [inserted] = await db.insert(organizations).values(div).returning();
-        divisionOrgs[div.code] = inserted.id;
+        const insertedList = await db.insert(organizations).values(div).returning();
+        const inserted = insertedList[0];
+        if (inserted) {
+          divisionOrgs[div.code] = inserted.id;
+        }
       } else {
         divisionOrgs[div.code] = existingDiv[0].id;
       }
@@ -389,8 +395,11 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     for (const dept of deptsList) {
       const existingDept = await db.select().from(organizations).where(eq(organizations.code, dept.code)).limit(1);
       if (existingDept.length === 0) {
-        const [inserted] = await db.insert(organizations).values(dept).returning();
-        deptOrgs[dept.code] = inserted.id;
+        const insertedList = await db.insert(organizations).values(dept).returning();
+        const inserted = insertedList[0];
+        if (inserted) {
+          deptOrgs[dept.code] = inserted.id;
+        }
       } else {
         deptOrgs[dept.code] = existingDept[0].id;
       }
