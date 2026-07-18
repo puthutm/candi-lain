@@ -19,6 +19,26 @@ run_migration() {
       npm install
     fi
   fi
+ 
+  if [ "${SERVICE_DIR}" = "sso-platform" ]; then
+    echo "==> Ensuring all platform databases exist in PostgreSQL..."
+    node -e "
+      const postgres = require('postgres');
+      const sql = postgres('postgresql://postgres:postgres@db:5432/postgres');
+      const databases = ['sso_platform', 'reference_data', 'pmb_platform', 'siakad_platform', 'lms_platform', 'keuangan_platform', 'hris_platform', 'bank_konten_platform'];
+      async function main() {
+        for (const db of databases) {
+          const exists = await sql\`SELECT 1 FROM pg_database WHERE datname = \${db}\`;
+          if (exists.length === 0) {
+            console.log('Creating database: ' + db);
+            await sql.unsafe('CREATE DATABASE ' + db);
+          }
+        }
+        await sql.end();
+      }
+      main().catch((err) => { console.error(err); process.exit(1); });
+    "
+  fi
 
   export DATABASE_URL="postgresql://postgres:postgres@db:5432/${DB_NAME}"
 
