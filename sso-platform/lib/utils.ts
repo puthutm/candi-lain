@@ -111,8 +111,14 @@ export function isValidRedirectUri(uri: string): boolean {
       return true;
     }
     
-    // Allow HTTP only for localhost in development
-    if (url.protocol === "http:" && (url.hostname === "localhost" || url.hostname === "127.0.0.1")) {
+    // Allow HTTP for localhost, 127.0.0.1, or private LAN IP addresses (10.x.x.x, 192.168.x.x, 172.16.x.x-172.31.x.x)
+    const isLocalOrPrivate = url.hostname === "localhost" || 
+                             url.hostname === "127.0.0.1" ||
+                             url.hostname.startsWith("10.") ||
+                             url.hostname.startsWith("192.168.") ||
+                             /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(url.hostname);
+
+    if (url.protocol === "http:" && isLocalOrPrivate) {
       return true;
     }
     
