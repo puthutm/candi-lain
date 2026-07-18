@@ -148,3 +148,42 @@ export function joinScopes(scopes: string[]): string {
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/**
+ * Check if the requested redirect URI is allowed, considering localhost/LAN mapping flexibility.
+ */
+export function isRedirectUriAllowed(registeredUris: string[], requestedUri: string): boolean {
+  if (registeredUris.includes(requestedUri)) {
+    return true;
+  }
+  try {
+    const reqUrl = new URL(requestedUri);
+    for (const reg of registeredUris) {
+      try {
+        const regUrl = new URL(reg);
+        // Compare paths
+        if (reqUrl.pathname !== regUrl.pathname) continue;
+        // Compare ports
+        if (reqUrl.port !== regUrl.port) continue;
+        
+        // If registered is localhost/127.0.0.1, allow requested to be any private LAN IP or localhost
+        const isRegLocal = regUrl.hostname === "localhost" || regUrl.hostname === "127.0.0.1";
+        const isReqLocalOrPrivate = reqUrl.hostname === "localhost" || 
+                                    reqUrl.hostname === "127.0.0.1" ||
+                                    reqUrl.hostname.startsWith("10.") ||
+                                    reqUrl.hostname.startsWith("192.168.") ||
+                                    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(reqUrl.hostname);
+                                    
+        if (isRegLocal && isReqLocalOrPrivate) {
+          return true;
+        }
+      } catch {
+        // Ignore parsing errors for individual registered URIs
+      }
+    }
+  } catch {
+    // Ignore parsing error for requested URI
+  }
+  return false;
+}
+

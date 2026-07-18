@@ -4,7 +4,7 @@ import { ClientService } from "@/lib/services/client";
 import { AuthenticationService } from "@/lib/services/auth";
 import { ConsentService } from "@/lib/services/consent";
 import { OAuth2Service } from "@/lib/services/oauth2";
-import { parseScopes } from "@/lib/utils";
+import { parseScopes, isRedirectUriAllowed } from "@/lib/utils";
 import { ensureDatabaseSeeded } from "@/lib/seed";
 
 export async function GET(request: NextRequest) {
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate redirect URI against application whitelist
-    if (!app.redirectUris.includes(redirectUri)) {
+    if (!isRedirectUriAllowed(app.redirectUris, redirectUri)) {
       return new NextResponse("Invalid redirect_uri", { status: 400 });
     }
 
