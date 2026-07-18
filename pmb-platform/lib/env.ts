@@ -16,6 +16,13 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().default("http://localhost:3002"),
   NEXT_PUBLIC_API_URL: z.string().default("http://localhost:3002/api"),
 
+  // Auth.js / NextAuth
+  AUTH_URL: z.string().default("http://localhost:3002"),
+  NEXTAUTH_URL: z.string().default("http://localhost:3002"),
+  AUTH_TRUST_HOST: z.coerce.boolean().default(true),
+  AUTH_SECRET: z.string().optional(),
+  NEXTAUTH_SECRET: z.string().optional(),
+
   // SSO OAuth2 Configuration
   SSO_OAUTH_CLIENT_ID: z.string().default("pmb-platform"),
   SSO_OAUTH_CLIENT_SECRET: z.string().default(""),

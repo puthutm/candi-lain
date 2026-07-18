@@ -1,31 +1,31 @@
 import NextAuth from "next-auth";
-
-const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+import { env } from "@/lib/env";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  trustHost: true,
-
-  // We're on HTTP in local/intranet deployment.
+  trustHost: env.AUTH_TRUST_HOST,
   useSecureCookies: false,
-
-  // Ensure secret is stable and used explicitly.
-  secret,
-
   debug: true,
 
+  // Ensure secret is stable and used explicitly.
+  secret: env.AUTH_SECRET ?? env.NEXTAUTH_SECRET,
+
+  // NextAuth/Auth.js v5: enforce PKCE checks (don't disable PKCE).
+  // If your beta doesn't support `checks` at provider-level, remove it later,
+  // but keep PKCE enabled (do not disable).
   providers: [
     {
       id: "unsia-sso",
       name: "UNSIA SSO",
       type: "oauth",
+      clientId: env.SSO_OAUTH_CLIENT_ID,
+      clientSecret: env.SSO_OAUTH_CLIENT_SECRET,
       authorization: {
-        url: process.env.SSO_OAUTH_AUTHORIZE_URL,
+        url: env.SSO_OAUTH_AUTHORIZE_URL,
         params: { scope: "openid profile email" },
       },
-      token: process.env.SSO_OAUTH_TOKEN_URL,
-      userinfo: process.env.SSO_OAUTH_USERINFO_URL,
-      clientId: process.env.SSO_OAUTH_CLIENT_ID,
-      clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET,
+      token: env.SSO_OAUTH_TOKEN_URL,
+      userinfo: env.SSO_OAUTH_USERINFO_URL,
+      checks: ["pkce", "state"],
 
       profile(profile: any) {
         return {
@@ -38,15 +38,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   ],
 
-  // Use unique cookie names to avoid collisions across apps on same host:port family.
-  // Keep this conservative (name only) to minimize schema mismatch in next-auth beta.
   cookies: {
-    sessionToken: { name: "pmb.authjs.session-token" },
-    callbackUrl: { name: "pmb.authjs.callback-url" },
-    csrfToken: { name: "pmb.authjs.csrf-token" },
-    pkceCodeVerifier: { name: "pmb.authjs.pkce.code_verifier" },
-    state: { name: "pmb.authjs.state" },
-    nonce: { name: "pmb.authjs.nonce" },
+    sessionToken: {
+      name: "pmb.authjs.session-token",
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false },
+    },
+    callbackUrl: {
+      name: "pmb.authjs.callback-url",
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false },
+    },
+    csrfToken: {
+      name: "pmb.authjs.csrf-token",
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false },
+    },
+    pkceCodeVerifier: {
+      name: "pmb.authjs.pkce.code_verifier",
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false, maxAge: 900 },
+    },
+    state: {
+      name: "pmb.authjs.state",
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false, maxAge: 900 },
+    },
+    nonce: {
+      name: "pmb.authjs.nonce",
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false },
+    },
   },
 
   callbacks: {

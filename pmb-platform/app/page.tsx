@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { signIn } from "@/auth";
 import {
   INSTITUTION_NAME,
   DEFAULT_APPLICANT_PASSWORD,
@@ -196,9 +197,9 @@ export default function PmbPublikPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  const handleSsoLogin = (e: React.MouseEvent) => {
+  const handleSsoLogin = async (e: React.MouseEvent) => {
     e.preventDefault();
-    window.location.href = "/api/auth/signin/unsia-sso";
+    await signIn("unsia-sso", undefined);
   };
 
   const handlePrev = () => {
