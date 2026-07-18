@@ -4,6 +4,7 @@ import { userApplicationRoles } from "@/db/schema/rbac";
 import { applications } from "@/db/schema/applications";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { logoutAction } from "./actions";
 import Link from "next/link";
 import { PORTAL_NAME } from "@/lib/client-config";
@@ -13,6 +14,10 @@ export default async function HomePage() {
   if (!user) {
     redirect("/?return_to=%2Fhome");
   }
+
+  const headersList = await headers();
+  const host = headersList.get("host") || "localhost:3000";
+  const hostname = host.split(":")[0];
 
   // Fetch applications user has active roles in
   const userApps = await db
@@ -248,8 +253,19 @@ export default async function HomePage() {
               {userApps.map((app) => {
                 // Construct a default authorization redirection flow link with mockup PKCE
                 const defaultUri = app.redirectUris[0] || "";
+                
+                // Dynamically translate localhost/127.0.0.1 callback URL to the reachable host/IP used to access the portal
+                let finalUri = defaultUri;
+                try {
+                  const uriUrl = new URL(defaultUri);
+                  if (uriUrl.hostname === "localhost" || uriUrl.hostname === "127.0.0.1") {
+                    uriUrl.hostname = hostname;
+                    finalUri = uriUrl.toString();
+                  }
+                } catch {}
+
                 const authUrl = `/oauth/authorize?client_id=${app.clientId}&redirect_uri=${encodeURIComponent(
-                  defaultUri
+                  finalUri
                 )}&response_type=code&scope=openid+profile&code_challenge=E9Melhoa2OwvFrGMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256&state=sso_portal_direct`;
 
                 return (
