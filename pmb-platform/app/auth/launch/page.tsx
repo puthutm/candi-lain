@@ -9,9 +9,9 @@ export default function SsoLaunchPage() {
     if (started.current) return;
     started.current = true;
 
-    console.info("[pmb][auth][launch] redirect to /auth/login");
-    // Server route /auth/login will call Auth.js signIn and create state/PKCE.
-    window.location.href = "/auth/login";
+    console.info("[pmb][auth][launch] redirect to /auth/login-start");
+    // Server route /auth/login-start calls Auth.js signIn and creates state/PKCE cookies.
+    window.location.href = "/auth/login-start";
   }, []);
 
   return <p>Mengarahkan ke SSO...</p>;
