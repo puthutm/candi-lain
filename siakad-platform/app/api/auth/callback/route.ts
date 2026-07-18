@@ -16,7 +16,13 @@ export async function GET(req: Request) {
 
     // 1. Get code verifier from cookies
     const cookieStore = await cookies();
-    const codeVerifier = cookieStore.get("sso_code_verifier")?.value;
+    let codeVerifier = cookieStore.get("sso_code_verifier")?.value;
+
+    // Fallback for IdP-initiated login (SSO Portal Direct flow)
+    const state = searchParams.get("state");
+    if (!codeVerifier && state === "sso_portal_direct") {
+      codeVerifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+    }
 
     if (!codeVerifier) {
       return NextResponse.json({ success: false, error: "Missing code verifier cookie" }, { status: 400 });
