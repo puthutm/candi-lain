@@ -53,10 +53,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "localhost:3000";
+    const proto = request.headers.get("x-forwarded-proto") || "http";
+    const clientUrl = `${proto}://${host}${request.nextUrl.pathname}${request.nextUrl.search}`;
+
     if (!sessionUser) {
       // Redirect to login page, preserving request URL for post-login return
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("return_to", request.url);
+      const loginUrl = new URL("/login", clientUrl);
+      loginUrl.searchParams.set("return_to", clientUrl);
       return NextResponse.redirect(loginUrl.toString());
     }
 
@@ -66,8 +70,8 @@ export async function GET(request: NextRequest) {
 
     if (!consented) {
       // Redirect to consent screen
-      const consentUrl = new URL("/oauth/consent", request.url);
-      consentUrl.searchParams.set("return_to", request.url);
+      const consentUrl = new URL("/oauth/consent", clientUrl);
+      consentUrl.searchParams.set("return_to", clientUrl);
       return NextResponse.redirect(consentUrl.toString());
     }
 
