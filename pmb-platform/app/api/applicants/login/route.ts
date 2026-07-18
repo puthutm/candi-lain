@@ -7,6 +7,13 @@ import bcrypt from "bcrypt";
 
 export async function POST(req: Request) {
   try {
+    const isSecure = process.env.NODE_ENV === "production" && (
+      req.url.startsWith("https://") ||
+      (req.headers.get("x-forwarded-proto") || "").toLowerCase() === "https" ||
+      (req.headers.get("referer") || "").startsWith("https://") ||
+      (req.headers.get("origin") || "").startsWith("https://")
+    );
+
     const { email, password } = await req.json();
 
     if (!email || !password) {
@@ -52,7 +59,7 @@ export async function POST(req: Request) {
       registrationNumber: applicant.registrationNumber,
     }), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isSecure,
       sameSite: "lax",
       maxAge: 86400,
     });

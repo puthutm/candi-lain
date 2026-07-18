@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { SSO_AUTHORIZE_URL, SSO_CLIENT_ID, SSO_CALLBACK_URL } from "@/lib/client-config";
 
 interface TuitionRate {
   id: string;
@@ -75,24 +74,7 @@ export default function SkeuDashboard() {
   const [selectedInvoice, setSelectedInvoice] = useState<StudentInvoice | null>(null);
 
   const redirectToSSO = () => {
-    const array = new Uint32Array(22);
-    window.crypto.getRandomValues(array);
-    const verifier = Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
-    document.cookie = `sso_code_verifier=${verifier}; path=/; max-age=600; SameSite=Lax`;
-
-    let authUrl = SSO_AUTHORIZE_URL;
-    let cbUrl = SSO_CALLBACK_URL;
-    if (typeof window !== "undefined") {
-      const host = window.location.hostname;
-      if (host !== "localhost" && host !== "127.0.0.1" && authUrl.includes("localhost")) {
-        authUrl = authUrl.replace("localhost", host);
-      }
-      const currentHost = window.location.host;
-      if (!cbUrl.includes(currentHost) && cbUrl.includes("localhost")) {
-        cbUrl = cbUrl.replace("localhost:3005", currentHost);
-      }
-    }
-    window.location.href = `${authUrl}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(cbUrl)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
+    window.location.href = "/api/auth/signin/unsia-sso";
   };
 
   const checkSession = async () => {

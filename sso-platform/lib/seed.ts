@@ -150,9 +150,9 @@ export async function ensureDatabaseSeeded(force?: boolean) {
 
     const getRedirectUris = (defaultUri: string, subdomainPrefix: string) => {
       if (baseDomain) {
-        return [`${protocol}://${subdomainPrefix}.${baseDomain}/api/auth/callback`];
+        return [`${protocol}://${subdomainPrefix}.${baseDomain}/api/auth/callback/unsia-sso`];
       }
-      return [defaultUri];
+      return [`${defaultUri}/unsia-sso`];
     };
 
     const defaultApps = [

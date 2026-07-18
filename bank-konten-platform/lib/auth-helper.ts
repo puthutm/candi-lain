@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { auth } from "@/auth";
 
 export interface UserProfile {
   userId: string;
@@ -9,10 +9,14 @@ export interface UserProfile {
 
 export async function getSessionUser(): Promise<UserProfile | null> {
   try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("bank_user");
-    if (!sessionCookie) return null;
-    return JSON.parse(sessionCookie.value) as UserProfile;
+    const session = await auth();
+    if (!session || !session.user) return null;
+    return {
+      userId: (session.user as any).id || "",
+      name: session.user.name || "",
+      username: (session.user as any).username || "",
+      role: (session.user as any).role || "dosen",
+    };
   } catch {
     return null;
   }

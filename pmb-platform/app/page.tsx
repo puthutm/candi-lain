@@ -201,23 +201,7 @@ export default function PmbPublikPage() {
 
   const handleSsoLogin = (e: React.MouseEvent) => {
     e.preventDefault();
-    const array = new Uint32Array(22);
-    window.crypto.getRandomValues(array);
-    const verifier = Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
-    document.cookie = `sso_code_verifier=${verifier}; path=/; max-age=600; SameSite=Lax`;
-
-    let authUrl = SSO_AUTHORIZE_URL;
-    let cbUrl = SSO_CALLBACK_URL;
-    if (typeof window !== "undefined") {
-      const host = window.location.hostname;
-      if (host !== "localhost" && host !== "127.0.0.1" && authUrl.includes("localhost")) {
-        authUrl = authUrl.replace("localhost", host);
-      }
-      const currentHost = window.location.host;
-      cbUrl = `${window.location.protocol}//${currentHost}/api/auth/callback`;
-    }
-
-    window.location.href = `${authUrl}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(cbUrl)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
+    window.location.href = "/api/auth/signin/unsia-sso";
   };
 
   const handlePrev = () => {

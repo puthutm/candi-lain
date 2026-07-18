@@ -61,6 +61,13 @@ export async function GET() {
 // Register a new applicant
 export async function POST(req: Request) {
   try {
+    const isSecure = process.env.NODE_ENV === "production" && (
+      req.url.startsWith("https://") ||
+      (req.headers.get("x-forwarded-proto") || "").toLowerCase() === "https" ||
+      (req.headers.get("referer") || "").startsWith("https://") ||
+      (req.headers.get("origin") || "").startsWith("https://")
+    );
+
     const body = await req.json();
     const { fullName, email, phone, waveId, entryPathId, studyProgramId, password } = body;
 
@@ -191,7 +198,7 @@ export async function POST(req: Request) {
       registrationNumber: result.registrationNumber,
     }), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isSecure,
       sameSite: "lax",
       maxAge: 86400,
     });

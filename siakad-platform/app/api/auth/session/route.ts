@@ -1,19 +1,15 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { auth } from "@/auth";
 import { ensureSiakadSeeded } from "@/db/seed";
 
 export async function GET() {
   try {
     await ensureSiakadSeeded();
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("siakad_user");
-
-    if (!sessionCookie) {
+    const session = await auth();
+    if (!session || !session.user) {
       return NextResponse.json({ success: true, authenticated: false, user: null });
     }
-
-    const user = JSON.parse(sessionCookie.value);
-    return NextResponse.json({ success: true, authenticated: true, user });
+    return NextResponse.json({ success: true, authenticated: true, user: session.user });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

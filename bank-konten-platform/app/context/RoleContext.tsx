@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { SSO_AUTHORIZE_URL, SSO_CLIENT_ID, SSO_CALLBACK_URL } from "@/lib/client-config";
 
 interface UserProfile {
   userId: string;
@@ -30,11 +29,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const redirectToSSO = () => {
-    const array = new Uint32Array(22);
-    window.crypto.getRandomValues(array);
-    const verifier = Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
-    document.cookie = `sso_code_verifier=${verifier}; path=/; max-age=600; SameSite=Lax`;
-    window.location.href = `${SSO_AUTHORIZE_URL}?client_id=${SSO_CLIENT_ID}&redirect_uri=${encodeURIComponent(SSO_CALLBACK_URL)}&response_type=code&code_challenge=${verifier}&code_challenge_method=plain&scope=openid`;
+    window.location.href = "/api/auth/signin/unsia-sso";
   };
 
   const refreshSession = async () => {
