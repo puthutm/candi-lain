@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema/users";
 import { applications, scopes } from "@/db/schema/applications";
 import { applicationRoles, userApplicationRoles } from "@/db/schema/rbac";
+import { refCategories, refItems, organizations, userOrganizations } from "@/db/schema/reference";
 import { eq, and } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { env } from "./env";
@@ -237,9 +238,15 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       } else if (appData.clientId === "pmb-platform") {
         const adminRole = await getOrInsertRole(insertedApp.id, "admin", "Admin PMB", "Administrator role in PMB", false);
         const pendaftarRole = await getOrInsertRole(insertedApp.id, "pendaftar", "Pendaftar", "Applicant role in PMB", true);
+        const verifikatorRole = await getOrInsertRole(insertedApp.id, "verifikator_berkas", "Verifikator Berkas PMB", "Document verification staff in PMB", false);
+        const keuanganRole = await getOrInsertRole(insertedApp.id, "staff_keuangan", "Staf Keuangan PMB", "Finance reconciliator staff in PMB", false);
+        const marketingRole = await getOrInsertRole(insertedApp.id, "staff_marketing", "Staf Marketing PMB", "Marketing and campaigns staff in PMB", false);
 
         if (adminUser && adminRole) await assignUserRole(adminUser.id, insertedApp.id, adminRole.id);
         if (mahasiswaUser && pendaftarRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, pendaftarRole.id);
+        if (dosenUser && verifikatorRole) await assignUserRole(dosenUser.id, insertedApp.id, verifikatorRole.id);
+        if (dosenUser && keuanganRole) await assignUserRole(dosenUser.id, insertedApp.id, keuanganRole.id);
+        if (dosenUser && marketingRole) await assignUserRole(dosenUser.id, insertedApp.id, marketingRole.id);
 
       } else if (appData.clientId === "keuangan-platform") {
         const kepalaBiroRole = await getOrInsertRole(insertedApp.id, "kepala_biro", "Kepala Biro Keuangan", "Chief Financial Officer", false);
@@ -272,6 +279,163 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         if (adminUser && verifikatorProdiRole) await assignUserRole(adminUser.id, insertedApp.id, verifikatorProdiRole.id);
         if (adminUser && verifikatorBpmRole) await assignUserRole(adminUser.id, insertedApp.id, verifikatorBpmRole.id);
         if (dosenUser && dosenRole) await assignUserRole(dosenUser.id, insertedApp.id, dosenRole.id);
+      }
+    }
+
+    // 5. Seed Reference Data Categories & Items
+    console.log("Seeding Reference Data (JABATAN)...");
+    
+    let jabCategory;
+    const existingCat = await db.select().from(refCategories).where(eq(refCategories.code, "JABATAN")).limit(1);
+    if (existingCat.length === 0) {
+      const [inserted] = await db.insert(refCategories).values({
+        code: "JABATAN",
+        name: "Jabatan Pegawai & Dosen",
+        description: "Kategori referensi untuk jabatan fungsional dan struktural di Universitas Siber Asia"
+      }).returning();
+      jabCategory = inserted;
+    } else {
+      jabCategory = existingCat[0];
+    }
+
+    const positionsList = [
+      { code: "REKTOR", name: "Rektor", sortOrder: 1 },
+      { code: "DEKAN", name: "Dekan Fakultas", sortOrder: 2 },
+      { code: "KAPRODI", name: "Ketua Program Studi (Kaprodi)", sortOrder: 3 },
+      { code: "DOSEN", name: "Dosen Pengajar", sortOrder: 4 },
+      { code: "DIR_KEUANGAN", name: "Kepala Biro Keuangan", sortOrder: 5 },
+      { code: "STAFF_KEUANGAN", name: "Staf Keuangan", sortOrder: 6 },
+      { code: "DIR_SDM", name: "Kepala Biro Kepegawaian (SDM)", sortOrder: 7 },
+      { code: "STAFF_SDM", name: "Staf Kepegawaian", sortOrder: 8 },
+      { code: "PANITIA_PMB", name: "Panitia PMB", sortOrder: 9 },
+      { code: "STAFF_LMS", name: "Staf Pengelola LMS", sortOrder: 10 }
+    ];
+
+    const positionItems: Record<string, string> = {};
+
+    for (const pos of positionsList) {
+      const existingItem = await db
+        .select()
+        .from(refItems)
+        .where(
+          and(
+            eq(refItems.categoryId, jabCategory.id),
+            eq(refItems.code, pos.code)
+          )
+        )
+        .limit(1);
+      
+      if (existingItem.length === 0) {
+        const [inserted] = await db.insert(refItems).values({
+          categoryId: jabCategory.id,
+          code: pos.code,
+          name: pos.name,
+          sortOrder: pos.sortOrder,
+          isActive: true
+        }).returning();
+        positionItems[pos.code] = inserted.id;
+      } else {
+        positionItems[pos.code] = existingItem[0].id;
+      }
+    }
+
+    // 6. Seed Organizations
+    console.log("Seeding Organizations Hierarchy...");
+    
+    let rektoratOrg;
+    const existingRektorat = await db.select().from(organizations).where(eq(organizations.code, "REKTORAT")).limit(1);
+    if (existingRektorat.length === 0) {
+      const [inserted] = await db.insert(organizations).values({
+        code: "REKTORAT",
+        name: "Rektorat Universitas Siber Asia",
+        type: "company",
+        isActive: true
+      }).returning();
+      rektoratOrg = inserted;
+    } else {
+      rektoratOrg = existingRektorat[0];
+    }
+
+    const divisionsList = [
+      { code: "FTI", name: "Fakultas Teknologi Informasi", type: "division", parentId: rektoratOrg.id },
+      { code: "BIRO_KEUANGAN", name: "Biro Keuangan & Administrasi", type: "division", parentId: rektoratOrg.id },
+      { code: "BIRO_SDM", name: "Biro Kepegawaian & HRD", type: "division", parentId: rektoratOrg.id }
+    ];
+
+    const divisionOrgs: Record<string, string> = {};
+
+    for (const div of divisionsList) {
+      const existingDiv = await db.select().from(organizations).where(eq(organizations.code, div.code)).limit(1);
+      if (existingDiv.length === 0) {
+        const [inserted] = await db.insert(organizations).values(div).returning();
+        divisionOrgs[div.code] = inserted.id;
+      } else {
+        divisionOrgs[div.code] = existingDiv[0].id;
+      }
+    }
+
+    const deptsList = [
+      { code: "PRODI_INF", name: "Program Studi Informatika", type: "department", parentId: divisionOrgs["FTI"] },
+      { code: "PRODI_SI", name: "Program Studi Sistem Informasi", type: "department", parentId: divisionOrgs["FTI"] },
+      { code: "UNIT_PMB", name: "Panitia Penerimaan Mahasiswa Baru", type: "department", parentId: divisionOrgs["BIRO_SDM"] }
+    ];
+
+    const deptOrgs: Record<string, string> = {};
+
+    for (const dept of deptsList) {
+      const existingDept = await db.select().from(organizations).where(eq(organizations.code, dept.code)).limit(1);
+      if (existingDept.length === 0) {
+        const [inserted] = await db.insert(organizations).values(dept).returning();
+        deptOrgs[dept.code] = inserted.id;
+      } else {
+        deptOrgs[dept.code] = existingDept[0].id;
+      }
+    }
+
+    // 7. Seed Sample User Organizations Assignments
+    console.log("Seeding User Organizations Mappings...");
+
+    if (adminUser && rektoratOrg && positionItems["REKTOR"]) {
+      const existingAdminOrg = await db
+        .select()
+        .from(userOrganizations)
+        .where(
+          and(
+            eq(userOrganizations.userId, adminUser.id),
+            eq(userOrganizations.organizationId, rektoratOrg.id)
+          )
+        )
+        .limit(1);
+
+      if (existingAdminOrg.length === 0) {
+        await db.insert(userOrganizations).values({
+          userId: adminUser.id,
+          organizationId: rektoratOrg.id,
+          positionRefItemId: positionItems["REKTOR"],
+          isPrimary: true
+        });
+      }
+    }
+
+    if (dosenUser && deptOrgs["PRODI_INF"] && positionItems["DOSEN"]) {
+      const existingDosenOrg = await db
+        .select()
+        .from(userOrganizations)
+        .where(
+          and(
+            eq(userOrganizations.userId, dosenUser.id),
+            eq(userOrganizations.organizationId, deptOrgs["PRODI_INF"])
+          )
+        )
+        .limit(1);
+
+      if (existingDosenOrg.length === 0) {
+        await db.insert(userOrganizations).values({
+          userId: dosenUser.id,
+          organizationId: deptOrgs["PRODI_INF"],
+          positionRefItemId: positionItems["DOSEN"],
+          isPrimary: true
+        });
       }
     }
 
