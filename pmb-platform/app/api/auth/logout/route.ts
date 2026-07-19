@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { signOut } from "@/auth";
 
 export async function POST() {
   try {
-    const cookieStore = await cookies();
-    cookieStore.delete("pmb_user");
+    await signOut({ redirect: false });
     return NextResponse.json({ success: true, message: "Logged out successfully." });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error?.message || String(error) },
+      { status: 500 }
+    );
   }
 }
 export const dynamic = "force-dynamic";

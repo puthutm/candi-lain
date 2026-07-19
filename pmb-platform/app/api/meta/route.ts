@@ -42,8 +42,8 @@ export async function GET() {
       .leftJoin(pmbStudyPrograms, eq(pmbQuotas.studyProgramId, pmbStudyPrograms.id));
 
     // Dynamic reference data pull from reference_data database
-    const pmbUrl = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/sso_platform";
-    const refUrl = pmbUrl.replace("/sso_platform", "/reference_data");
+    const pmbUrl = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/pmb_platform";
+    const refUrl = pmbUrl.replace("/pmb_platform", "/reference_data");
     
     let regions: Record<string, string[]> = {};
     try {

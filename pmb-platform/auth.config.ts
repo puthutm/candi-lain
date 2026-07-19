@@ -41,15 +41,15 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
   ],
 
   cookies: {
-    sessionToken: { name: "authjs.session-token", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
-    callbackUrl: { name: "authjs.callback-url", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
-    csrfToken: { name: "authjs.csrf-token", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
+    sessionToken: { name: "pmb.authjs.session-token", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
+    callbackUrl: { name: "pmb.authjs.callback-url", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
+    csrfToken: { name: "pmb.authjs.csrf-token", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
     pkceCodeVerifier: {
-      name: "authjs.pkce.code_verifier",
+      name: "pmb.authjs.pkce.code_verifier",
       options: { path: "/", sameSite: "lax", secure: false, httpOnly: true },
     },
-    state: { name: "authjs.state", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
-    nonce: { name: "authjs.nonce", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
+    state: { name: "pmb.authjs.state", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
+    nonce: { name: "pmb.authjs.nonce", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
   },
 
   callbacks: {

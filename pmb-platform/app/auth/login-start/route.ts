@@ -32,25 +32,25 @@ export async function GET() {
     typeof maybeResponse.headers.get === "function";
 
   if (isResponseLike) {
+    // next-auth/Auth.js can set multiple cookies; in some runtime cases headers.get("set-cookie")
+    // might only return one value. We log whatever is present to confirm pkce/state/nonce creation.
     const setCookie = maybeResponse.headers.get("set-cookie") || "";
+
     const interesting = [
-      "pmb.authjs.csrf-token",
-      "pmb.authjs.state",
       "pmb.authjs.pkce.code_verifier",
+      "pmb.authjs.state",
       "pmb.authjs.nonce",
-      "authjs.csrf-token",
-      "authjs.state",
-      "authjs.pkce.code_verifier",
-      "authjs.nonce",
+      "pmb.authjs.csrf-token",
       "pmb.authjs.callback-url",
     ];
 
     const present: Record<string, boolean> = {};
     for (const k of interesting) present[k] = setCookie.includes(k + "=");
 
-    console.info("[pmb][auth][login-start] signIn Response set-cookie keys present", {
+    console.info("[pmb][auth][login-start][signIn-set-cookie-debug]", {
       present,
-      setCookieSnippet: setCookie.slice(0, 800),
+      setCookieLength: setCookie.length,
+      setCookieSnippet: setCookie.slice(0, 1200),
     });
 
     return maybeResponse as Response;
