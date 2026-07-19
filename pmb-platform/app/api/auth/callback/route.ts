@@ -23,6 +23,12 @@ export async function GET(req: Request) {
     // Debug cookie presence for PKCE/state/csrf/nonces.
     // NOTE: only checks existence of cookie keys, not cookie values.
     const cookieHeader = req.headers.get("cookie") || "";
+
+    const stateMatches = cookieHeader.match(/(?:^|;\s*)([^=;\s]+)\s*=\s*/g) || [];
+    const interestingCookieKeys = stateMatches
+      .map((m) => m.replace(/^[;\s]+/, "").replace(/\s*=\s*$/, ""))
+      .filter((k) => /(state|pkce|csrf|nonce)/i.test(k));
+
     const hasPkce = cookieHeader.includes("pmb.authjs.pkce.code_verifier=");
     const hasState = cookieHeader.includes("pmb.authjs.state=");
     const hasCsrf = cookieHeader.includes("pmb.authjs.csrf-token=");
@@ -32,6 +38,11 @@ export async function GET(req: Request) {
     const hasDefaultState = cookieHeader.includes("authjs.state=");
     const hasDefaultCsrf = cookieHeader.includes("authjs.csrf-token=");
     const hasDefaultNonce = cookieHeader.includes("authjs.nonce=");
+
+    console.info("[pmb][auth][callback-cookie-debug] interesting cookie keys (state/pkce/csrf/nonce)", {
+      interestingCookieKeys,
+      rawCookieHeaderSnippet: cookieHeader.slice(0, 600),
+    });
 
     console.info("[pmb][auth][callback-cookie-presence]", {
       pmb: { hasPkce, hasState, hasCsrf, hasNonce },

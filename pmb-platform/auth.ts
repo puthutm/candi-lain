@@ -40,11 +40,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   cookies: {
     sessionToken: { name: "pmb.authjs.session-token" },
+
+    // Keep callbackUrl namespaced, but align the rest with Auth.js v5
+    // so checks ["pkce","state"] can successfully parse the cookies.
     callbackUrl: { name: "pmb.authjs.callback-url" },
-    csrfToken: { name: "pmb.authjs.csrf-token" },
-    pkceCodeVerifier: { name: "pmb.authjs.pkce.code_verifier" },
-    state: { name: "pmb.authjs.state" },
-    nonce: { name: "pmb.authjs.nonce" },
+    csrfToken: { name: "authjs.csrf-token" },
+    pkceCodeVerifier: { name: "authjs.pkce.code_verifier" },
+    state: { name: "authjs.state" },
+    nonce: { name: "authjs.nonce" },
   },
 
   callbacks: {
