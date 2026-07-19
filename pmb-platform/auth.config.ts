@@ -41,12 +41,15 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
   ],
 
   cookies: {
-    sessionToken: { name: "authjs.session-token" },
-    callbackUrl: { name: "authjs.callback-url" },
-    csrfToken: { name: "authjs.csrf-token" },
-    pkceCodeVerifier: { name: "authjs.pkce.code_verifier" },
-    state: { name: "authjs.state" },
-    nonce: { name: "authjs.nonce" },
+    sessionToken: { name: "authjs.session-token", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
+    callbackUrl: { name: "authjs.callback-url", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
+    csrfToken: { name: "authjs.csrf-token", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
+    pkceCodeVerifier: {
+      name: "authjs.pkce.code_verifier",
+      options: { path: "/", sameSite: "lax", secure: false, httpOnly: true },
+    },
+    state: { name: "authjs.state", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
+    nonce: { name: "authjs.nonce", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
   },
 
   callbacks: {
