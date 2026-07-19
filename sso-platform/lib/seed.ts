@@ -149,17 +149,9 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     const protocol = process.env.SEED_DOMAIN_PROTOCOL || "http";
 
     const getRedirectUris = (defaultUri: string, subdomainPrefix: string): string[] => {
-      // Standardize callback URI generation based on PUBLIC_BASE_URL if provided.
-      // This prevents localhost vs public-host mismatches (cookies are host-bound).
-      if (env.PUBLIC_BASE_URL) {
-        try {
-          const publicUrl = new URL(env.PUBLIC_BASE_URL);
-          return [`${publicUrl.origin}/api/auth/callback/unsia-sso`];
-        } catch {
-          // If PUBLIC_BASE_URL is malformed, fall back to legacy/defaultUri logic.
-        }
-      }
-
+      // If SEED_DOMAIN_BASE is set, use subdomain-based URLs (for reverse proxy setups).
+      // Otherwise, use the per-platform callback URL directly (defaultUri),
+      // which allows each platform to have its own port/host via SEED_*_CALLBACK_URL.
       if (baseDomain) {
         return [`${protocol}://${subdomainPrefix}.${baseDomain}/api/auth/callback/unsia-sso`];
       }

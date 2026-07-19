@@ -67,8 +67,14 @@ services:
       - REDIS_URL=redis://redis:6379
       - NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=erp-unsia-sso-server-actions-key-2026
       - SESSION_COOKIE_SECURE=false
-      # Ensures SSO seed generates redirect_uri matching browser-accessible host (cookie host-bound)
-      - PUBLIC_BASE_URL=http://10.10.20.56:3002
+      # Use correct public callback URLs for each platform (different ports per service)
+      - SEED_PMB_CALLBACK_URL=http://10.10.20.56:3002/api/auth/callback
+      - SEED_SIAKAD_CALLBACK_URL=http://10.10.20.56:3003/api/auth/callback
+      - SEED_LMS_CALLBACK_URL=http://10.10.20.56:3004/api/auth/callback
+      - SEED_KEUANGAN_CALLBACK_URL=http://10.10.20.56:3005/api/auth/callback
+      - SEED_HRIS_CALLBACK_URL=http://10.10.20.56:3006/api/auth/callback
+      - SEED_BANK_KONTEN_CALLBACK_URL=http://10.10.20.56:3007/api/auth/callback
+      # Enable to force re-seed and update redirect URIs: SSO_SEED_FORCE=true
 
   reference-data:
     build:
@@ -116,6 +122,16 @@ services:
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
       - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
+      # Auth.js / NextAuth — use public IP so callbacks match the request host (prevents "Configuration" error)
+      - NEXTAUTH_URL=http://10.10.20.56:3002
+      - AUTH_URL=http://10.10.20.56:3002/api/auth
+      - AUTH_TRUST_HOST=true
+      - NEXTAUTH_SECRET=super-secret-nextauth-key-pmb-platform-2026
+      - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3002/api/auth/callback/unsia-sso
+      - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3002
+      - NEXT_PUBLIC_API_URL=http://10.10.20.56:3002/api
+      - SSO_OAUTH_CLIENT_ID=pmb-platform
+      - SSO_OAUTH_CLIENT_SECRET=pmb-platform-client-secret-key-2026
 
   siakad-platform:
     build:
@@ -141,6 +157,9 @@ services:
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
       - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
+      - NEXTAUTH_SECRET=super-secret-nextauth-key-siakad-platform-2026
+      - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3003/api/auth/callback/unsia-sso
+      - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3003
 
   lms-platform:
     build:
@@ -166,6 +185,9 @@ services:
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
       - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
+      - NEXTAUTH_SECRET=super-secret-nextauth-key-lms-platform-2026
+      - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3004/api/auth/callback/unsia-sso
+      - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3004
 
   keuangan-platform:
     build:
@@ -191,6 +213,9 @@ services:
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
       - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
+      - NEXTAUTH_SECRET=super-secret-nextauth-key-keuangan-platform-2026
+      - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3005/api/auth/callback/unsia-sso
+      - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3005
 
   hris-platform:
     build:
@@ -216,6 +241,9 @@ services:
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
       - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
+      - NEXTAUTH_SECRET=super-secret-nextauth-key-hris-platform-2026
+      - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3006/api/auth/callback/unsia-sso
+      - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3006
 
   bank-konten-platform:
     build:
@@ -241,6 +269,9 @@ services:
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
       - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
+      - NEXTAUTH_SECRET=super-secret-nextauth-key-bank-konten-platform-2026
+      - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3007/api/auth/callback/unsia-sso
+      - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3007
 
 volumes:
   postgres_data:
