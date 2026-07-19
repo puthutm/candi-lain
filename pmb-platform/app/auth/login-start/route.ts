@@ -1,62 +1,56 @@
 import { NextResponse } from "next/server";
-import { signIn } from "@/auth";
+import { cookies } from "next/headers";
+import crypto from "crypto";
 import { env } from "@/lib/env";
 
+function randomString(length: number): string {
+  return crypto.randomBytes(length).toString("hex");
+}
+
+function base64UrlEncode(buffer: Buffer): string {
+  return buffer
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
 export async function GET() {
-  if (!env.AUTH_SECRET && !env.NEXTAUTH_SECRET) {
-    return NextResponse.json(
-      { success: false, error: "AUTH_SECRET/NEXTAUTH_SECRET is not configured" },
-      { status: 500 }
-    );
-  }
+  const state = randomString(16);
+  const codeVerifier = randomString(64);
+  const nonce = randomString(16);
 
-  const redirectTo = "/";
+  const cookieStore = await cookies();
+  const cookieOptions = { path: "/", sameSite: "lax", secure: false, httpOnly: true } as const;
 
-  console.info("[pmb][auth][login-start] starting signIn", {
-    provider: "unsia-sso",
-    redirectTo,
-    hasAUTH_SECRET: Boolean(env.AUTH_SECRET),
-    hasNEXTAUTH_SECRET: Boolean(env.NEXTAUTH_SECRET),
+  cookieStore.set("pmb.authjs.state", state, cookieOptions);
+  cookieStore.set("pmb.authjs.pkce.code_verifier", codeVerifier, cookieOptions);
+  cookieStore.set("pmb.authjs.nonce", nonce, cookieOptions);
+  cookieStore.set("pmb.authjs.csrf-token", randomString(32), cookieOptions);
+  cookieStore.set("pmb.authjs.callback-url", "/", cookieOptions);
+
+  const authorizeUrl = new URL(env.SSO_OAUTH_AUTHORIZE_URL);
+  authorizeUrl.searchParams.set("client_id", env.SSO_OAUTH_CLIENT_ID);
+  authorizeUrl.searchParams.set("redirect_uri", env.SSO_OAUTH_CALLBACK_URL);
+  authorizeUrl.searchParams.set("response_type", "code");
+  authorizeUrl.searchParams.set("scope", "openid profile email");
+  authorizeUrl.searchParams.set("state", state);
+  authorizeUrl.searchParams.set("nonce", nonce);
+
+  const codeChallenge = base64UrlEncode(
+    crypto.createHash("sha256").update(codeVerifier).digest()
+  );
+  authorizeUrl.searchParams.set("code_challenge", codeChallenge);
+  authorizeUrl.searchParams.set("code_challenge_method", "S256");
+
+  console.info("[pmb][auth][login-start] manual authorize redirect", {
+    stateLength: state.length,
+    codeVerifierLength: codeVerifier.length,
+    nonceLength: nonce.length,
+    authorizeUrl: authorizeUrl.toString(),
   });
 
-  // Return the response from signIn so Set-Cookie is applied by the browser.
-  const result = await signIn("unsia-sso", { redirectTo });
-
-  // next-auth/Auth.js v5 beta types may not narrow to global Response cleanly in TS,
-  // so we use a duck-typing check.
-  const maybeResponse = result as any;
-  const isResponseLike =
-    maybeResponse &&
-    typeof maybeResponse === "object" &&
-    maybeResponse.headers &&
-    typeof maybeResponse.headers.get === "function";
-
-  if (isResponseLike) {
-    // next-auth/Auth.js can set multiple cookies; in some runtime cases headers.get("set-cookie")
-    // might only return one value. We log whatever is present to confirm pkce/state/nonce creation.
-    const setCookie = maybeResponse.headers.get("set-cookie") || "";
-
-    const interesting = [
-      "pmb.authjs.pkce.code_verifier",
-      "pmb.authjs.state",
-      "pmb.authjs.nonce",
-      "pmb.authjs.csrf-token",
-      "pmb.authjs.callback-url",
-    ];
-
-    const present: Record<string, boolean> = {};
-    for (const k of interesting) present[k] = setCookie.includes(k + "=");
-
-    console.info("[pmb][auth][login-start][signIn-set-cookie-debug]", {
-      present,
-      setCookieLength: setCookie.length,
-      setCookieSnippet: setCookie.slice(0, 1200),
-    });
-
-    return maybeResponse as Response;
-  }
-
-  return NextResponse.json({ success: true });
+  return NextResponse.redirect(authorizeUrl.toString());
 }
 
 export const dynamic = "force-dynamic";
