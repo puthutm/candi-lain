@@ -40,13 +40,14 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
     },
   ],
 
-  // IMPORTANT:
-  // Keep Auth.js DEFAULT cookie names for all internals (csrf/callback-url/pkce/state/nonce)
-  // to avoid InvalidCheck due to cookie namespace mismatches between different callback hops.
-  // If you must namespace cookies, do it consistently across both the login endpoint and
-  // the callback endpoint, and include pkce/state/nonce as well.
-  //
-  // cookies: { ... } intentionally removed.
+  cookies: {
+    sessionToken: { name: "authjs.session-token" },
+    callbackUrl: { name: "authjs.callback-url" },
+    csrfToken: { name: "authjs.csrf-token" },
+    pkceCodeVerifier: { name: "authjs.pkce.code_verifier" },
+    state: { name: "authjs.state" },
+    nonce: { name: "authjs.nonce" },
+  },
 
   callbacks: {
     async jwt({ token, user }: any) {
