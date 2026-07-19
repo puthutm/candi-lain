@@ -40,6 +40,17 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
     },
   ],
 
+  // Namespace cookies so NextAuth/Auth.js state/PKCE/CSRF/nonce are consistent
+  // with PMB callback logic.
+  cookies: {
+    sessionToken: { name: "pmb.authjs.session-token" },
+    callbackUrl: { name: "pmb.authjs.callback-url" },
+    csrfToken: { name: "pmb.authjs.csrf-token" },
+    pkceCodeVerifier: { name: "pmb.authjs.pkce.code_verifier" },
+    state: { name: "pmb.authjs.state" },
+    nonce: { name: "pmb.authjs.nonce" },
+  },
+
   callbacks: {
     async jwt({ token, user }: any) {
       if (user) {
