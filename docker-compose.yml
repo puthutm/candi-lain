@@ -120,7 +120,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/pmb_platform
       - REDIS_URL=redis://redis:6379
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
-      - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
+      - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
       # Auth.js / NextAuth — use public IP so callbacks match the request host (prevents "Configuration" error)
       - NEXTAUTH_URL=http://10.10.20.56:3002
@@ -155,7 +155,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/siakad_platform
       - REDIS_URL=redis://redis:6379
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
-      - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
+      - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
       - NEXTAUTH_SECRET=super-secret-nextauth-key-siakad-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3003/api/auth/callback/unsia-sso
@@ -183,7 +183,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/lms_platform
       - REDIS_URL=redis://redis:6379
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
-      - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
+      - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
       - NEXTAUTH_SECRET=super-secret-nextauth-key-lms-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3004/api/auth/callback/unsia-sso
@@ -211,7 +211,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/keuangan_platform
       - REDIS_URL=redis://redis:6379
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
-      - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
+      - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
       - NEXTAUTH_SECRET=super-secret-nextauth-key-keuangan-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3005/api/auth/callback/unsia-sso
@@ -239,7 +239,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/hris_platform
       - REDIS_URL=redis://redis:6379
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
-      - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
+      - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
       - NEXTAUTH_SECRET=super-secret-nextauth-key-hris-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3006/api/auth/callback/unsia-sso
@@ -267,7 +267,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/bank_konten_platform
       - REDIS_URL=redis://redis:6379
       - SSO_OAUTH_TOKEN_URL=http://sso-platform:3000/oauth/token
-      - SSO_OAUTH_AUTHORIZE_URL=http://sso-platform:3000/oauth/authorize
+      - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://sso-platform:3000/oauth/userinfo
       - NEXTAUTH_SECRET=super-secret-nextauth-key-bank-konten-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3007/api/auth/callback/unsia-sso
