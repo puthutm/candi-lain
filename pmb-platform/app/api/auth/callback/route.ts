@@ -1,91 +1,48 @@
 import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
-import { buildNextAuthCallbackUrl } from "@/proxy";
 
+/**
+ * IMPORTANT:
+ * This endpoint used to 302-redirect to NextAuth's provider callback:
+ *   /api/auth/callback/unsia-sso
+ *
+ * That redirect created a second hop and can break Auth.js cookie context
+ * (PKCE/state/csrf/nonce), leading to errors like:
+ *   "InvalidCheck: state value could not be parsed"
+ *
+ * SSO provider MUST call the correct callback URL directly:
+ *   /api/auth/callback/unsia-sso
+ */
 export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const code = searchParams.get("code");
+  const { searchParams } = new URL(req.url);
 
-    console.info("[pmb][auth][callback-config]", {
-      AUTH_TRUST_HOST: env.AUTH_TRUST_HOST,
-      AUTH_URL: env.AUTH_URL,
-      NEXTAUTH_URL: env.NEXTAUTH_URL,
-      hasAUTH_SECRET: Boolean(env.AUTH_SECRET),
-      hasNEXTAUTH_SECRET: Boolean(env.NEXTAUTH_SECRET),
-      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ? "set" : "missing",
-      NEXT_PUBLIC_SSO_OAUTH_CALLBACK_URL: process.env.NEXT_PUBLIC_SSO_OAUTH_CALLBACK_URL
-        ? "set"
-        : process.env.SSO_OAUTH_CALLBACK_URL
+  // Keep some visibility for ops/debugging.
+  console.error("[pmb][auth][callback] legacy callback endpoint hit - fail fast", {
+    AUTH_TRUST_HOST: env.AUTH_TRUST_HOST,
+    AUTH_URL: env.AUTH_URL,
+    NEXTAUTH_URL: env.NEXTAUTH_URL,
+    hasAUTH_SECRET: Boolean(env.AUTH_SECRET),
+    hasNEXTAUTH_SECRET: Boolean(env.NEXTAUTH_SECRET),
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ? "set" : "missing",
+    NEXT_PUBLIC_SSO_OAUTH_CALLBACK_URL: process.env.NEXT_PUBLIC_SSO_OAUTH_CALLBACK_URL
+      ? "set"
+      : process.env.SSO_OAUTH_CALLBACK_URL
         ? "set"
         : "missing",
-    });
-
-    // Debug cookie presence for PKCE/state/csrf/nonces.
-    // NOTE: only checks existence of cookie keys, not cookie values.
-    const cookieHeader = req.headers.get("cookie") || "";
-
-    const stateMatches = cookieHeader.match(/(?:^|;\s*)([^=;\s]+)\s*=\s*/g) || [];
-    const interestingCookieKeys = stateMatches
-      .map((m) => m.replace(/^[;\s]+/, "").replace(/\s*=\s*$/, ""))
-      .filter((k) => /(state|pkce|csrf|nonce)/i.test(k));
-
-    const hasPkce = cookieHeader.includes("pmb.authjs.pkce.code_verifier=");
-    const hasState = cookieHeader.includes("pmb.authjs.state=");
-    const hasCsrf = cookieHeader.includes("pmb.authjs.csrf-token=");
-    const hasNonce = cookieHeader.includes("pmb.authjs.nonce=");
-
-    const hasDefaultPkce = cookieHeader.includes("authjs.pkce.code_verifier=");
-    const hasDefaultState = cookieHeader.includes("authjs.state=");
-    const hasDefaultCsrf = cookieHeader.includes("authjs.csrf-token=");
-    const hasDefaultNonce = cookieHeader.includes("authjs.nonce=");
-
-    // Extra debug: list *all* cookie keys containing "authjs" so we can see real namespacing.
-    const authjsCookieKeys =
-      stateMatches
-        .map((m) => m.replace(/^[;\s]+/, "").replace(/\s*=\s*$/, ""))
-        .filter((k) => /authjs/i.test(k)) || [];
-
-    console.info("[pmb][auth][callback-cookie-debug] interesting cookie keys (state/pkce/csrf/nonce)", {
-      interestingCookieKeys,
-      authjsCookieKeys,
-      rawCookieHeaderSnippet: cookieHeader.slice(0, 600),
-    });
-
-    console.info("[pmb][auth][callback-cookie-presence]", {
-      pmb: { hasPkce, hasState, hasCsrf, hasNonce },
-      default: { hasPkce: hasDefaultPkce, hasState: hasDefaultState, hasCsrf: hasDefaultCsrf, hasNonce: hasDefaultNonce },
-    });
-
-    if (!code) {
-      return NextResponse.json({ success: false, error: "Missing authorization code" }, { status: 400 });
-    }
-
-    // Redirect to NextAuth's expected callback path.
-    // IMPORTANT: use PUBLIC URL so redirect doesn't inherit internal docker Hostnames.
-    const publicBaseUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (!publicBaseUrl) {
-      return NextResponse.json(
-        { success: false, error: "Missing env NEXT_PUBLIC_APP_URL (public base URL for redirects)" },
-        { status: 500 }
-      );
-    }
-
-    console.info("[pmb][auth][callback-forward] incoming query", {
-      code: searchParams.get("code"),
-      state: searchParams.get("state"),
+    incoming: {
+      codePresent: Boolean(searchParams.get("code")),
+      statePresent: Boolean(searchParams.get("state")),
       all: searchParams.toString(),
-    });
+    },
+  });
 
-    const nextAuthCallbackUrl = buildNextAuthCallbackUrl(searchParams);
-
-    console.info("[pmb][auth][callback-forward] redirecting to", {
-      url: nextAuthCallbackUrl.toString(),
-    });
-
-    return NextResponse.redirect(nextAuthCallbackUrl.toString());
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Legacy callback endpoint disabled. Configure SSO_OAUTH_CALLBACK_URL / NEXT_PUBLIC_SSO_OAUTH_CALLBACK_URL to point directly to /api/auth/callback/unsia-sso.",
+    },
+    { status: 410 }
+  );
 }
+
 export const dynamic = "force-dynamic";

@@ -75,7 +75,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Semua kolom wajib diisi" }, { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(password || env.DEFAULT_APPLICANT_PASSWORD, env.BCRYPT_ROUNDS);
+    if (!env.DEFAULT_APPLICANT_PASSWORD || !env.BCRYPT_ROUNDS) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Server misconfiguration: DEFAULT_APPLICANT_PASSWORD and/or BCRYPT_ROUNDS not set",
+        },
+        { status: 500 }
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(
+      password || env.DEFAULT_APPLICANT_PASSWORD,
+      env.BCRYPT_ROUNDS
+    );
 
     const result = await db.transaction(async (tx) => {
       // 1. Lock and get Wave & Entry Path info

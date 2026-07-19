@@ -154,11 +154,15 @@ export async function PUT(req: Request, { params }: RouteParams) {
         };
 
         // Fire and forget, log errors if any
-        fetch(env.SIAKAD_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }).catch(err => console.error("Webhook trigger failed", err));
+        if (env.SIAKAD_WEBHOOK_URL) {
+          fetch(env.SIAKAD_WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }).catch(err => console.error("Webhook trigger failed", err));
+        } else {
+          console.warn("[pmb][webhook] SIAKAD_WEBHOOK_URL is not configured; skipping webhook trigger");
+        }
       } catch (webhookErr) {
         console.error("Webhook build failed", webhookErr);
       }

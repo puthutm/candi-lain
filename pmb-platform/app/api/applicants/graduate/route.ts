@@ -90,19 +90,23 @@ export async function POST(req: Request) {
         };
 
         const siakadWebhookUrl = env.SIAKAD_WEBHOOK_URL || env.SIAKAD_CALLBACK_URL;
-        
-        // Non-blocking fire-and-forget or await the callback
-        const response = await fetch(siakadWebhookUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
 
-        const callbackRes = await response.json();
-        if (!callbackRes.success) {
-          console.error("SIAKAD integration callback failed:", callbackRes.error);
+        if (!siakadWebhookUrl) {
+          console.warn("[pmb][siakad] SIAKAD_WEBHOOK_URL / SIAKAD_CALLBACK_URL is not configured; skipping integration callback");
+        } else {
+          // Non-blocking fire-and-forget or await the callback
+          const response = await fetch(siakadWebhookUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const callbackRes = await response.json();
+          if (!callbackRes.success) {
+            console.error("SIAKAD integration callback failed:", callbackRes.error);
+          }
         }
       } catch (err: any) {
         console.error("Failed to connect to SIAKAD integration callback:", err.message);
