@@ -40,8 +40,15 @@ export async function GET(req: Request) {
     const hasDefaultCsrf = cookieHeader.includes("authjs.csrf-token=");
     const hasDefaultNonce = cookieHeader.includes("authjs.nonce=");
 
+    // Extra debug: list *all* cookie keys containing "authjs" so we can see real namespacing.
+    const authjsCookieKeys =
+      stateMatches
+        .map((m) => m.replace(/^[;\s]+/, "").replace(/\s*=\s*$/, ""))
+        .filter((k) => /authjs/i.test(k)) || [];
+
     console.info("[pmb][auth][callback-cookie-debug] interesting cookie keys (state/pkce/csrf/nonce)", {
       interestingCookieKeys,
+      authjsCookieKeys,
       rawCookieHeaderSnippet: cookieHeader.slice(0, 600),
     });
 
