@@ -33,10 +33,26 @@ export async function GET() {
 
   if (isResponseLike) {
     const setCookie = maybeResponse.headers.get("set-cookie") || "";
-    console.info("[pmb][auth][login-start] signIn Response cookie flags", {
-      hasSetCookieState: setCookie.includes("pmb.authjs.state="),
-      hasSetCookiePkce: setCookie.includes("pmb.authjs.pkce.code_verifier="),
+    const interesting = [
+      "pmb.authjs.csrf-token",
+      "pmb.authjs.state",
+      "pmb.authjs.pkce.code_verifier",
+      "pmb.authjs.nonce",
+      "authjs.csrf-token",
+      "authjs.state",
+      "authjs.pkce.code_verifier",
+      "authjs.nonce",
+      "pmb.authjs.callback-url",
+    ];
+
+    const present: Record<string, boolean> = {};
+    for (const k of interesting) present[k] = setCookie.includes(k + "=");
+
+    console.info("[pmb][auth][login-start] signIn Response set-cookie keys present", {
+      present,
+      setCookieSnippet: setCookie.slice(0, 800),
     });
+
     return maybeResponse as Response;
   }
 
