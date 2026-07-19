@@ -21,24 +21,27 @@ export async function POST(request: NextRequest) {
     let clientId = body.get("client_id");
     let clientSecret = body.get("client_secret");
 
-    // Some OAuth clients (including some Auth.js/NextAuth implementations) may send
-    // client_id/client_secret using HTTP Basic auth instead of form fields.
-    // Your token endpoint requires form fields, so we bridge Basic -> form fields.
+    // Some OAuth clients (including Auth.js/NextAuth) may send client credentials using
+    // HTTP Basic auth instead of form fields. Bridge Basic -> form fields with robust parsing.
     const authHeader = request.headers.get("authorization") || "";
-    const isBasic = authHeader.toLowerCase().startsWith("basic ");
-    if ((!clientId || !clientSecret) && isBasic) {
-      const b64 = authHeader.slice("basic ".length).trim();
-      try {
-        const decoded = Buffer.from(b64, "base64").toString("utf8");
-        const idx = decoded.indexOf(":");
-        if (idx > -1) {
-          const basicClientId = decoded.slice(0, idx);
-          const basicClientSecret = decoded.slice(idx + 1);
-          clientId = clientId || basicClientId;
-          clientSecret = clientSecret || basicClientSecret;
+    const basicMatch = authHeader.match(/^Basic\s+(.+)$/i);
+    const isBasic = Boolean(basicMatch);
+
+    if ((!clientId || !clientSecret) && basicMatch) {
+      const b64 = basicMatch[1]?.trim();
+      if (b64) {
+        try {
+          const decoded = Buffer.from(b64, "base64").toString("utf8");
+          const idx = decoded.indexOf(":");
+          if (idx > -1) {
+            const basicClientId = decoded.slice(0, idx);
+            const basicClientSecret = decoded.slice(idx + 1);
+            clientId = clientId || basicClientId;
+            clientSecret = clientSecret || basicClientSecret;
+          }
+        } catch {
+          // ignore invalid basic auth encoding
         }
-      } catch {
-        // ignore invalid basic auth encoding
       }
     }
 
@@ -46,12 +49,18 @@ export async function POST(request: NextRequest) {
       grantType,
       clientId,
       hasClientSecret: Boolean(clientSecret),
-      usedBasicAuth: Boolean(isBasic),
+      usedBasicAuth: isBasic,
+      hasFormClientId: Boolean(body.get("client_id")),
+      hasFormClientSecret: Boolean(body.get("client_secret")),
     });
 
     if (!grantType || !clientId || !clientSecret) {
       return NextResponse.json(
-        { error: "invalid_request", error_description: "Missing required form fields (grant_type, client_id, client_secret)" },
+        {
+          error: "invalid_request",
+          error_description:
+            "Missing required client credentials (grant_type, client_id, client_secret). Provide via form fields or Authorization: Basic.",
+        },
         { status: 400 }
       );
     }
