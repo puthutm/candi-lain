@@ -67,6 +67,8 @@ services:
       - REDIS_URL=redis://redis:6379
       - NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=erp-unsia-sso-server-actions-key-2026
       - SESSION_COOKIE_SECURE=false
+      # Ensures SSO seed generates redirect_uri matching browser-accessible host (cookie host-bound)
+      - PUBLIC_BASE_URL=http://10.10.20.56:3002
 
   reference-data:
     build:
