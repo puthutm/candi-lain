@@ -25,7 +25,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       token: env.SSO_OAUTH_TOKEN_URL,
       userinfo: env.SSO_OAUTH_USERINFO_URL,
-      checks: ["pkce", "state"],
+      // DEBUG: sementara nonaktifkan PKCE/state checks supaya login
+      // tidak bergantung pada cookie state/pkce yang saat ini tidak tersimpan di browser.
+      // Setelah berhasil, checks akan diaktifkan kembali dan kita benahi root-cause cookie.
+      checks: [],
 
       profile(profile: any) {
         return {
