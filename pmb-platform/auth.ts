@@ -31,10 +31,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       token: env.SSO_OAUTH_TOKEN_URL,
       userinfo: env.SSO_OAUTH_USERINFO_URL,
-      // DEBUG: sementara nonaktifkan PKCE/state checks supaya login
-      // tidak bergantung pada cookie state/pkce yang saat ini tidak tersimpan di browser.
-      // Setelah berhasil, checks akan diaktifkan kembali dan kita benahi root-cause cookie.
-      checks: [],
+
+      // Use Auth.js v5 PKCE/state checks (required for OAuth code exchange security)
+      checks: ["pkce", "state"],
 
       profile(profile: any) {
         return {
@@ -46,13 +45,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     },
   ],
-
-  cookies: {
-    // Only namespace the session token to prevent collisions between modules.
-    // For PKCE/state/csrf/nonce, we intentionally use Auth.js v5 defaults (authjs.*)
-    // so `checks: ["pkce","state"]` can parse values correctly.
-    sessionToken: { name: "pmb.authjs.session-token" },
-  },
 
   callbacks: {
     async jwt({ token, user }: any) {
