@@ -6,6 +6,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   useSecureCookies: false,
   debug: true,
 
+  // Debug auth provider config (tanpa expose secret)
+  // Tujuan: memastikan PMB kirim client_id/client_secret & token URL ke host yang benar.
+  // (Bila token exchange masih error, log ini akan membantu validasi env.)
+  logger: {
+    error(code, metadata) {
+      console.error("[pmb][auth][logger][error]", { code, metadata });
+    },
+    warn(code, metadata) {
+      console.warn("[pmb][auth][logger][warn]", { code, metadata });
+    },
+    debug(code, metadata) {
+      // batasi noise: hanya log metadata minimal bila tersedia
+      if (metadata) console.debug("[pmb][auth][logger][debug]", { code, metadata });
+      else console.debug("[pmb][auth][logger][debug]", { code });
+    },
+  },
+
   // Ensure secret is stable and used explicitly.
   secret: env.AUTH_SECRET ?? env.NEXTAUTH_SECRET,
 

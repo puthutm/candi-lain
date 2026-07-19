@@ -21,6 +21,12 @@ export async function POST(request: NextRequest) {
     const clientId = body.get("client_id");
     const clientSecret = body.get("client_secret");
 
+    console.info("[sso][oauth][token][debug][incoming-form]", {
+      grantType,
+      clientId,
+      hasClientSecret: Boolean(clientSecret),
+    });
+
     if (!grantType || !clientId || !clientSecret) {
       return NextResponse.json(
         { error: "invalid_request", error_description: "Missing required form fields (grant_type, client_id, client_secret)" },
