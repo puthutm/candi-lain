@@ -39,15 +39,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 
   cookies: {
+    // Only namespace the session token to prevent collisions between modules.
+    // For PKCE/state/csrf/nonce, we intentionally use Auth.js v5 defaults (authjs.*)
+    // so `checks: ["pkce","state"]` can parse values correctly.
     sessionToken: { name: "pmb.authjs.session-token" },
-
-    // Keep callbackUrl namespaced, but align the rest with Auth.js v5
-    // so checks ["pkce","state"] can successfully parse the cookies.
-    callbackUrl: { name: "pmb.authjs.callback-url" },
-    csrfToken: { name: "authjs.csrf-token" },
-    pkceCodeVerifier: { name: "authjs.pkce.code_verifier" },
-    state: { name: "authjs.state" },
-    nonce: { name: "authjs.nonce" },
   },
 
   callbacks: {
