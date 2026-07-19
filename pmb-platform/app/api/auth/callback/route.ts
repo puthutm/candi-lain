@@ -64,7 +64,18 @@ export async function GET(req: Request) {
       );
     }
 
+    console.info("[pmb][auth][callback-forward] incoming query", {
+      code: searchParams.get("code"),
+      state: searchParams.get("state"),
+      all: searchParams.toString(),
+    });
+
     const nextAuthCallbackUrl = buildNextAuthCallbackUrl(searchParams);
+
+    console.info("[pmb][auth][callback-forward] redirecting to", {
+      url: nextAuthCallbackUrl.toString(),
+    });
+
     return NextResponse.redirect(nextAuthCallbackUrl.toString());
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
