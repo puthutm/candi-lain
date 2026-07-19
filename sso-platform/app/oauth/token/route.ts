@@ -18,13 +18,35 @@ export async function POST(request: NextRequest) {
     }
 
     const grantType = body.get("grant_type");
-    const clientId = body.get("client_id");
-    const clientSecret = body.get("client_secret");
+    let clientId = body.get("client_id");
+    let clientSecret = body.get("client_secret");
+
+    // Some OAuth clients (including some Auth.js/NextAuth implementations) may send
+    // client_id/client_secret using HTTP Basic auth instead of form fields.
+    // Your token endpoint requires form fields, so we bridge Basic -> form fields.
+    const authHeader = request.headers.get("authorization") || "";
+    const isBasic = authHeader.toLowerCase().startsWith("basic ");
+    if ((!clientId || !clientSecret) && isBasic) {
+      const b64 = authHeader.slice("basic ".length).trim();
+      try {
+        const decoded = Buffer.from(b64, "base64").toString("utf8");
+        const idx = decoded.indexOf(":");
+        if (idx > -1) {
+          const basicClientId = decoded.slice(0, idx);
+          const basicClientSecret = decoded.slice(idx + 1);
+          clientId = clientId || basicClientId;
+          clientSecret = clientSecret || basicClientSecret;
+        }
+      } catch {
+        // ignore invalid basic auth encoding
+      }
+    }
 
     console.info("[sso][oauth][token][debug][incoming-form]", {
       grantType,
       clientId,
       hasClientSecret: Boolean(clientSecret),
+      usedBasicAuth: Boolean(isBasic),
     });
 
     if (!grantType || !clientId || !clientSecret) {

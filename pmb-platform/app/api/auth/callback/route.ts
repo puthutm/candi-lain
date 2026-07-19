@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
+import { buildNextAuthCallbackUrl } from "@/proxy";
 
 export async function GET(req: Request) {
   try {
@@ -63,43 +64,7 @@ export async function GET(req: Request) {
       );
     }
 
-    // IMPORTANT:
-    // Cookie state/PKCE/CSRF are validated by NextAuth on the *same origin*.
-    // If we redirect to a different origin/protocol, browsers may not send the cookies
-    // (or NextAuth will fail parsing the state), causing InvalidCheck errors.
-    //
-    // Therefore:
-    // - default: always redirect using NEXT_PUBLIC_APP_URL origin
-    // - only fall back to NEXT_PUBLIC_SSO_OAUTH_CALLBACK_URL / SSO_OAUTH_CALLBACK_URL
-    //   when it matches host+protocol of NEXT_PUBLIC_APP_URL.
-    const publicCallbackBase =
-      process.env.NEXT_PUBLIC_SSO_OAUTH_CALLBACK_URL || process.env.SSO_OAUTH_CALLBACK_URL;
-
-    const publicBase = new URL(publicBaseUrl);
-    let resolvedBase = publicBase;
-
-    if (publicCallbackBase) {
-      try {
-        const candidate = new URL(publicCallbackBase);
-        const sameOrigin = candidate.origin === publicBase.origin;
-        if (!sameOrigin) {
-          console.warn("[pmb][auth][callback-config] Ignoring publicCallbackBase due to origin mismatch", {
-            publicBaseOrigin: publicBase.origin,
-            publicCallbackBaseOrigin: candidate.origin,
-          });
-        } else {
-          resolvedBase = candidate;
-        }
-      } catch {
-        console.warn("[pmb][auth][callback-config] Invalid publicCallbackBase, ignoring", {
-          publicCallbackBase,
-        });
-      }
-    }
-
-    const nextAuthCallbackUrl = new URL("/api/auth/callback/unsia-sso", resolvedBase);
-    nextAuthCallbackUrl.search = searchParams.toString();
-
+    const nextAuthCallbackUrl = buildNextAuthCallbackUrl(searchParams);
     return NextResponse.redirect(nextAuthCallbackUrl.toString());
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
