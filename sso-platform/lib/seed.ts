@@ -216,7 +216,29 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         }).returning();
         insertedApp = inserted;
       } else {
-        insertedApp = existingApp[0];
+        const existing = existingApp[0];
+        if (!existing) {
+          continue;
+        }
+
+        // IMPORTANT: keep redirect_uris in sync with the new standardized callback endpoints.
+        const existingRedirectUris = Array.isArray(existing.redirectUris) ? existing.redirectUris : [];
+        const redirectUrisChanged =
+          existingRedirectUris.length !== appData.redirectUris.length ||
+          existingRedirectUris.some((u) => !appData.redirectUris.includes(u));
+
+        if (redirectUrisChanged) {
+          await db
+            .update(applications)
+            .set({
+              redirectUris: appData.redirectUris,
+              status: "active",
+              updatedAt: new Date(),
+            })
+            .where(eq(applications.id, existing.id));
+        }
+
+        insertedApp = existing;
       }
 
       if (!insertedApp) continue;

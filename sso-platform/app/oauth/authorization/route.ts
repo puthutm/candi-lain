@@ -21,6 +21,16 @@ export async function GET(request: NextRequest) {
     const codeChallenge = searchParams.get("code_challenge");
     const codeChallengeMethod = searchParams.get("code_challenge_method") || "S256";
 
+    console.info("[sso][oauth][authorize][input]", {
+      clientId,
+      redirectUri,
+      responseType,
+      scope,
+      hasState: Boolean(state),
+      hasCodeChallenge: Boolean(codeChallenge),
+      codeChallengeMethod,
+    });
+
     // IMPORTANT:
     // Treat `state` as an opaque value (OAuth/OIDC requirement).
     // Do NOT decode/parse/transform `state`, otherwise auth clients (e.g. Auth.js)
