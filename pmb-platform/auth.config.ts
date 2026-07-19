@@ -40,14 +40,13 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
     },
   ],
 
-  // Namespace cookies so callback URL + CSRF remain stable for PMB.
-  // For Auth.js v5 PKCE/state/nonce, keep DEFAULT cookie names to avoid
-  // mismatch with internal cookie keys that trigger InvalidCheck.
-  cookies: {
-    sessionToken: { name: "pmb.authjs.session-token" },
-    callbackUrl: { name: "pmb.authjs.callback-url" },
-    csrfToken: { name: "pmb.authjs.csrf-token" },
-  },
+  // IMPORTANT:
+  // Keep Auth.js DEFAULT cookie names for all internals (csrf/callback-url/pkce/state/nonce)
+  // to avoid InvalidCheck due to cookie namespace mismatches between different callback hops.
+  // If you must namespace cookies, do it consistently across both the login endpoint and
+  // the callback endpoint, and include pkce/state/nonce as well.
+  //
+  // cookies: { ... } intentionally removed.
 
   callbacks: {
     async jwt({ token, user }: any) {

@@ -10,7 +10,9 @@ import { ensureDatabaseSeeded } from "@/lib/seed";
 export async function GET(request: NextRequest) {
   try {
     // Ensure database is seeded with applications, users, and roles
-    await ensureDatabaseSeeded();
+    // (optionally force to keep redirectUris in sync with production/public hosts)
+    const { env } = await import("@/lib/env");
+    await ensureDatabaseSeeded(env.SSO_SEED_FORCE);
 
     const { searchParams } = new URL(request.url);
     const responseType = searchParams.get("response_type");

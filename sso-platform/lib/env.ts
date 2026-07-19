@@ -78,6 +78,10 @@ const envSchema = z.object({
 
   // Logging
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+
+  // Seed behavior
+  // When true, re-run seeding with force=true (clears tables in FK order)
+  SSO_SEED_FORCE: z.coerce.boolean().default(false),
 });
 
 /**
