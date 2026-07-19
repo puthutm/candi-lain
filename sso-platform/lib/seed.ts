@@ -148,10 +148,23 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     const baseDomain = process.env.SEED_DOMAIN_BASE;
     const protocol = process.env.SEED_DOMAIN_PROTOCOL || "http";
 
-    const getRedirectUris = (defaultUri: string, subdomainPrefix: string) => {
+    const getRedirectUris = (defaultUri: string, subdomainPrefix: string): string[] => {
+      // Standardize callback URI generation based on PUBLIC_BASE_URL if provided.
+      // This prevents localhost vs public-host mismatches (cookies are host-bound).
+      if (env.PUBLIC_BASE_URL) {
+        try {
+          const publicUrl = new URL(env.PUBLIC_BASE_URL);
+          return [`${publicUrl.origin}/api/auth/callback/unsia-sso`];
+        } catch {
+          // If PUBLIC_BASE_URL is malformed, fall back to legacy/defaultUri logic.
+        }
+      }
+
       if (baseDomain) {
         return [`${protocol}://${subdomainPrefix}.${baseDomain}/api/auth/callback/unsia-sso`];
       }
+
+      // defaultUri is expected to be the base callback (e.g. http://10.10.20.56:3002/api/auth/callback)
       return [`${defaultUri}/unsia-sso`];
     };
 
