@@ -1,24 +1,19 @@
-# TODO - Fix OAuth INVALID (SSO portal utama)
-
-## Plan
-1. Update portal authorization link builder:
-   - `sso-platform/app/home/page.tsx`: remove hardcoded `code_challenge` and generate real PKCE verifier/challenge per login attempt.
-   - Encode/verpack `code_verifier` into `state` so callback can forward it securely (no hardcoded secrets).
-
-2. Update authorization endpoint redirect behavior:
-   - `sso-platform/app/oauth/authorize/route.ts`: decode the PKCE `state` payload and append `code_verifier` into redirect URL fragment (`#code_verifier=...`) so clients can pick it up without affecting `redirect_uri` strict string match.
-
-3. Improve observability for the root cause:
-   - `sso-platform/lib/services/oauth2.ts`: add safe logging when authorization code validation fails (especially `redirectUri` mismatch), without leaking secrets.
-
-4. Test flow:
-   - Run SSO portal and attempt redirect login to client app.
-   - Confirm error `Authorization code validation failed: INVALID` is resolved.
-   - If new error appears (e.g., `PKCE_MISMATCH`), iterate.
-
-## Status
-- [x] Step 1: Patch `sso-platform/app/home/page.tsx` (remove hardcoded PKCE; generate per-request PKCE; embed verifier into state)
-- [x] Step 2: Patch `sso-platform/app/oauth/authorize/route.ts` (decode state; append verifier to redirect fragment)
-- [x] Step 3: Patch `sso-platform/lib/services/oauth2.ts` (safe logging for INVALID reasons)
-- [x] Step 4: Patch `pmb-platform/app/api/auth/callback/route.ts` (fallback read `code_verifier` from `state` when cookie missing)
-- [ ] Step 5: Test end-to-end OAuth authorization_code -> token exchange (portal -> pmb callback -> token -> redirect)
+- [x] Audit awal & baca auth entrypoint: PMB (`pmb-platform/auth.ts`), SSO (`sso-platform/app/oauth/authorization/route.ts`), env untuk PMB/Keuangan
+- [x] Buat standard template NextAuth v5 berbasis PMB:
+  - [x] checks pkce/state
+  - [x] cookies namespace per modul
+  - [x] callbacks: jwt/session role konsisten
+- [x] Terapkan template ke `hris-platform/auth.ts` (build sukses setelah `--legacy-peer-deps`)
+- [x] Terapkan template ke `siakad-platform/auth.ts` (build sukses setelah `--legacy-peer-deps`)
+- [ ] Terapkan template ke:
+  - [ ] `bank-konten-platform/auth.ts`
+  - [ ] `keuangan-platform/auth.ts`
+- [ ] Samakan flow login & handler lintas-modul (pola PMB):
+  - [ ] pastikan tiap modul punya `/app/auth/login` -> redirect ke `/auth/login-start` (jika ada)
+  - [ ] pastikan tiap modul punya `/app/auth/login-start` -> `signIn("unsia-sso", { redirectTo })`
+  - [ ] pastikan callback/redirect handler tidak menimbulkan mismatch cookie (pola PMB)
+- [ ] Validasi end-to-end:
+  - [ ] Login dari masing-masing modul
+  - [ ] Cek cookie state/pkce/csrf/nonce sesuai namespace modul
+  - [ ] Pastikan session.user.role muncul konsisten
+- [ ] Update dokumentasi ringkas (opsional) dan catat env contract yang wajib diset.

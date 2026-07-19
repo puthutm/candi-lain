@@ -1,6 +1,8 @@
 import NextAuth from "next-auth";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  debug: true,
+
   providers: [
     {
       id: "unsia-sso",
@@ -14,6 +16,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       userinfo: process.env.SSO_OAUTH_USERINFO_URL,
       clientId: process.env.SSO_OAUTH_CLIENT_ID,
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET,
+
+      // Keep PKCE/state protections enabled
+      checks: ["pkce", "state"],
+
       profile(profile: any) {
         return {
           id: profile.sub,
@@ -24,6 +30,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     },
   ],
+
+  // Namespace cookies so PKCE/state/csrf are not shared/mixed across modules.
+  cookies: {
+    sessionToken: { name: "bank-konten.authjs.session-token" },
+    callbackUrl: { name: "bank-konten.authjs.callback-url" },
+    csrfToken: { name: "bank-konten.authjs.csrf-token" },
+    pkceCodeVerifier: { name: "bank-konten.authjs.pkce.code_verifier" },
+    state: { name: "bank-konten.authjs.state" },
+    nonce: { name: "bank-konten.authjs.nonce" },
+  },
+
   callbacks: {
     async jwt({ token, user }: any) {
       if (user) {
@@ -38,5 +55,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
+
   secret: process.env.NEXTAUTH_SECRET,
 });
