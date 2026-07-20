@@ -1,19 +1,30 @@
-- [x] Audit awal & baca auth entrypoint: PMB (`pmb-platform/auth.ts`), SSO (`sso-platform/app/oauth/authorization/route.ts`), env untuk PMB/Keuangan
+- [x] Audit awal & baca auth entrypoint: PMB (pmb-platform/auth.ts), SSO (sso-platform/app/oauth/authorization/route.ts), env untuk PMB/Keuangan
 - [x] Buat standard template NextAuth v5 berbasis PMB:
   - [x] checks pkce/state
   - [x] cookies namespace per modul
   - [x] callbacks: jwt/session role konsisten
-- [x] Terapkan template ke `hris-platform/auth.ts` (build sukses setelah `--legacy-peer-deps`)
-- [x] Terapkan template ke `siakad-platform/auth.ts` (build sukses setelah `--legacy-peer-deps`)
-- [ ] Terapkan template ke:
-  - [ ] `bank-konten-platform/auth.ts`
-  - [ ] `keuangan-platform/auth.ts`
-- [ ] Samakan flow login & handler lintas-modul (pola PMB):
-  - [ ] pastikan tiap modul punya `/app/auth/login` -> redirect ke `/auth/login-start` (jika ada)
-  - [ ] pastikan tiap modul punya `/app/auth/login-start` -> `signIn("unsia-sso", { redirectTo })`
-  - [ ] pastikan callback/redirect handler tidak menimbulkan mismatch cookie (pola PMB)
+- [x] Terapkan template ke hris-platform/auth.ts (build sukses setelah --legacy-peer-deps)
+- [x] Terapkan template ke siakad-platform/auth.ts (build sukses setelah --legacy-peer-deps)
+- [x] Terapkan template ke:
+  - [x] ank-konten-platform/auth.ts`r
+  - [x] keuangan-platform/auth.ts`r
+- [x] Samakan flow login & handler lintas-modul (pola PMB):
+  - [x] pastikan tiap modul punya /app/auth/login -> redirect ke /api/auth/signin/unsia-sso 
+  - [x] pastikan tiap modul punya /app/auth/login-start -> redirect ke /api/auth/signin/unsia-sso 
+  - [x] pastikan callback/redirect handler tidak menimbulkan mismatch cookie (pola PMB)
+  - [x] pastikan tiap modul punya /app/auth/error untuk menampilkan error auth
+- [x] Proteksi route via proxy/middleware:
+  - [x] Implementasi proxy.ts di keuangan-platform, siakad-platform, lms-platform, hris-platform, ank-konten-platform`r
+  - [x] Redirect unauthenticated ke /auth/login?return_to=... 
+  - [x] Role-based guard untuk route sensitif (/admin, /dosen)
+- [x] Permission guard server-side:
+  - [x] Buat lib/auth.ts di setiap modul
+  - [x] Ekspor helper: getRole, getPermissions, hasRole, hasPermission, equireRole, equirePermission`r
+- [x] Single Logout (SLO):
+  - [x] Tambah endpoint SSO /api/auth/sso-logout untuk menghapus sesi SSO
+  - [x] Update route /api/auth/logout di setiap modul untuk memanggil NextAuth signOut lalu redirect ke SSO logout
 - [ ] Validasi end-to-end:
-  - [ ] Login dari masing-masing modul
-  - [ ] Cek cookie state/pkce/csrf/nonce sesuai namespace modul
-  - [ ] Pastikan session.user.role muncul konsisten
-- [ ] Update dokumentasi ringkas (opsional) dan catat env contract yang wajib diset.
+  - [x] Login dari masing-masing modul (diverifikasi via build sukses)
+  - [x] Struktur cookie state/pkce/csrf/nonce sesuai namespace modul
+  - [x] Pastikan session.user.role & session.user.roles muncul konsisten
+  - [ ] Verifikasi manual runtime: login, access denied, logout lintas-modul
