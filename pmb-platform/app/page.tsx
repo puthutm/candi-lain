@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -87,7 +87,7 @@ export default function PmbPublikPage() {
               desc: p.isFree ? "Pembebasan biaya pendaftaran" : "Jalur pendaftaran berbayar",
               price: parseFloat(p.formFee),
               free: p.isFree,
-              icon: p.code === "BEAS" ? "🎁" : p.code === "PRES" ? "🏆" : "✨",
+              icon: p.code === "BEAS" ? "ðŸŽ" : p.code === "PRES" ? "ðŸ†" : "âœ¨",
             }))
           );
 
@@ -96,7 +96,7 @@ export default function PmbPublikPage() {
               id: p.id,
               name: p.name.replace("S1 ", ""),
               faculty: p.faculty === "FTI" ? "Fakultas Sains & Teknologi" : "Fakultas Bisnis",
-              icon: p.code === "INF" ? "💻" : p.code === "SI" ? "📊" : "💼",
+              icon: p.code === "INF" ? "ðŸ’»" : p.code === "SI" ? "ðŸ“Š" : "ðŸ’¼",
             }))
           );
         }
@@ -198,8 +198,8 @@ export default function PmbPublikPage() {
 
   const handleSsoLogin = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Use Auth.js official entrypoint that generates pmb.authjs.state + pmb.authjs.pkce cookies.
-    window.location.href = "/auth/login-start";
+    // Redirect directly to Auth.js signin endpoint which properly sets state/PKCE cookies.
+    window.location.href = "/api/auth/signin/unsia-sso";
   };
 
   const handlePrev = () => {
@@ -250,7 +250,7 @@ export default function PmbPublikPage() {
           {/* Brand */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#ecc94b] flex items-center justify-center pmb-accent-glow shrink-0 text-[#0f487b] font-bold text-xl">
-              🎓
+              ðŸŽ“
             </div>
             <div className="leading-tight min-w-0">
               <div className="text-[10px] uppercase tracking-[0.18em] text-slate-200/80 font-bold">Portal PMB</div>
@@ -266,7 +266,7 @@ export default function PmbPublikPage() {
               Daftar jadi <span className="text-[#ecc94b]">mahasiswa baru</span> dalam 4 langkah.
             </h1>
             <p className="text-slate-200/80 text-xs sm:text-sm mt-4 leading-relaxed">
-              Pengalaman pendaftaran digital ala enterprise — cepat, aman, dan sepenuhnya online.
+              Pengalaman pendaftaran digital ala enterprise â€” cepat, aman, dan sepenuhnya online.
             </p>
           </div>
 
@@ -294,7 +294,7 @@ export default function PmbPublikPage() {
                           : "bg-white/5 text-slate-300 border border-white/10"
                       }`}
                     >
-                      {isDone ? "✓" : s.id}
+                      {isDone ? "âœ“" : s.id}
                     </div>
                     {idx !== STEPS.length - 1 && (
                       <div
@@ -316,7 +316,7 @@ export default function PmbPublikPage() {
           </div>
 
           <div className="mt-auto pt-6 text-[10px] text-slate-300/70">
-            © {currentYear} {INSTITUTION_NAME}.
+            Â© {currentYear} {INSTITUTION_NAME}.
           </div>
         </div>
       </aside>
@@ -366,7 +366,7 @@ export default function PmbPublikPage() {
                               : "bg-white text-slate-500 border border-slate-200"
                           }`}
                         >
-                          {isDone ? "✓" : s.id}
+                          {isDone ? "âœ“" : s.id}
                         </span>
                         <span className="font-medium">{s.label}</span>
                       </div>
@@ -411,7 +411,7 @@ export default function PmbPublikPage() {
                               isSelected ? "bg-[#0f487b] text-[#ecc94b]" : "bg-slate-100 text-slate-500"
                             }`}
                           >
-                            📅
+                            ðŸ“…
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -441,7 +441,7 @@ export default function PmbPublikPage() {
                               isSelected ? "border-[#ecc94b] bg-[#ecc94b] text-[#0f487b]" : "border-slate-300 bg-white"
                             }`}
                           >
-                            {isSelected && <span className="text-xs font-bold">✓</span>}
+                            {isSelected && <span className="text-xs font-bold">âœ“</span>}
                           </div>
                         </button>
                       );
@@ -534,7 +534,7 @@ export default function PmbPublikPage() {
                           </div>
                           {isSelected && (
                             <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#ecc94b] flex items-center justify-center text-xs font-bold text-[#0f487b]">
-                              ✓
+                              âœ“
                             </div>
                           )}
                         </button>
@@ -552,7 +552,7 @@ export default function PmbPublikPage() {
                         <span className="text-[11px] text-slate-400">Sesuai dengan ijazah / KTP</span>
                       </div>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">👤</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">ðŸ‘¤</span>
                         <input
                           type="text"
                           placeholder="Mis. Andi Pratama Wijaya"
@@ -571,7 +571,7 @@ export default function PmbPublikPage() {
                           <span className="text-[11px] text-slate-400">Aktif untuk verifikasi</span>
                         </div>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">📞</span>
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">ðŸ“ž</span>
                           <input
                             type="tel"
                             placeholder="08xxxxxxxxxx"
@@ -588,7 +588,7 @@ export default function PmbPublikPage() {
                           <span className="text-[11px] text-slate-400">Untuk kredensial SSO</span>
                         </div>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">✉️</span>
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">âœ‰ï¸</span>
                           <input
                             type="email"
                             placeholder="nama@email.com"
@@ -612,7 +612,7 @@ export default function PmbPublikPage() {
                           dataDiri.agree ? "bg-[#ecc94b] border-[#ecc94b]" : "bg-white border-slate-300"
                         }`}
                       >
-                        {dataDiri.agree && <span className="text-xs text-[#0f487b] font-bold">✓</span>}
+                        {dataDiri.agree && <span className="text-xs text-[#0f487b] font-bold">âœ“</span>}
                       </div>
                       <div className="text-sm leading-relaxed select-none">
                         <div className="flex items-center gap-1.5 text-slate-900 font-semibold">
@@ -635,7 +635,7 @@ export default function PmbPublikPage() {
                   onClick={handlePrev}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-slate-700 font-semibold border border-slate-200 hover:bg-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  ← Kembali
+                  â† Kembali
                 </button>
                 <button
                   disabled={!canProceed()}
@@ -655,7 +655,7 @@ export default function PmbPublikPage() {
             <div className="min-h-[70vh] flex items-center fade-up relative z-10">
               <div className="w-full max-w-2xl mx-auto">
                 <div className="w-20 h-20 rounded-full bg-emerald-500 mx-auto flex items-center justify-center shadow-[0_20px_50px_-15px_rgba(16,185,129,.6)] pop text-white text-3xl font-bold">
-                  ✓
+                  âœ“
                 </div>
                 <div className="text-center mt-7">
                   <div className="text-xs uppercase tracking-[0.22em] text-emerald-600 font-semibold">
@@ -716,7 +716,7 @@ export default function PmbPublikPage() {
                     href="/dashboard"
                     className="mt-6 w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold gradient-btn hover:brightness-110 transition-all shadow-lg shadow-[#0f487b]/30"
                   >
-                    Buka Dashboard Kandidat →
+                    Buka Dashboard Kandidat â†’
                   </Link>
                 </div>
 
@@ -752,7 +752,7 @@ export default function PmbPublikPage() {
           <div className="absolute inset-0 pmb-grid-pattern opacity-40 pointer-events-none"></div>
           <div className="relative max-w-md w-full bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur text-white">
             <div className="flex items-center gap-3 text-[#ecc94b] mb-1">
-              <span className="animate-spin text-lg">⚙️</span>
+              <span className="animate-spin text-lg">âš™ï¸</span>
               <span className="text-[11px] uppercase tracking-[0.22em] font-semibold">Memproses</span>
             </div>
             <h3 className="font-display text-2xl font-semibold leading-tight">Menyiapkan pendaftaranmu...</h3>
@@ -782,7 +782,7 @@ export default function PmbPublikPage() {
                             : "bg-white/10 text-slate-400"
                         }`}
                       >
-                        {done ? "✓" : active ? "⏳" : i + 1}
+                        {done ? "âœ“" : active ? "â³" : i + 1}
                       </div>
                       <span className={`text-sm ${done || active ? "text-white" : "text-slate-400"}`}>{t}</span>
                     </div>
@@ -805,7 +805,7 @@ export default function PmbPublikPage() {
                 onClick={() => setIsLoginOpen(false)}
                 className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur flex items-center justify-center text-white transition-all text-xs"
               >
-                ✕
+                âœ•
               </button>
               <div className="absolute bottom-4 left-6 right-6 text-white">
                 <div className="text-[10px] uppercase tracking-[0.22em] text-[#ecc94b]/90 font-semibold">
@@ -856,7 +856,7 @@ export default function PmbPublikPage() {
                 onClick={handleSsoLogin}
                 className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-[#0f487b] bg-[#0f487b]/10 hover:bg-[#0f487b]/20 transition-all border border-[#0f487b]/10 text-xs text-center cursor-pointer"
               >
-                🔑 Masuk dengan SSO Portal
+                ðŸ”‘ Masuk dengan SSO Portal
               </button>
             </form>
           </div>
@@ -866,10 +866,11 @@ export default function PmbPublikPage() {
       {/* TOAST */}
       {toastMessage && (
         <div className="fixed top-5 right-5 z-[60] bg-white border border-slate-200 rounded-xl shadow-xl px-4 py-3 flex items-center gap-3 fade-up">
-          <span className="text-emerald-500 font-bold">✓</span>
+          <span className="text-emerald-500 font-bold">âœ“</span>
           <span className="text-sm font-medium text-slate-800">{toastMessage}</span>
         </div>
       )}
     </div>
   );
 }
+

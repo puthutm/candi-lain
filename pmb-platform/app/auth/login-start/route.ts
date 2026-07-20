@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 
 /**
  * Redirect to Auth.js built-in signin endpoint which properly sets
@@ -14,7 +14,8 @@ import { redirect } from "next/navigation";
  * the browser receives the cookies directly from the Auth.js handler
  * and the callback validation succeeds.
  */
-export async function GET() {
-  redirect("/api/auth/signin/unsia-sso");
+export async function GET(request: Request) {
+  const url = new URL("/api/auth/signin/unsia-sso", request.url);
+  return NextResponse.redirect(url);
 }
 
