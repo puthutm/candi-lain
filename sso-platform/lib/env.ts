@@ -45,6 +45,7 @@ const envSchema = z.object({
   // Admin
   SUPER_ADMIN_EMAIL: z.string().email().optional(),
   SUPER_ADMIN_PASSWORD: z.string().optional(),
+  SUPERADMIN_PASSWORD: z.string().optional(),
 
   // Default password applied when an admin resets a user's password
   DEFAULT_RESET_PASSWORD: z.string().default("Sso@2026!default"),
@@ -118,3 +119,5 @@ export const isDevelopment = env.NODE_ENV === "development";
  * Check if running in test
  */
 export const isTest = env.NODE_ENV === "test";
+
+

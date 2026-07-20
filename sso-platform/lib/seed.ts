@@ -108,6 +108,23 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       adminUser = existingAdmin[0];
     }
 
+    // superadmin
+    let superadminUser;
+    const existingSuperadmin = await db.select().from(users).where(eq(users.username, "superadmin")).limit(1);
+    if (existingSuperadmin.length === 0) {
+      const superadminPasswordHash = await bcrypt.hash(env.SUPERADMIN_PASSWORD || "superadmin-password-123", saltRounds);
+      const [inserted] = await db.insert(users).values({
+        username: "superadmin",
+        email: "superadmin@example.com",
+        passwordHash: superadminPasswordHash,
+        fullName: "Super Administrator",
+        status: "active",
+      }).returning();
+      superadminUser = inserted;
+    } else {
+      superadminUser = existingSuperadmin[0];
+    }
+
     // mahasiswa
     let mahasiswaUser;
     const existingMahasiswa = await db.select().from(users).where(eq(users.username, "mahasiswa")).limit(1);
@@ -257,6 +274,7 @@ export async function ensureDatabaseSeeded(force?: boolean) {
 
         // Assignments
         if (adminUser && adminRole) await assignUserRole(adminUser.id, insertedApp.id, adminRole.id);
+        if (superadminUser && adminRole) await assignUserRole(superadminUser.id, insertedApp.id, adminRole.id);
         if (mahasiswaUser && mhsRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, mhsRole.id);
         if (dosenUser && dsnRole) await assignUserRole(dosenUser.id, insertedApp.id, dsnRole.id);
 
@@ -265,6 +283,7 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         const dsnRole = await getOrInsertRole(insertedApp.id, "dosen", "Dosen", "Lecturer role in LMS", false);
 
         if (adminUser && mhsRole) await assignUserRole(adminUser.id, insertedApp.id, mhsRole.id);
+        if (superadminUser && mhsRole) await assignUserRole(superadminUser.id, insertedApp.id, mhsRole.id);
         if (mahasiswaUser && mhsRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, mhsRole.id);
         if (dosenUser && dsnRole) await assignUserRole(dosenUser.id, insertedApp.id, dsnRole.id);
 
@@ -276,6 +295,7 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         const marketingRole = await getOrInsertRole(insertedApp.id, "staff_marketing", "Staf Marketing PMB", "Marketing and campaigns staff in PMB", false);
 
         if (adminUser && adminRole) await assignUserRole(adminUser.id, insertedApp.id, adminRole.id);
+        if (superadminUser && adminRole) await assignUserRole(superadminUser.id, insertedApp.id, adminRole.id);
         if (mahasiswaUser && pendaftarRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, pendaftarRole.id);
         if (dosenUser && verifikatorRole) await assignUserRole(dosenUser.id, insertedApp.id, verifikatorRole.id);
         if (dosenUser && keuanganRole) await assignUserRole(dosenUser.id, insertedApp.id, keuanganRole.id);
@@ -289,6 +309,7 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         const mahasiswaRole = await getOrInsertRole(insertedApp.id, "mahasiswa", "Mahasiswa", "Student finance access", true);
 
         if (adminUser && kepalaBiroRole) await assignUserRole(adminUser.id, insertedApp.id, kepalaBiroRole.id);
+        if (superadminUser && kepalaBiroRole) await assignUserRole(superadminUser.id, insertedApp.id, kepalaBiroRole.id);
         if (mahasiswaUser && mahasiswaRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, mahasiswaRole.id);
         if (dosenUser && stafPenerimaanRole) await assignUserRole(dosenUser.id, insertedApp.id, stafPenerimaanRole.id);
 
@@ -300,6 +321,7 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         const pegawaiRole = await getOrInsertRole(insertedApp.id, "pegawai", "Pegawai", "Standard employee access", true);
 
         if (adminUser && superAdminSdmRole) await assignUserRole(adminUser.id, insertedApp.id, superAdminSdmRole.id);
+        if (superadminUser && superAdminSdmRole) await assignUserRole(superadminUser.id, insertedApp.id, superAdminSdmRole.id);
         if (mahasiswaUser && pegawaiRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, pegawaiRole.id);
 
       } else if (appData.clientId === "bank-konten-platform") {
@@ -309,8 +331,11 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         const adminBankKontenRole = await getOrInsertRole(insertedApp.id, "admin_bank_konten", "Admin Bank Konten", "Administrator role in Bank Soal & Materi", false);
 
         if (adminUser && adminBankKontenRole) await assignUserRole(adminUser.id, insertedApp.id, adminBankKontenRole.id);
+        if (superadminUser && adminBankKontenRole) await assignUserRole(superadminUser.id, insertedApp.id, adminBankKontenRole.id);
         if (adminUser && verifikatorProdiRole) await assignUserRole(adminUser.id, insertedApp.id, verifikatorProdiRole.id);
+        if (superadminUser && verifikatorProdiRole) await assignUserRole(superadminUser.id, insertedApp.id, verifikatorProdiRole.id);
         if (adminUser && verifikatorBpmRole) await assignUserRole(adminUser.id, insertedApp.id, verifikatorBpmRole.id);
+        if (superadminUser && verifikatorBpmRole) await assignUserRole(superadminUser.id, insertedApp.id, verifikatorBpmRole.id);
         if (dosenUser && dosenRole) await assignUserRole(dosenUser.id, insertedApp.id, dosenRole.id);
       }
     }
@@ -459,6 +484,28 @@ export async function ensureDatabaseSeeded(force?: boolean) {
           organizationId: rektoratOrg.id,
           positionRefItemId: positionItems["REKTOR"],
           isPrimary: true
+        });
+      }
+    }
+
+    if (superadminUser && rektoratOrg && positionItems["REKTOR"]) {
+      const existingSuperadminOrg = await db
+        .select()
+        .from(userOrganizations)
+        .where(
+          and(
+            eq(userOrganizations.userId, superadminUser.id),
+            eq(userOrganizations.organizationId, rektoratOrg.id)
+          )
+        )
+        .limit(1);
+
+      if (existingSuperadminOrg.length === 0) {
+        await db.insert(userOrganizations).values({
+          userId: superadminUser.id,
+          organizationId: rektoratOrg.id,
+          positionRefItemId: positionItems["REKTOR"],
+          isPrimary: false
         });
       }
     }
