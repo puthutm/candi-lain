@@ -19,7 +19,9 @@
   - [x] Role-based guard untuk route sensitif (/admin, /dosen)
 - [x] Permission guard server-side:
   - [x] Buat lib/auth.ts di setiap modul
-  - [x] Ekspor helper: getRole, getPermissions, hasRole, hasPermission, equireRole, equirePermission`r
+  - [x] Ekspor helper: getRole, getPermissions, hasRole, hasPermission, 
+equireRole, 
+equirePermission`r
 - [x] Single Logout (SLO):
   - [x] Tambah endpoint SSO /api/auth/sso-logout untuk menghapus sesi SSO
   - [x] Update route /api/auth/logout di setiap modul untuk memanggil NextAuth signOut lalu redirect ke SSO logout
@@ -28,3 +30,11 @@
   - [x] Struktur cookie state/pkce/csrf/nonce sesuai namespace modul
   - [x] Pastikan session.user.role & session.user.roles muncul konsisten
   - [ ] Verifikasi manual runtime: login, access denied, logout lintas-modul
+- [x] **Fix Error `column "photo_url" does not exist` di SSO Platform:**
+  - [x] Perbaiki file `sso-platform/db/migrations/add_photo_url_to_users.sql` — hapus CREATE TABLE yang salah, hanya menyisakan ALTER TABLE ADD COLUMN
+  - [x] Buat seeder superadmin `sso-platform/lib/seed-superadmin.ts`:
+    - Mengecek & menambahkan kolom `photo_url` jika belum ada
+    - Membuat/mengupdate user superadmin dengan data lengkap dari env
+    - Juga memastikan user admin tersedia
+    - Dapat dijalankan via `npx tsx lib/seed-superadmin.ts`
+  - [x] Tambah script npm `"seed:superadmin"` di `sso-platform/package.json`

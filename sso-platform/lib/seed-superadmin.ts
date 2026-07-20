@@ -71,10 +71,15 @@ async function seedSuperadmin() {
     if (existingSuperadmin.length === 0) {
       // Create new superadmin
       console.log("📝 Creating new superadmin user...");
-      const [inserted] = await db
+      const insertedRows = await db
         .insert(users)
         .values(superadminData)
         .returning();
+      const inserted = insertedRows[0];
+
+      if (!inserted) {
+        throw new Error("Failed to create superadmin user - no rows returned");
+      }
 
       console.log(`✅ Superadmin created successfully:`);
       console.log(`   - ID: ${inserted.id}`);
@@ -84,9 +89,13 @@ async function seedSuperadmin() {
     } else {
       // Update existing superadmin
       const existing = existingSuperadmin[0];
+      if (!existing) {
+        throw new Error("Superadmin record unexpectedly empty");
+      }
+
       console.log("📝 Updating existing superadmin user...");
       
-      const [updated] = await db
+      const updatedRows = await db
         .update(users)
         .set({
           passwordHash: superadminData.passwordHash,
@@ -97,6 +106,11 @@ async function seedSuperadmin() {
         })
         .where(eq(users.id, existing.id))
         .returning();
+      const updated = updatedRows[0];
+
+      if (!updated) {
+        throw new Error("Failed to update superadmin user - no rows returned");
+      }
 
       console.log(`✅ Superadmin updated successfully:`);
       console.log(`   - ID: ${updated.id}`);
@@ -117,7 +131,7 @@ async function seedSuperadmin() {
       const adminPassword = env.SUPER_ADMIN_PASSWORD || "password123";
       const adminPasswordHash = await bcrypt.hash(adminPassword, saltRounds);
 
-      const [inserted] = await db
+      const adminRows = await db
         .insert(users)
         .values({
           username: "admin",
@@ -128,11 +142,16 @@ async function seedSuperadmin() {
           photoUrl: null,
         })
         .returning();
+      const adminInserted = adminRows[0];
+
+      if (!adminInserted) {
+        throw new Error("Failed to create admin user - no rows returned");
+      }
 
       console.log(`✅ Admin created successfully:`);
-      console.log(`   - ID: ${inserted.id}`);
-      console.log(`   - Username: ${inserted.username}`);
-      console.log(`   - Email: ${inserted.email}`);
+      console.log(`   - ID: ${adminInserted.id}`);
+      console.log(`   - Username: ${adminInserted.username}`);
+      console.log(`   - Email: ${adminInserted.email}`);
     } else {
       console.log("\n✅ Admin user already exists.");
     }
