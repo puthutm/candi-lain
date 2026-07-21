@@ -140,6 +140,7 @@ services:
       - AUTH_URL=http://10.10.20.56:3002/api/auth
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-pmb-platform-2026
+      - AUTH_SECRET=super-secret-nextauth-key-pmb-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3002/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3002
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3002/api
@@ -174,6 +175,7 @@ services:
       - AUTH_URL=http://10.10.20.56:3003/api/auth
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-siakad-platform-2026
+      - AUTH_SECRET=super-secret-nextauth-key-siakad-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3003/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3003
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3003/api
@@ -206,6 +208,7 @@ services:
       - AUTH_URL=http://10.10.20.56:3004/api/auth
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-lms-platform-2026
+      - AUTH_SECRET=super-secret-nextauth-key-lms-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3004/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3004
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3004/api
@@ -238,6 +241,7 @@ services:
       - AUTH_URL=http://10.10.20.56:3005/api/auth
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-keuangan-platform-2026
+      - AUTH_SECRET=super-secret-nextauth-key-keuangan-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3005/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3005
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3005/api
@@ -270,6 +274,7 @@ services:
       - AUTH_URL=http://10.10.20.56:3006/api/auth
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-hris-platform-2026
+      - AUTH_SECRET=super-secret-nextauth-key-hris-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3006/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3006
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3006/api
@@ -302,6 +307,7 @@ services:
       - AUTH_URL=http://10.10.20.56:3007/api/auth
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-bank-konten-platform-2026
+      - AUTH_SECRET=super-secret-nextauth-key-bank-konten-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3007/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3007
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3007/api
