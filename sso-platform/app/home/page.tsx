@@ -8,7 +8,6 @@ import { headers } from "next/headers";
 import { logoutAction } from "./actions";
 import Link from "next/link";
 import { PORTAL_NAME } from "@/lib/client-config";
-import { generateCodeVerifier, generateCodeChallenge, base64UrlEncode } from "@/lib/utils";
 
 export default async function HomePage() {
   const user = await getSessionUser();
