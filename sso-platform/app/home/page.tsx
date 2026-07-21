@@ -258,7 +258,12 @@ export default async function HomePage() {
                     let authUrl = "";
                     try {
                       const uriUrl = new URL(defaultUri);
-                      if (uriUrl.hostname === "localhost" || uriUrl.hostname === "127.0.0.1") {
+                      const isLocalOrContainer =
+                        uriUrl.hostname === "localhost" ||
+                        uriUrl.hostname === "127.0.0.1" ||
+                        !uriUrl.hostname.includes(".");
+
+                      if (isLocalOrContainer) {
                         uriUrl.hostname = hostname;
                       }
                       uriUrl.pathname = "/auth/login-start";
