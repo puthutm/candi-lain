@@ -15,7 +15,9 @@ import { NextResponse } from "next/server";
  * and the callback validation succeeds.
  */
 export async function GET(request: Request) {
-  const url = new URL("/api/auth/signin/unsia-sso", request.url);
+  const host = request.headers.get("host") || "10.10.20.56:3002";
+  const protocol = request.headers.get("x-forwarded-proto") || "http";
+  const url = new URL("/api/auth/signin/unsia-sso", `${protocol}://${host}`);
   return NextResponse.redirect(url);
 }
 
