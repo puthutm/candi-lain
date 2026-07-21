@@ -5,7 +5,7 @@ import { z } from "zod";
  */
 const envSchema = z.object({
   // Database
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string(),
 
   // JWT Configuration
   JWT_PRIVATE_KEY: z.string().optional(),
