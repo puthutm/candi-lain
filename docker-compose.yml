@@ -70,10 +70,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      migrate-all:
-        condition: service_completed_successfully
-      seed-superadmin:
-        condition: service_completed_successfully
     env_file:
       - path: ./sso-platform/.env
         required: false
