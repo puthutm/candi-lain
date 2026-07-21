@@ -14,7 +14,7 @@ const parsedNextAuth = NextAuth(authConfig);
 const originalGet = parsedNextAuth.handlers.GET;
 const originalPost = parsedNextAuth.handlers.POST;
 
-const wrappedGet = (req: any) => {
+const wrappedGet = (req: any, ...args: any[]) => {
   const host = req.headers.get("host");
   const protocol = req.headers.get("x-forwarded-proto") || "http";
   if (host) {
@@ -28,13 +28,13 @@ const wrappedGet = (req: any) => {
       urlObj.host = host;
       urlObj.protocol = protocol;
       const modifiedReq = new NextRequest(urlObj.toString(), req);
-      return originalGet(modifiedReq);
+      return originalGet(modifiedReq, ...args);
     }
   }
-  return originalGet(req);
+  return originalGet(req, ...args);
 };
 
-const wrappedPost = (req: any) => {
+const wrappedPost = (req: any, ...args: any[]) => {
   const host = req.headers.get("host");
   const protocol = req.headers.get("x-forwarded-proto") || "http";
   if (host) {
@@ -48,10 +48,10 @@ const wrappedPost = (req: any) => {
       urlObj.host = host;
       urlObj.protocol = protocol;
       const modifiedReq = new NextRequest(urlObj.toString(), req);
-      return originalPost(modifiedReq);
+      return originalPost(modifiedReq, ...args);
     }
   }
-  return originalPost(req);
+  return originalPost(req, ...args);
 };
 
 export const handlers = { GET: wrappedGet, POST: wrappedPost };
