@@ -70,9 +70,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "localhost:3000";
-    const proto = request.headers.get("x-forwarded-proto") || "http";
-    const clientUrl = `${proto}://${host}${request.nextUrl.pathname}${request.nextUrl.search}`;
+    const publicBase = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
+    const clientUrl = `${publicBase}${request.nextUrl.pathname}${request.nextUrl.search}`;
 
     if (!sessionUser) {
       // Redirect to login page, preserving request URL for post-login return

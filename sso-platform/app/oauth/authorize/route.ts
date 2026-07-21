@@ -5,6 +5,7 @@ import { AuthenticationService } from "@/lib/services/auth";
 import { ConsentService } from "@/lib/services/consent";
 import { OAuth2Service } from "@/lib/services/oauth2";
 import { parseScopes, isRedirectUriAllowed } from "@/lib/utils";
+import { env } from "@/lib/env";
 import { ensureDatabaseSeeded } from "@/lib/seed";
 
 export async function GET(request: NextRequest) {
@@ -69,15 +70,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build client origin from the actual request URL to avoid wrong host/proto behind proxies.
-    // request.url is already the correct origin for this hop (works for direct access and most proxy setups).
-    const clientUrlObj = new URL(request.url);
-
-    // Ensure we preserve Next route path/query for the current request.
-    clientUrlObj.pathname = request.nextUrl.pathname;
-    clientUrlObj.search = request.nextUrl.search;
-
-    const clientUrl = clientUrlObj.toString();
+    // Build client URL for redirects using the public app URL as base
+    // instead of request.url which may contain Docker container hostname.
+    const publicBase = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
+    const clientUrl = `${publicBase}${request.nextUrl.pathname}${request.nextUrl.search}`;
 
     if (!sessionUser) {
       // Redirect to login page, preserving request URL for post-login return
