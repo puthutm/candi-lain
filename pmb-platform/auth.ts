@@ -17,6 +17,14 @@ const originalPost = parsedNextAuth.handlers.POST;
 const wrappedGet = (req: any, ...args: any[]) => {
   const host = req.headers.get("host");
   const protocol = req.headers.get("x-forwarded-proto") || "http";
+
+  console.error("[pmb][auth][wrappedGet][debug]", {
+    originalUrl: req.url,
+    host,
+    protocol,
+    args: JSON.stringify(args),
+  });
+
   if (host) {
     const urlObj = new URL(req.url);
     const isLocalOrContainer =
@@ -28,6 +36,10 @@ const wrappedGet = (req: any, ...args: any[]) => {
       urlObj.host = host;
       urlObj.protocol = protocol;
       const modifiedReq = new NextRequest(urlObj.toString(), req);
+      console.error("[pmb][auth][wrappedGet][modified]", {
+        modifiedUrl: modifiedReq.url,
+        nextUrlPath: modifiedReq.nextUrl?.pathname,
+      });
       return (originalGet as any)(modifiedReq, ...args);
     }
   }
@@ -37,6 +49,14 @@ const wrappedGet = (req: any, ...args: any[]) => {
 const wrappedPost = (req: any, ...args: any[]) => {
   const host = req.headers.get("host");
   const protocol = req.headers.get("x-forwarded-proto") || "http";
+
+  console.error("[pmb][auth][wrappedPost][debug]", {
+    originalUrl: req.url,
+    host,
+    protocol,
+    args: JSON.stringify(args),
+  });
+
   if (host) {
     const urlObj = new URL(req.url);
     const isLocalOrContainer =
@@ -48,6 +68,10 @@ const wrappedPost = (req: any, ...args: any[]) => {
       urlObj.host = host;
       urlObj.protocol = protocol;
       const modifiedReq = new NextRequest(urlObj.toString(), req);
+      console.error("[pmb][auth][wrappedPost][modified]", {
+        modifiedUrl: modifiedReq.url,
+        nextUrlPath: modifiedReq.nextUrl?.pathname,
+      });
       return (originalPost as any)(modifiedReq, ...args);
     }
   }
