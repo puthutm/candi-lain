@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import { authConfig } from "./auth.config";
 
@@ -13,7 +14,7 @@ const parsedNextAuth = NextAuth(authConfig);
 const originalGet = parsedNextAuth.handlers.GET;
 const originalPost = parsedNextAuth.handlers.POST;
 
-const wrappedGet = (req: Request) => {
+const wrappedGet = (req: any) => {
   const host = req.headers.get("host");
   const protocol = req.headers.get("x-forwarded-proto") || "http";
   if (host) {
@@ -26,14 +27,14 @@ const wrappedGet = (req: Request) => {
     if (isLocalOrContainer) {
       urlObj.host = host;
       urlObj.protocol = protocol;
-      const modifiedReq = new Request(urlObj.toString(), req);
+      const modifiedReq = new NextRequest(urlObj.toString(), req);
       return originalGet(modifiedReq);
     }
   }
   return originalGet(req);
 };
 
-const wrappedPost = (req: Request) => {
+const wrappedPost = (req: any) => {
   const host = req.headers.get("host");
   const protocol = req.headers.get("x-forwarded-proto") || "http";
   if (host) {
@@ -46,7 +47,7 @@ const wrappedPost = (req: Request) => {
     if (isLocalOrContainer) {
       urlObj.host = host;
       urlObj.protocol = protocol;
-      const modifiedReq = new Request(urlObj.toString(), req);
+      const modifiedReq = new NextRequest(urlObj.toString(), req);
       return originalPost(modifiedReq);
     }
   }
