@@ -170,9 +170,13 @@ services:
       - SSO_OAUTH_TOKEN_URL=http://10.10.20.56:3000/oauth/token
       - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://10.10.20.56:3000/oauth/userinfo
+      - NEXTAUTH_URL=http://10.10.20.56:3003
+      - AUTH_URL=http://10.10.20.56:3003/api/auth
+      - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-siakad-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3003/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3003
+      - NEXT_PUBLIC_API_URL=http://10.10.20.56:3003/api
 
   lms-platform:
     build:
@@ -198,9 +202,13 @@ services:
       - SSO_OAUTH_TOKEN_URL=http://10.10.20.56:3000/oauth/token
       - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://10.10.20.56:3000/oauth/userinfo
+      - NEXTAUTH_URL=http://10.10.20.56:3004
+      - AUTH_URL=http://10.10.20.56:3004/api/auth
+      - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-lms-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3004/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3004
+      - NEXT_PUBLIC_API_URL=http://10.10.20.56:3004/api
 
   keuangan-platform:
     build:
@@ -226,9 +234,13 @@ services:
       - SSO_OAUTH_TOKEN_URL=http://10.10.20.56:3000/oauth/token
       - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://10.10.20.56:3000/oauth/userinfo
+      - NEXTAUTH_URL=http://10.10.20.56:3005
+      - AUTH_URL=http://10.10.20.56:3005/api/auth
+      - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-keuangan-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3005/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3005
+      - NEXT_PUBLIC_API_URL=http://10.10.20.56:3005/api
 
   hris-platform:
     build:
@@ -254,9 +266,13 @@ services:
       - SSO_OAUTH_TOKEN_URL=http://10.10.20.56:3000/oauth/token
       - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://10.10.20.56:3000/oauth/userinfo
+      - NEXTAUTH_URL=http://10.10.20.56:3006
+      - AUTH_URL=http://10.10.20.56:3006/api/auth
+      - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-hris-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3006/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3006
+      - NEXT_PUBLIC_API_URL=http://10.10.20.56:3006/api
 
   bank-konten-platform:
     build:
@@ -282,9 +298,13 @@ services:
       - SSO_OAUTH_TOKEN_URL=http://10.10.20.56:3000/oauth/token
       - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://10.10.20.56:3000/oauth/userinfo
+      - NEXTAUTH_URL=http://10.10.20.56:3007
+      - AUTH_URL=http://10.10.20.56:3007/api/auth
+      - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-bank-konten-platform-2026
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3007/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3007
+      - NEXT_PUBLIC_API_URL=http://10.10.20.56:3007/api
 
 volumes:
   postgres_data:

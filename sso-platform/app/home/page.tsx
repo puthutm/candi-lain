@@ -256,33 +256,18 @@ export default async function HomePage() {
                   userApps.map(async (app) => {
                     const defaultUri = app.redirectUris[0] || "";
 
-                    let finalUri = defaultUri;
+                    let authUrl = "";
                     try {
                       const uriUrl = new URL(defaultUri);
                       if (uriUrl.hostname === "localhost" || uriUrl.hostname === "127.0.0.1") {
                         uriUrl.hostname = hostname;
-                        finalUri = uriUrl.toString();
                       }
-                    } catch {}
-
-                    const verifier = generateCodeVerifier();
-                    const challenge = await generateCodeChallenge(verifier);
-
-                    // Pack verifier into state so authorize endpoint can forward it to client via fragment
-                    const statePayload = JSON.stringify({
-                      t: "pkce",
-                      v: verifier,
-                    });
-
-                    const state = base64UrlEncode(new TextEncoder().encode(statePayload).buffer);
-
-                    const authUrl = `/oauth/authorize?client_id=${app.clientId}&redirect_uri=${encodeURIComponent(
-                      finalUri
-                    )}&response_type=code&scope=openid+profile&code_challenge=${encodeURIComponent(
-                      challenge
-                    )}&code_challenge_method=S256&state=${encodeURIComponent(
-                      state
-                    )}`;
+                      uriUrl.pathname = "/auth/login-start";
+                      uriUrl.search = "";
+                      authUrl = uriUrl.toString();
+                    } catch {
+                      authUrl = "/";
+                    }
 
                     return { app, authUrl };
                   })
