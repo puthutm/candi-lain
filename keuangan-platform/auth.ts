@@ -67,9 +67,28 @@ const parsedNextAuth = NextAuth({
 const originalGet = parsedNextAuth.handlers.GET;
 const originalPost = parsedNextAuth.handlers.POST;
 
+const getNextauthParams = (url: string) => {
+  try {
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+    const prefix = "/api/auth/";
+    if (pathname.startsWith(prefix)) {
+      const remaining = pathname.substring(prefix.length);
+      if (remaining) {
+        return remaining.split("/");
+      }
+    }
+  } catch {}
+  return undefined;
+};
+
 const wrappedGet = (req: any, ...args: any[]) => {
   const host = req.headers.get("host");
   const protocol = req.headers.get("x-forwarded-proto") || "http";
+
+  let modifiedReq = req;
+  let modifiedArgs = args;
+
   if (host) {
     const urlObj = new URL(req.url);
     const isLocalOrContainer =
@@ -80,16 +99,27 @@ const wrappedGet = (req: any, ...args: any[]) => {
     if (isLocalOrContainer) {
       urlObj.host = host;
       urlObj.protocol = protocol;
-      const modifiedReq = new NextRequest(urlObj.toString(), req);
-      return (originalGet as any)(modifiedReq, ...args);
+      modifiedReq = new NextRequest(urlObj.toString(), req);
     }
   }
-  return (originalGet as any)(req, ...args);
+
+  const parsedParams = getNextauthParams(modifiedReq.url);
+  if (parsedParams) {
+    const context = args[0] || {};
+    context.params = { nextauth: parsedParams };
+    modifiedArgs = [context, ...args.slice(1)];
+  }
+
+  return (originalGet as any)(modifiedReq, ...modifiedArgs);
 };
 
 const wrappedPost = (req: any, ...args: any[]) => {
   const host = req.headers.get("host");
   const protocol = req.headers.get("x-forwarded-proto") || "http";
+
+  let modifiedReq = req;
+  let modifiedArgs = args;
+
   if (host) {
     const urlObj = new URL(req.url);
     const isLocalOrContainer =
@@ -100,11 +130,18 @@ const wrappedPost = (req: any, ...args: any[]) => {
     if (isLocalOrContainer) {
       urlObj.host = host;
       urlObj.protocol = protocol;
-      const modifiedReq = new NextRequest(urlObj.toString(), req);
-      return (originalPost as any)(modifiedReq, ...args);
+      modifiedReq = new NextRequest(urlObj.toString(), req);
     }
   }
-  return (originalPost as any)(req, ...args);
+
+  const parsedParams = getNextauthParams(modifiedReq.url);
+  if (parsedParams) {
+    const context = args[0] || {};
+    context.params = { nextauth: parsedParams };
+    modifiedArgs = [context, ...args.slice(1)];
+  }
+
+  return (originalPost as any)(modifiedReq, ...modifiedArgs);
 };
 
 export const handlers = { GET: wrappedGet, POST: wrappedPost };
