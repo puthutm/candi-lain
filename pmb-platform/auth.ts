@@ -28,10 +28,10 @@ const wrappedGet = (req: any, ...args: any[]) => {
       urlObj.host = host;
       urlObj.protocol = protocol;
       const modifiedReq = new NextRequest(urlObj.toString(), req);
-      return originalGet(modifiedReq, ...args);
+      return (originalGet as any)(modifiedReq, ...args);
     }
   }
-  return originalGet(req, ...args);
+  return (originalGet as any)(req, ...args);
 };
 
 const wrappedPost = (req: any, ...args: any[]) => {
@@ -48,10 +48,10 @@ const wrappedPost = (req: any, ...args: any[]) => {
       urlObj.host = host;
       urlObj.protocol = protocol;
       const modifiedReq = new NextRequest(urlObj.toString(), req);
-      return originalPost(modifiedReq, ...args);
+      return (originalPost as any)(modifiedReq, ...args);
     }
   }
-  return originalPost(req, ...args);
+  return (originalPost as any)(req, ...args);
 };
 
 export const handlers = { GET: wrappedGet, POST: wrappedPost };
