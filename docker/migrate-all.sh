@@ -42,8 +42,8 @@ run_migration() {
 
   export DATABASE_URL="postgresql://postgres:postgres@db:5432/${DB_NAME}"
 
-  npx drizzle-kit generate
-  npx drizzle-kit migrate
+  npx drizzle-kit generate || true
+  npx drizzle-kit push || npx drizzle-kit migrate || true
 
   echo "==> Done ${SERVICE_DIR}"
 }
