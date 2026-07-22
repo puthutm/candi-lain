@@ -153,7 +153,7 @@ services:
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3002
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3002/api
       - SSO_OAUTH_CLIENT_ID=pmb-platform
-      - SSO_OAUTH_CLIENT_SECRET=pmb-platform-client-secret-key-2026
+      - SSO_OAUTH_CLIENT_SECRET=sec_pmb-platform_898f7b0bb665b73b751ad7b37c409ed3
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3002/api/health || exit 1"]
       interval: 30s

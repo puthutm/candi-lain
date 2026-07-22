@@ -52,7 +52,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       type: "oauth",
       issuer: process.env.SSO_OAUTH_ISSUER || "http://10.10.20.56:3000",
       clientId: process.env.SSO_OAUTH_CLIENT_ID || "pmb-platform",
-      clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "pmb-platform-client-secret-key-2026",
+      clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "sec_pmb-platform_898f7b0bb665b73b751ad7b37c409ed3",
       allowInsecureHTTP: true,
       client: {
         token_endpoint_auth_method: "client_secret_basic",
