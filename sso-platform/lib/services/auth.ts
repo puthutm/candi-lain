@@ -143,11 +143,12 @@ export class AuthenticationService {
    */
   static async createSession(
     userId: string,
-    metadata?: { userAgent?: string; ipAddress?: string }
+    metadata?: { userAgent?: string; ipAddress?: string },
+    rememberMe?: boolean
   ): Promise<Session> {
     try {
       const sessionId = randomUUID();
-      const maxAgeSeconds = env.SESSION_MAX_AGE || 86400;
+      const maxAgeSeconds = rememberMe ? 2592000 : (env.SESSION_MAX_AGE || 86400);
 
       const now = new Date();
       const expires = new Date(now.getTime() + maxAgeSeconds * 1000);

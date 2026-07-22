@@ -132,6 +132,24 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     }
   };
 
+  const handleUnlockAccount = async () => {
+    try {
+      const res = await fetch(`/api/admin/users/${id}/unlock`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("Akun berhasil dibuka kembali!");
+        setStatus("active");
+        if (user) setUser({ ...user, status: "active" });
+      } else {
+        showToast(data.error || "Gagal membuka kunci akun", "error");
+      }
+    } catch {
+      showToast("Gagal menghubungi server", "error");
+    }
+  };
+
   const handleAddMapping = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrgId) {
@@ -303,6 +321,16 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                     >
                       Simpan Status
                     </button>
+
+                    {(user.status === "suspended" || (user.status as string) === "locked") && (
+                      <button
+                        type="button"
+                        onClick={handleUnlockAccount}
+                        className="w-full rounded-lg bg-emerald-600/20 border border-emerald-500/30 py-2.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/30 transition flex items-center justify-center gap-1.5"
+                      >
+                        <span>🔓</span> Buka Kunci Akun & Reset Counter
+                      </button>
+                    )}
                   </form>
                 </div>
               </div>

@@ -138,12 +138,24 @@ function LoginContent() {
                     </svg>
                   </button>
                 </div>
-                <Link
-                  href="/forgot-password"
-                  className="text-[11px] font-bold text-[#0B4A75] hover:underline block text-right mt-1.5"
-                >
-                  Lupa password?
-                </Link>
+                <div className="flex items-center justify-between mt-2">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      name="remember_me"
+                      value="true"
+                      className="w-4 h-4 rounded border-slate-300 text-[#0B4A75] focus:ring-[#0B4A75]/20 cursor-pointer"
+                    />
+                    <span>Ingat Saya di Perangkat Ini</span>
+                  </label>
+
+                  <Link
+                    href="/forgot-password"
+                    className="text-[11px] font-bold text-[#0B4A75] hover:underline"
+                  >
+                    Lupa password?
+                  </Link>
+                </div>
               </div>
 
               {/* Error Alert Box */}

@@ -24,7 +24,7 @@ export const CRYPTO_CONFIG = {
 // JWT & OAuth Configuration
 export const JWT_CONFIG = {
   ALGORITHM: process.env.JWT_ALGORITHM || 'HS256',
-  ISSUER: process.env.JWT_ISSUER || 'urn:unsia:sso',
+  ISSUER: process.env.JWT_ISSUER || process.env.NEXT_PUBLIC_APP_URL || 'http://10.10.20.56:3000',
   AUDIENCE: process.env.JWT_AUDIENCE || 'urn:unsia:platform',
 } as const;
 

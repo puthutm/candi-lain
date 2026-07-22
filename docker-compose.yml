@@ -88,6 +88,12 @@ services:
       - SEED_HRIS_CALLBACK_URL=http://10.10.20.56:3006/api/auth/callback
       - SEED_BANK_KONTEN_CALLBACK_URL=http://10.10.20.56:3007/api/auth/callback
       # Enable to force re-seed and update redirect URIs: SSO_SEED_FORCE=true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   reference-data:
     build:
@@ -146,6 +152,12 @@ services:
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3002/api
       - SSO_OAUTH_CLIENT_ID=pmb-platform
       - SSO_OAUTH_CLIENT_SECRET=pmb-platform-client-secret-key-2026
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   siakad-platform:
     build:
@@ -179,6 +191,12 @@ services:
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3003/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3003
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3003/api
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3003/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   lms-platform:
     build:
@@ -212,6 +230,12 @@ services:
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3004/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3004
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3004/api
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3004/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   keuangan-platform:
     build:
@@ -245,6 +269,12 @@ services:
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3005/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3005
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3005/api
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3005/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   hris-platform:
     build:
@@ -278,6 +308,12 @@ services:
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3006/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3006
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3006/api
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3006/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   bank-konten-platform:
     build:
@@ -311,6 +347,12 @@ services:
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3007/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3007
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3007/api
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3007/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres_data:

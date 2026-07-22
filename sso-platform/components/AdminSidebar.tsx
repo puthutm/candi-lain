@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 interface AdminSidebarProps {
-  activeTab: "dashboard" | "applications" | "reference" | "settings" | "profile" | "users" | "roles" | "permissions" | "clients" | "audit-logs";
+  activeTab: "dashboard" | "applications" | "reference" | "settings" | "profile" | "users" | "roles" | "permissions" | "clients" | "audit-logs" | "sessions";
   adminName?: string;
 }
 
@@ -107,6 +107,16 @@ export default function AdminSidebar({ activeTab, adminName }: AdminSidebarProps
             }`}
           >
             <span>📋</span> Audit Logs
+          </Link>
+          <Link
+            href="/admin/sessions"
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2 ${
+              activeTab === "sessions"
+                ? "bg-indigo-500/10 text-indigo-400"
+                : "text-slate-400 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <span>🟢</span> Sesi Aktif
           </Link>
           <hr className="border-white/10 my-2" />
           <Link

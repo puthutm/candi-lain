@@ -101,13 +101,17 @@ export async function loginAction(
     };
   }
 
+  const rememberMe = formData.get("remember_me") === "true" || formData.get("remember_me") === "on";
+
   try {
     const result = await AuthenticationService.authenticate(username, password);
     if (!result.success) return mapAuthErrorToState(result.error);
 
-    const session = await AuthenticationService.createSession(result.user.id);
+    const session = await AuthenticationService.createSession(result.user.id, undefined, rememberMe);
 
     const cookieSecure = await computeCookieSecureFromRequest();
+
+    const maxAgeSeconds = rememberMe ? 2592000 : env.SESSION_MAX_AGE;
 
     const cookieStore = await cookies();
     cookieStore.set("sso_session", session.id, {
@@ -115,7 +119,7 @@ export async function loginAction(
       httpOnly: true,
       secure: cookieSecure,
       sameSite: "lax",
-      maxAge: env.SESSION_MAX_AGE,
+      maxAge: maxAgeSeconds,
     });
 
     return {

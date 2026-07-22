@@ -10,6 +10,7 @@ import AdminSidebar from "@/components/AdminSidebar";
 import AppActions from "./AppActions";
 import RolesManager from "./RolesManager";
 import AssignmentsManager from "./AssignmentsManager";
+import SecretManager from "./SecretManager";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -102,22 +103,17 @@ export default async function AppDetailPage({ params }: PageProps) {
         {/* Configurations details */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
           <div className="lg:col-span-1 space-y-6">
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6 shadow-md">
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6 shadow-md space-y-4">
               <h2 className="text-base font-bold">Integration Credentials</h2>
-              <div className="mt-4 space-y-4 text-xs">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Client ID</span>
-                  <p className="font-mono text-slate-300 bg-slate-900/60 p-2.5 rounded select-all border border-white/5">{app.clientId}</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Allowed Grant Types</span>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {app.allowedGrantTypes.map((type) => (
-                      <span key={type} className="rounded bg-slate-900 px-2 py-0.5 font-mono text-[10px] text-slate-400 border border-white/5">
-                        {type}
-                      </span>
-                    ))}
-                  </div>
+              <SecretManager appId={id} clientId={app.clientId} />
+              <div className="pt-3 border-t border-white/10 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Allowed Grant Types</span>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {app.allowedGrantTypes.map((type) => (
+                    <span key={type} className="rounded bg-slate-900 px-2 py-0.5 font-mono text-[10px] text-slate-400 border border-white/5">
+                      {type}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, boolean, timestamp, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { users } from "./users";
 import { applications } from "./applications";
@@ -17,16 +17,22 @@ export const oauthAuthorizationCodes = pgTable("oauth_authorization_codes", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const oauthAccessTokens = pgTable("oauth_access_tokens", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tokenHash: text("token_hash").unique().notNull(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  applicationId: uuid("application_id").references(() => applications.id, { onDelete: "cascade" }).notNull(),
-  scope: text("scope").notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  revoked: boolean("revoked").default(false).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const oauthAccessTokens = pgTable(
+  "oauth_access_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tokenHash: text("token_hash").unique().notNull(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    applicationId: uuid("application_id").references(() => applications.id, { onDelete: "cascade" }).notNull(),
+    scope: text("scope").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revoked: boolean("revoked").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_oauth_access_tokens_user_app").on(table.userId, table.applicationId),
+  ]
+);
 
 export const oauthRefreshTokens = pgTable("oauth_refresh_tokens", {
   id: uuid("id").primaryKey().defaultRandom(),

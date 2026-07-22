@@ -65,9 +65,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limiting: max 10 requests per minute per client application
+    // Rate limiting: max 60 requests per minute per client application
     const rateLimitKey = `rate_limit:token:${clientId}`;
-    const rateCheck = await rateLimit(rateLimitKey, 10, 60);
+    const rateCheck = await rateLimit(rateLimitKey, 60, 60);
     if (!rateCheck.success) {
       return NextResponse.json(
         { error: "slow_down", error_description: "Too many token requests. Please try again later." },
