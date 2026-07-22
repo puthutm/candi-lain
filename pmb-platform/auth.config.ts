@@ -38,6 +38,11 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
   useSecureCookies: false,
   debug: true,
 
+  pages: {
+    signIn: "/auth/login",
+    error: "/auth/login",
+  },
+
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "super-secret-nextauth-key-pmb-platform-2026",
 
   providers: [

@@ -106,6 +106,11 @@ const parsedNextAuth = NextAuth({
     },
   },
 
+  pages: {
+    signIn: "/auth/login",
+    error: "/auth/login",
+  },
+
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "super-secret-nextauth-key-keuangan-platform-2026",
 });
 
