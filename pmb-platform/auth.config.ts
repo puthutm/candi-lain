@@ -68,7 +68,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
           username: profile.preferred_username,
         };
       },
-    },
+    } as any,
   ],
 
   cookies: {

@@ -62,7 +62,7 @@ const parsedNextAuth = NextAuth({
           username: profile.preferred_username,
         };
       },
-    },
+    } as any,
   ],
 
   // Namespace cookies so PKCE/state/csrf are not shared/mixed across modules.
