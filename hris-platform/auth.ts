@@ -38,6 +38,8 @@ const parsedNextAuth = NextAuth({
       id: "unsia-sso",
       name: "UNSIA SSO",
       type: "oauth",
+      issuer: process.env.SSO_OAUTH_ISSUER || "http://10.10.20.56:3000",
+      wellKnown: false,
       authorization: {
         url: process.env.SSO_OAUTH_AUTHORIZE_URL,
         params: { scope: "openid profile email" },
