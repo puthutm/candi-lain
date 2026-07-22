@@ -17,8 +17,8 @@ const PUBLIC_PATHS: string[] = [
 ];
 
 function isPublic(pathname: string) {
+  if (pathname.startsWith("/_next") || pathname.startsWith("/api/auth") || pathname.includes(".")) return true;
   if (PUBLIC_PATHS.includes(pathname)) return true;
-  if (pathname.startsWith("/api/auth")) return true;
   return false;
 }
 

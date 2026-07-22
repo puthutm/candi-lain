@@ -84,10 +84,25 @@ export async function GET(request: NextRequest) {
 
     // 4. Consent check
     const requestedScopes = parseScopes(scope);
-    const consented = await ConsentService.hasActiveConsent(sessionUser.userId, app.id, requestedScopes);
+    let consented = await ConsentService.hasActiveConsent(sessionUser.userId, app.id, requestedScopes);
+
+    // Auto-grant consent for built-in campus platforms
+    const isBuiltInApp = [
+      "siakad-platform",
+      "lms-platform",
+      "pmb-platform",
+      "keuangan-platform",
+      "hris-platform",
+      "bank-konten-platform",
+    ].includes(app.clientId);
+
+    if (!consented && isBuiltInApp) {
+      await ConsentService.grantConsent(sessionUser.userId, app.id, requestedScopes);
+      consented = true;
+    }
 
     if (!consented) {
-      // Redirect to consent screen
+      // Redirect to consent screen for external apps
       const consentUrl = new URL("/oauth/consent", clientUrl);
       consentUrl.searchParams.set("return_to", clientUrl);
       return NextResponse.redirect(consentUrl.toString());

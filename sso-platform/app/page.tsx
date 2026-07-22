@@ -21,12 +21,7 @@ function LoginContent() {
     const isSuccess = Boolean(nextState?.status === "success" || legacyState?.success);
 
     if (!isSuccess || !redirectTo) return;
-
-    if (redirectTo.startsWith("http://") || redirectTo.startsWith("https://")) {
-      window.location.href = redirectTo;
-    } else {
-      router.push(redirectTo);
-    }
+    window.location.href = redirectTo;
   }, [state, router]);
 
   const legacyState = state as { error?: string } | null;
