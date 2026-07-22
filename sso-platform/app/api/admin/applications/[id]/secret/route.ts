@@ -21,12 +21,10 @@ export async function POST(_req: Request, { params }: RouteParams) {
 
     const { id } = await params;
 
-    const appList = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
-    if (appList.length === 0) {
+    const app = appList[0];
+    if (!app) {
       return NextResponse.json({ success: false, error: "Application not found" }, { status: 404 });
     }
-
-    const app = appList[0];
 
     // Generate new raw client secret
     const rawSecret = `sec_${app.clientId}_${crypto.randomBytes(16).toString("hex")}`;
