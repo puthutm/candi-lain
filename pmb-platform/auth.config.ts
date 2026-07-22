@@ -48,6 +48,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       issuer: process.env.SSO_OAUTH_ISSUER || "http://10.10.20.56:3000",
       clientId: process.env.SSO_OAUTH_CLIENT_ID || "pmb-platform",
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "pmb-platform-client-secret-key-2026",
+      allowInsecureHTTP: true,
       authorization: {
         url: process.env.SSO_OAUTH_AUTHORIZE_URL || "http://10.10.20.56:3000/oauth/authorize",
         params: { scope: "openid profile email" },
