@@ -76,6 +76,7 @@ services:
     environment:
       - NODE_ENV=production
       - ALLOW_SEED_IN_PROD=true
+      - JWT_ISSUER=http://10.10.20.56:3000
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/sso_platform
       - REDIS_URL=redis://redis:6379
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3000

@@ -34,11 +34,11 @@ async function refreshAccessToken(token: any) {
  * Keep this as the single source of truth for `pmb-platform/auth.ts`.
  */
 export const authConfig: Parameters<typeof NextAuth>[0] = {
-  trustHost: env.AUTH_TRUST_HOST,
+  trustHost: true,
   useSecureCookies: false,
   debug: true,
 
-  secret: env.AUTH_SECRET ?? env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "super-secret-nextauth-key-pmb-platform-2026",
 
   providers: [
     {
@@ -46,14 +46,14 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       name: "UNSIA SSO",
       type: "oauth",
       issuer: process.env.SSO_OAUTH_ISSUER || "http://10.10.20.56:3000",
-      clientId: env.SSO_OAUTH_CLIENT_ID,
-      clientSecret: env.SSO_OAUTH_CLIENT_SECRET,
+      clientId: process.env.SSO_OAUTH_CLIENT_ID || "pmb-platform",
+      clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "pmb-platform-client-secret-key-2026",
       authorization: {
-        url: env.SSO_OAUTH_AUTHORIZE_URL,
+        url: process.env.SSO_OAUTH_AUTHORIZE_URL || "http://10.10.20.56:3000/oauth/authorize",
         params: { scope: "openid profile email" },
       },
-      token: env.SSO_OAUTH_TOKEN_URL,
-      userinfo: env.SSO_OAUTH_USERINFO_URL,
+      token: process.env.SSO_OAUTH_TOKEN_URL || "http://10.10.20.56:3000/oauth/token",
+      userinfo: process.env.SSO_OAUTH_USERINFO_URL || "http://10.10.20.56:3000/oauth/userinfo",
 
       // Keep Auth.js v5 PKCE/state checks enabled.
       checks: ["pkce", "state"],

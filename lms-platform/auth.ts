@@ -105,7 +105,7 @@ const parsedNextAuth = NextAuth({
     },
   },
 
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "super-secret-nextauth-key-lms-platform-2026",
 });
 
 const originalGet = parsedNextAuth.handlers.GET;
