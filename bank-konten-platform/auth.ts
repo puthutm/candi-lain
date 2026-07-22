@@ -48,6 +48,10 @@ const parsedNextAuth = NextAuth({
       clientId: process.env.SSO_OAUTH_CLIENT_ID,
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET,
       allowInsecureHTTP: true,
+      client: {
+        token_endpoint_auth_method: "client_secret_basic",
+        allowInsecureHTTP: true,
+      },
 
       // Keep PKCE/state protections enabled
       checks: ["pkce", "state"],
