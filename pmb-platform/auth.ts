@@ -33,6 +33,12 @@ const wrappedGet = (req: any, ...args: any[]) => {
   const host = req.headers.get("host");
   const protocol = req.headers.get("x-forwarded-proto") || "http";
 
+  console.error("[pmb][auth][wrappedGet][debug]", {
+    reqUrl: req.url,
+    reqHeaders: Object.fromEntries(req.headers.entries()),
+    args: JSON.stringify(args)
+  });
+
   let modifiedReq = req;
   let modifiedArgs = args;
 
@@ -47,10 +53,16 @@ const wrappedGet = (req: any, ...args: any[]) => {
       urlObj.host = host;
       urlObj.protocol = protocol;
       modifiedReq = new NextRequest(urlObj.toString(), req);
+      console.error("[pmb][auth][wrappedGet][modified]", {
+        modifiedUrl: modifiedReq.url,
+        nextUrlPath: modifiedReq.nextUrl?.pathname
+      });
     }
   }
 
   const parsedParams = getNextauthParams(modifiedReq.url);
+  console.error("[pmb][auth][wrappedGet][params]", { parsedParams });
+
   if (parsedParams) {
     const context = args[0] || {};
     context.params = { nextauth: parsedParams };
