@@ -17,6 +17,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       id: "unsia-sso",
       name: "UNSIA SSO",
       type: "oauth",
+      issuer: "urn:unsia:sso",
       clientId: env.SSO_OAUTH_CLIENT_ID,
       clientSecret: env.SSO_OAUTH_CLIENT_SECRET,
       authorization: {
@@ -35,6 +36,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
           name: profile.name,
           email: profile.email,
           role: profile.roles?.[0] || "user",
+          username: profile.preferred_username,
         };
       },
     },
@@ -56,12 +58,15 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
     async jwt({ token, user }: any) {
       if (user) {
         token.role = (user as any).role;
+        token.username = (user as any).username;
       }
       return token;
     },
     async session({ session, token }: any) {
       if (session.user) {
+        (session.user as any).id = token.sub as string;
         (session.user as any).role = token.role as string;
+        (session.user as any).username = token.username as string;
       }
       return session;
     },

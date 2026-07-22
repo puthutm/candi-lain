@@ -10,6 +10,7 @@ const parsedNextAuth = NextAuth({
       id: "unsia-sso",
       name: "UNSIA SSO",
       type: "oauth",
+      issuer: "urn:unsia:sso",
       authorization: {
         url: process.env.SSO_OAUTH_AUTHORIZE_URL,
         params: { scope: "openid profile email" },
@@ -29,6 +30,7 @@ const parsedNextAuth = NextAuth({
           email: profile.email,
           role: profile.roles?.[0] || "mahasiswa",
           roles: profile.roles || [],
+          username: profile.preferred_username,
         };
       },
     },
@@ -49,13 +51,16 @@ const parsedNextAuth = NextAuth({
       if (user) {
         token.role = (user as any).role || "mahasiswa";
         token.roles = (user as any).roles || [];
+        token.username = (user as any).username;
       }
       return token;
     },
     async session({ session, token }: any) {
       if (session.user) {
+        (session.user as any).id = token.sub as string;
         (session.user as any).role = token.role as string;
         (session.user as any).roles = token.roles as string[];
+        (session.user as any).username = token.username as string;
       }
       return session;
     },
