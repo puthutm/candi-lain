@@ -43,8 +43,12 @@ const parsedNextAuth = NextAuth({
         url: process.env.SSO_OAUTH_AUTHORIZE_URL,
         params: { scope: "openid profile email" },
       },
-      token: process.env.SSO_OAUTH_TOKEN_URL,
-      userinfo: process.env.SSO_OAUTH_USERINFO_URL,
+      token: {
+        url: process.env.SSO_OAUTH_TOKEN_URL,
+      },
+      userinfo: {
+        url: process.env.SSO_OAUTH_USERINFO_URL,
+      },
       clientId: process.env.SSO_OAUTH_CLIENT_ID,
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET,
       allowInsecureHTTP: true,

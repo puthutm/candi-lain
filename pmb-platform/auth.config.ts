@@ -62,8 +62,12 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
         url: process.env.SSO_OAUTH_AUTHORIZE_URL || "http://10.10.20.56:3000/oauth/authorize",
         params: { scope: "openid profile email" },
       },
-      token: process.env.SSO_OAUTH_TOKEN_URL || "http://10.10.20.56:3000/oauth/token",
-      userinfo: process.env.SSO_OAUTH_USERINFO_URL || "http://10.10.20.56:3000/oauth/userinfo",
+      token: {
+        url: process.env.SSO_OAUTH_TOKEN_URL || "http://10.10.20.56:3000/oauth/token",
+      },
+      userinfo: {
+        url: process.env.SSO_OAUTH_USERINFO_URL || "http://10.10.20.56:3000/oauth/userinfo",
+      },
 
       // Keep Auth.js v5 PKCE/state checks enabled.
       checks: ["pkce", "state"],
