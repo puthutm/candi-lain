@@ -243,22 +243,16 @@ export async function ensureDatabaseSeeded(force?: boolean) {
           continue;
         }
 
-        // IMPORTANT: keep redirect_uris in sync with the new standardized callback endpoints.
-        const existingRedirectUris = Array.isArray(existing.redirectUris) ? existing.redirectUris : [];
-        const redirectUrisChanged =
-          existingRedirectUris.length !== appData.redirectUris.length ||
-          existingRedirectUris.some((u) => !appData.redirectUris.includes(u));
-
-        if (redirectUrisChanged) {
-          await db
-            .update(applications)
-            .set({
-              redirectUris: appData.redirectUris,
-              status: "active",
-              updatedAt: new Date(),
-            })
-            .where(eq(applications.id, existing.id));
-        }
+        const secretHash = await bcrypt.hash(appData.clientSecret, saltRounds);
+        await db
+          .update(applications)
+          .set({
+            clientSecretHash: secretHash,
+            redirectUris: appData.redirectUris,
+            status: "active",
+            updatedAt: new Date(),
+          })
+          .where(eq(applications.id, existing.id));
 
         insertedApp = existing;
       }

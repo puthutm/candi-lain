@@ -83,6 +83,7 @@ services:
       - NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=erp-unsia-sso-server-actions-key-2026
       - SESSION_COOKIE_SECURE=false
       # Use correct public callback URLs for each platform (different ports per service)
+      - SEED_PMB_CLIENT_SECRET=sec_pmb-platform_898f7b0bb665b73b751ad7b37c409ed3
       - SEED_PMB_CALLBACK_URL=http://10.10.20.56:3002/api/auth/callback
       - SEED_SIAKAD_CALLBACK_URL=http://10.10.20.56:3003/api/auth/callback
       - SEED_LMS_CALLBACK_URL=http://10.10.20.56:3004/api/auth/callback

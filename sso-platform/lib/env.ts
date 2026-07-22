@@ -58,7 +58,7 @@ const envSchema = z.object({
   SEED_LMS_CLIENT_SECRET: z.string().default("lms-platform-client-secret-key-2026"),
   SEED_LMS_CALLBACK_URL: z.string().default("http://localhost:3004/api/auth/callback"),
   SEED_PMB_CLIENT_ID: z.string().default("pmb-platform"),
-  SEED_PMB_CLIENT_SECRET: z.string().default("pmb-platform-client-secret-key-2026"),
+  SEED_PMB_CLIENT_SECRET: z.string().default("sec_pmb-platform_898f7b0bb665b73b751ad7b37c409ed3"),
   SEED_PMB_CALLBACK_URL: z.string().default("http://localhost:3002/api/auth/callback"),
   SEED_KEUANGAN_CLIENT_ID: z.string().default("keuangan-platform"),
   SEED_KEUANGAN_CLIENT_SECRET: z.string().default("keuangan-platform-client-secret-key-2026"),
@@ -85,14 +85,11 @@ const envSchema = z.object({
   SSO_SEED_FORCE: z.coerce.boolean().default(false),
 });
 
-/**
- * Parse and validate environment variables
- */
 function parseEnv() {
   try {
     return envSchema.parse(process.env);
   } catch (error) {
-    console.error("❌ Invalid environment variables:");
+    console.error("❌ Invalid environment variables for SSO Platform:");
     if (error instanceof z.ZodError) {
       console.error(error.flatten().fieldErrors);
     }
@@ -100,24 +97,5 @@ function parseEnv() {
   }
 }
 
-/**
- * Validated environment variables
- */
 export const env = parseEnv();
-
-/**
- * Check if running in production
- */
 export const isProduction = env.NODE_ENV === "production";
-
-/**
- * Check if running in development
- */
-export const isDevelopment = env.NODE_ENV === "development";
-
-/**
- * Check if running in test
- */
-export const isTest = env.NODE_ENV === "test";
-
-
