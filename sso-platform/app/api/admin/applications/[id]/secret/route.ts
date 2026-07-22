@@ -21,6 +21,7 @@ export async function POST(_req: Request, { params }: RouteParams) {
 
     const { id } = await params;
 
+    const appList = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
     const app = appList[0];
     if (!app) {
       return NextResponse.json({ success: false, error: "Application not found" }, { status: 404 });
