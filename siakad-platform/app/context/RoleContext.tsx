@@ -43,7 +43,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   };
 
   const redirectToSSO = () => {
-    window.location.href = "/api/auth/signin/unsia-sso";
+    window.location.href = "/auth/login";
   };
 
   useEffect(() => {

@@ -29,7 +29,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const redirectToSSO = () => {
-    window.location.href = "/api/auth/signin/unsia-sso";
+    window.location.href = "/auth/login";
   };
 
   const refreshSession = async () => {

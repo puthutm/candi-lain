@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import {
   INSTITUTION_NAME,
   DEFAULT_APPLICANT_PASSWORD,
@@ -198,8 +199,7 @@ export default function PmbPublikPage() {
 
   const handleSsoLogin = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Redirect directly to Auth.js signin endpoint which properly sets state/PKCE cookies.
-    window.location.href = "/api/auth/signin/unsia-sso";
+    signIn("unsia-sso");
   };
 
   const handlePrev = () => {

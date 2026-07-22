@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { signIn } from "next-auth/react";
 
 export default function LmsAuthLoginPage() {
   const started = useRef(false);
@@ -9,7 +10,7 @@ export default function LmsAuthLoginPage() {
     if (started.current) return;
     started.current = true;
 
-    window.location.href = "/api/auth/signin/unsia-sso";
+    signIn("unsia-sso");
   }, []);
 
   return (
