@@ -1,5 +1,4 @@
 import NextAuth from "next-auth";
-import { NextRequest } from "next/server";
 
 async function refreshAccessToken(token: any) {
   try {
@@ -39,28 +38,25 @@ const parsedNextAuth = NextAuth({
       name: "UNSIA SSO",
       type: "oauth",
       issuer: process.env.SSO_OAUTH_ISSUER || "http://10.10.20.56:3000",
-      wellKnown: false,
+      wellKnown: `${process.env.SSO_OAUTH_ISSUER || "http://10.10.20.56:3000"}/.well-known/openid-configuration`,
       authorization: {
-        url: process.env.SSO_OAUTH_AUTHORIZE_URL,
+        url: process.env.SSO_OAUTH_AUTHORIZE_URL || "http://10.10.20.56:3000/oauth/authorize",
         params: { scope: "openid profile email" },
       },
       token: {
-        url: process.env.SSO_OAUTH_TOKEN_URL,
+        url: process.env.SSO_OAUTH_TOKEN_URL || "http://10.10.20.56:3000/oauth/token",
       },
       userinfo: {
-        url: process.env.SSO_OAUTH_USERINFO_URL,
+        url: process.env.SSO_OAUTH_USERINFO_URL || "http://10.10.20.56:3000/oauth/userinfo",
       },
-      clientId: process.env.SSO_OAUTH_CLIENT_ID,
+      clientId: process.env.SSO_OAUTH_CLIENT_ID || "lms-platform",
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET,
       allowInsecureHTTP: true,
       client: {
         token_endpoint_auth_method: "client_secret_basic",
         allowInsecureHTTP: true,
       },
-
-      // Keep PKCE/state protections enabled
       checks: ["pkce", "state"],
-
       profile(profile: any) {
         return {
           id: profile.sub,
@@ -74,7 +70,6 @@ const parsedNextAuth = NextAuth({
     } as any,
   ],
 
-  // Namespace cookies so PKCE/state/csrf are not shared/mixed across modules.
   cookies: {
     sessionToken: { name: "lms.authjs.session-token" },
     callbackUrl: { name: "lms.authjs.callback-url" },
