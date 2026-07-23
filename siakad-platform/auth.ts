@@ -39,7 +39,7 @@ const parsedNextAuth = NextAuth({
       type: "oauth",
       // Do NOT set wellKnown — openid-client v6 only allows HTTPS for discovery.
       // Explicit endpoint URLs below bypass discovery entirely.
-      issuer: process.env.SSO_OAUTH_ISSUER || "http://10.10.20.56:3000",
+
       authorization: {
         url: process.env.SSO_OAUTH_AUTHORIZE_URL || "http://10.10.20.56:3000/oauth/authorize",
         params: { scope: "openid profile email" },

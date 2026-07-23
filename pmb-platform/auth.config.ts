@@ -50,7 +50,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       id: "unsia-sso",
       name: "UNSIA SSO",
       type: "oauth",
-      issuer: process.env.SSO_OAUTH_ISSUER || "http://10.10.20.56:3000",
+
       clientId: process.env.SSO_OAUTH_CLIENT_ID || "pmb-platform",
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "sec_pmb-platform_898f7b0bb665b73b751ad7b37c409ed3",
       allowInsecureHTTP: true,
