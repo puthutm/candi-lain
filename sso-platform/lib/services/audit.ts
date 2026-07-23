@@ -64,7 +64,7 @@ export class AuditService {
       entityType: e.entityType,
       entityId: e.entityId,
       metadata: e.metadata,
-      createdAt: new Date(e.createdAt),
+      createdAt: e.createdAt && !isNaN(new Date(e.createdAt).getTime()) ? new Date(e.createdAt) : new Date(),
     }));
 
     await db.insert(auditLogs).values(valuesToInsert);
