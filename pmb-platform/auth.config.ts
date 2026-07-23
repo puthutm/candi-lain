@@ -59,7 +59,6 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       // Allow HTTP (development) connections.
       allowInsecureHTTP: true,
       checks: ["pkce", "state"],
-      // The OIDC provider will discover endpoints from the issuer's well‑known configuration.
       // Only custom parameters are needed here.
       authorization: { params: { scope: "openid profile email" } },
       profile(profile: any) {
@@ -80,10 +79,23 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
     csrfToken: { name: "pmb.authjs.csrf-token", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
     pkceCodeVerifier: { name: "pmb.authjs.pkce.code_verifier", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
     state: { name: "pmb.authjs.state", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
-    nonce: { name: "pmb.authjs.nonce", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
+    nonce: { name: "pmb.authjs.nonce", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } }
   },
 
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Allow redirect to baseUrl or to url if it is same origin
+      try {
+        const urlObj = new URL(url);
+        const baseObj = new URL(baseUrl);
+        if (urlObj.origin === baseObj.origin) {
+          return url;
+        }
+      } catch (e) {
+        // ignore malformed URL
+      }
+      return baseUrl;
+    },
     async jwt({ token, user, account }: any) {
       if (account && user) {
         return {
