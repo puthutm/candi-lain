@@ -97,6 +97,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
         return baseUrl;
       }
     },
+    async jwt({ token, user, account }: any) {
       if (account && user) {
         return {
           ...token,
