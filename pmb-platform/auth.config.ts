@@ -45,17 +45,42 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
 
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "super-secret-nextauth-key-pmb-platform-2026",
 
+
+
+/**
+ * PMB Auth.js / NextAuth config (provider + callbacks + cookies naming).
+ * Keep this as the single source of truth for `pmb-platform/auth.ts`.
+ */
+export const authConfig: Parameters<typeof NextAuth>[0] = {
+  trustHost: true,
+  useSecureCookies: false,
+  debug: true,
+
+  pages: {
+    signIn: "/auth/login",
+    error: "/auth/login",
+  },
+
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "super-secret-nextauth-key-pmb-platform-2026",
+
   providers: [
     {
       id: "unsia-sso",
       name: "UNSIA SSO",
       type: "oauth",
 
+        url: process.env.SSO_OAUTH_AUTHORIZE_URL || "http://10.10.20.56:3000/oauth/authorize",
+        params: { scope: "openid profile email" },
+      },
       clientId: process.env.SSO_OAUTH_CLIENT_ID || "pmb-platform",
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "sec_pmb-platform_898f7b0bb665b73b751ad7b37c409ed3",
+      // Explicit issuer for token validation (must match the "iss" claim in the ID token).
+      issuer: process.env.SSO_OAUTH_ISSUER_URL || "http://10.10.20.56:3000",
+      // Allow HTTP connections for development environments.
       allowInsecureHTTP: true,
       client: {
         token_endpoint_auth_method: "client_secret_basic",
+        // Ensure the client also permits insecure HTTP.
         allowInsecureHTTP: true,
       },
       authorization: {
@@ -68,10 +93,8 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       userinfo: {
         url: process.env.SSO_OAUTH_USERINFO_URL || "http://10.10.20.56:3000/oauth/userinfo",
       },
-
       // Keep Auth.js v5 PKCE/state checks enabled.
       checks: ["pkce", "state"],
-
       profile(profile: any) {
         return {
           id: profile.sub,
@@ -88,10 +111,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
     sessionToken: { name: "pmb.authjs.session-token", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
     callbackUrl: { name: "pmb.authjs.callback-url", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
     csrfToken: { name: "pmb.authjs.csrf-token", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
-    pkceCodeVerifier: {
-      name: "pmb.authjs.pkce.code_verifier",
-      options: { path: "/", sameSite: "lax", secure: false, httpOnly: true },
-    },
+    pkceCodeVerifier: { name: "pmb.authjs.pkce.code_verifier", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
     state: { name: "pmb.authjs.state", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
     nonce: { name: "pmb.authjs.nonce", options: { path: "/", sameSite: "lax", secure: false, httpOnly: true } },
   },
@@ -109,6 +129,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
         };
       }
 
+      // Refresh the token if it has expired.
       if (Date.now() < (token.expiresAt as number) * 1000) {
         return token;
       }
