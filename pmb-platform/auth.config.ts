@@ -83,20 +83,20 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
   },
 
   callbacks: {
+
     async redirect({ url, baseUrl }) {
-      // Allow redirect to baseUrl or to url if it is same origin
+      // Prevent redirect back to the login page after successful sign‑in
+      if (url && url.includes('/auth/login')) {
+        return baseUrl;
+      }
       try {
         const urlObj = new URL(url);
         const baseObj = new URL(baseUrl);
-        if (urlObj.origin === baseObj.origin) {
-          return url;
-        }
-      } catch (e) {
-        // ignore malformed URL
+        return urlObj.origin === baseObj.origin ? url : baseUrl;
+      } catch {
+        return baseUrl;
       }
-      return baseUrl;
     },
-    async jwt({ token, user, account }: any) {
       if (account && user) {
         return {
           ...token,
