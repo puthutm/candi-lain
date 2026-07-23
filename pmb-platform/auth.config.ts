@@ -51,29 +51,17 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
     {
       id: "unsia-sso",
       name: "UNSIA SSO",
-      type: "oauth",
+      type: "oidc",
       clientId: process.env.SSO_OAUTH_CLIENT_ID || "pmb-platform",
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "sec_pmb-platform_898f7b0bb665b73b751ad7b37c409ed3",
       // Issuer must match the `iss` claim from the ID token.
       issuer: process.env.SSO_OAUTH_ISSUER_URL || "http://10.10.20.56:3000",
       // Allow HTTP (development) connections.
       allowInsecureHTTP: true,
-      client: {
-        token_endpoint_auth_method: "client_secret_basic",
-        allowInsecureHTTP: true,
-      },
-      authorization: {
-        url: process.env.SSO_OAUTH_AUTHORIZE_URL || "http://10.10.20.56:3000/oauth/authorize",
-        params: { scope: "openid profile email" },
-      },
-      token: {
-        url: process.env.SSO_OAUTH_TOKEN_URL || "http://10.10.20.56:3000/oauth/token",
-      },
-      userinfo: {
-        url: process.env.SSO_OAUTH_USERINFO_URL || "http://10.10.20.56:3000/oauth/userinfo",
-      },
-      // Keep Auth.js v5 PKCE/state checks enabled.
       checks: ["pkce", "state"],
+      // The OIDC provider will discover endpoints from the issuer's well‑known configuration.
+      // Only custom parameters are needed here.
+      authorization: { params: { scope: "openid profile email" } },
       profile(profile: any) {
         return {
           id: profile.sub,
