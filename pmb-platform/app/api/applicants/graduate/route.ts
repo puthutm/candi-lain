@@ -2,11 +2,19 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbApplicants, pmbApplicantProfiles, pmbApplicantStatusHistory } from "@/db/schema/applicants";
 import { pmbStudyPrograms, pmbEntryPaths } from "@/db/schema/master";
+import { pmbExamResults } from "@/db/schema/exam";
 import { eq } from "drizzle-orm";
 import { env } from "@/lib/env";
+import { getStaffId, requireRole, PMB_ROLES } from "@/lib/sso-middleware";
+import { publishAcceptedApplicantToSiakad } from "@/lib/siakad-publisher";
 
 export async function POST(req: Request) {
   try {
+    // RBAC: Only Super Admin can make graduation decisions
+    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN]);
+    if (auth instanceof NextResponse) return auth;
+
+    const staffId = await getStaffId();
     const body = await req.json();
     const { applicantId, status } = body; // status can be "lulus" or "tidak_lulus"
 
@@ -59,58 +67,46 @@ export async function POST(req: Request) {
         .set({ currentStage: toStage, updatedAt: new Date() })
         .where(eq(pmbApplicants.id, applicantId));
 
-      // 3. Log to history
+      // 3. Log to history with staff ID
       await tx
         .insert(pmbApplicantStatusHistory)
         .values({
           applicantId,
           fromStage,
           toStage,
+          changedByStaffId: staffId,
           note: status === "lulus"
             ? "Kandidat dinyatakan Lulus Seleksi PMB."
             : "Kandidat dinyatakan Tidak Lulus Seleksi PMB.",
         });
+
+      // 4. Update exam results with gradedByStaffId if applicable
+      if (toStage === "diterima" || toStage === "tidak_lulus") {
+        await tx
+          .update(pmbExamResults)
+          .set({
+            gradedByStaffId: staffId,
+            gradedAt: new Date(),
+          })
+          .where(eq(pmbExamResults.applicantId, applicantId));
+      }
 
       return { applicant, toStage };
     });
 
     const { applicant, toStage: finalStage } = result;
 
-    // 4. Trigger Integration event if Accepted (lulus) and Payment is completed (lunas)
-    if (finalStage === "diterima" && applicant.paymentStatus === "lunas") {
-      try {
-        const payload = {
-          event: "applicant.accepted_and_paid",
-          data: {
-            pmb_applicant_id: applicant.id,
-            full_name: applicant.fullName,
-            email: applicant.email,
-            phone: applicant.phone || "",
-          }
-        };
-
-        const siakadWebhookUrl = env.SIAKAD_WEBHOOK_URL || env.SIAKAD_CALLBACK_URL;
-
-        if (!siakadWebhookUrl) {
-          console.warn("[pmb][siakad] SIAKAD_WEBHOOK_URL / SIAKAD_CALLBACK_URL is not configured; skipping integration callback");
-        } else {
-          // Non-blocking fire-and-forget or await the callback
-          const response = await fetch(siakadWebhookUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-          });
-
-          const callbackRes = await response.json();
-          if (!callbackRes.success) {
-            console.error("SIAKAD integration callback failed:", callbackRes.error);
-          }
-        }
-      } catch (err: any) {
-        console.error("Failed to connect to SIAKAD integration callback:", err.message);
-      }
+    // 5. Trigger Integration event if Accepted (lulus)
+    if (finalStage === "diterima") {
+      await publishAcceptedApplicantToSiakad({
+        pmbApplicantId: applicant.id,
+        fullName: applicant.fullName,
+        nik: applicant.nik || undefined,
+        email: applicant.email,
+        phone: applicant.phone || undefined,
+        studyProgramId: applicant.studyProgramCode || "00000000-0000-0000-0000-000000000001",
+        acceptedDate: new Date().toISOString(),
+      });
     }
 
     return NextResponse.json({

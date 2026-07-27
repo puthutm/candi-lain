@@ -7,9 +7,12 @@ type AdminPanelType =
   | "dashboard"
   | "monitoring"
   | "pendaftar"
+  | "seleksi"
   | "verifikasi"
+  | "pembayaran"
   | "komunikasi"
-  | "gelombang";
+  | "gelombang"
+  | "pengaturan";
 
 interface ApplicantRow {
   id: string; // Database UUID
@@ -25,6 +28,10 @@ interface ApplicantRow {
   entryPathFee: string;
   studyProgram: string;
   docsCount: number;
+  nim?: string;
+  nimGeneratedAt?: string;
+  totalExamScore?: string;
+  passingRecommendation?: string;
 }
 
 interface WaveRow {
@@ -71,8 +78,60 @@ export default function AdminPage() {
   const [blastChannel, setBlastChannel] = useState("email");
   const [blastMessage, setBlastMessage] = useState("");
   
-  // Auth state
-  const [adminUser, setAdminUser] = useState<{ name: string; username: string; role: string } | null>(null);
+  // Auth state with PMB roles
+  const [adminUser, setAdminUser] = useState<{ 
+    name: string; 
+    username: string; 
+    role: string;
+    roleDisplayName?: string;
+    isAdmin?: boolean;
+    staffId?: string;
+  } | null>(null);
+  
+  // Role-based access control helpers
+  const SUPER_ADMIN_ROLE = "super_admin_pmb";
+  const VERIFIKATOR_ROLE = "verifikator_berkas";
+  const STAFF_KEUANGAN_ROLE = "staff_keuangan";
+  const STAFF_MARKETING_ROLE = "staff_marketing";
+  const ALL_ADMIN_ROLES = [SUPER_ADMIN_ROLE, VERIFIKATOR_ROLE, STAFF_KEUANGAN_ROLE, STAFF_MARKETING_ROLE];
+  
+  const canAccessPanel = (panel: AdminPanelType): boolean => {
+    if (!adminUser?.role) return false;
+    const role = adminUser.role;
+    switch (panel) {
+      case "dashboard":
+      case "monitoring":
+      case "pendaftar":
+      case "gelombang":
+        return role === SUPER_ADMIN_ROLE;
+      case "seleksi":
+        return role === SUPER_ADMIN_ROLE || role === VERIFIKATOR_ROLE;
+      case "verifikasi":
+        return role === SUPER_ADMIN_ROLE || role === VERIFIKATOR_ROLE;
+      case "pembayaran":
+        return role === SUPER_ADMIN_ROLE || role === STAFF_KEUANGAN_ROLE;
+      case "komunikasi":
+        return role === SUPER_ADMIN_ROLE || role === STAFF_MARKETING_ROLE;
+      case "pengaturan":
+        return role === SUPER_ADMIN_ROLE;
+      default:
+        return false;
+    }
+  };
+  
+  const canSeed = (): boolean => {
+    return adminUser?.role === SUPER_ADMIN_ROLE;
+  };
+  
+  const getRoleDisplayName = (role: string): string => {
+    const names: Record<string, string> = {
+      [SUPER_ADMIN_ROLE]: "Super Admin PMB",
+      [VERIFIKATOR_ROLE]: "Verifikator Berkas",
+      [STAFF_KEUANGAN_ROLE]: "Staff Keuangan",
+      [STAFF_MARKETING_ROLE]: "Staff Marketing",
+    };
+    return names[role] || role;
+  };
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   // Verification panel state
@@ -138,10 +197,26 @@ export default function AdminPage() {
       try {
         const res = await fetch("/api/auth/session");
         const data = await res.json();
-        if (data.success && data.authenticated && data.user && data.user.role === "admin") {
-          setAdminUser(data.user);
-          setCheckingAuth(false);
-          fetchData();
+        if (data.success && data.authenticated && data.user) {
+          // Check if user has a valid PMB admin role
+          const userRole = data.user.role;
+          const isPmbAdmin = userRole && ALL_ADMIN_ROLES.includes(userRole);
+          
+          if (isPmbAdmin) {
+            setAdminUser({
+              name: data.user.name || "Admin",
+              username: data.user.email || "",
+              role: userRole,
+              roleDisplayName: data.user.roleDisplayName || getRoleDisplayName(userRole),
+              isAdmin: true,
+              staffId: data.user.staffId || data.user.id,
+            });
+            setCheckingAuth(false);
+            fetchData();
+          } else {
+            // Not a PMB admin - redirect to SSO
+            redirectToSSO();
+          }
         } else {
           redirectToSSO();
         }
@@ -516,7 +591,7 @@ export default function AdminPage() {
             <div className="overflow-hidden flex-1">
               <h3 className="font-bold text-white truncate text-sm">{adminUser?.name || "Admin"}</h3>
               <p className="text-[10px] text-[#ecc94b] font-bold tracking-wider uppercase font-mono">
-                {adminUser?.role === "admin" ? "Super Admin" : adminUser?.role}
+                {adminUser?.roleDisplayName || getRoleDisplayName(adminUser?.role || "")}
               </p>
             </div>
           </div>
@@ -524,104 +599,193 @@ export default function AdminPage() {
 
         {/* Navigation Menu */}
         <nav className="flex-1 overflow-y-auto no-scrollbar py-4 px-3 space-y-0.5">
-          <p className="px-3 text-[9px] font-bold text-white/50 uppercase tracking-widest mb-2 mt-2">
-            Operasional
-          </p>
+          {/* Role-based navigation - only show accessible panels */}
+          {canAccessPanel("dashboard") && (
+            <>
+              <p className="px-3 text-[9px] font-bold text-white/50 uppercase tracking-widest mb-2 mt-2">
+                Operasional
+              </p>
 
-          <button
-            onClick={() => {
-              setActivePanel("dashboard");
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
-              activePanel === "dashboard"
-                ? "bg-white/15 text-white font-bold border border-white/20"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <span>🏠</span>
-            <span>Beranda</span>
-          </button>
+              <button
+                onClick={() => {
+                  setActivePanel("dashboard");
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
+                  activePanel === "dashboard"
+                    ? "bg-white/15 text-white font-bold border border-white/20"
+                    : "text-white/70 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <span>🏠</span>
+                <span>Beranda</span>
+              </button>
+            </>
+          )}
 
-          <button
-            onClick={() => {
-              setActivePanel("monitoring");
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
-              activePanel === "monitoring"
-                ? "bg-white/15 text-white font-bold border border-white/20"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <span>📊</span>
-            <span>Monitoring Funnel</span>
-          </button>
+          {canAccessPanel("monitoring") && (
+            <button
+              onClick={() => {
+                setActivePanel("monitoring");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
+                activePanel === "monitoring"
+                  ? "bg-white/15 text-white font-bold border border-white/20"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <span>📊</span>
+              <span>Monitoring Funnel</span>
+            </button>
+          )}
 
-          <button
-            onClick={() => {
-              setActivePanel("pendaftar");
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
-              activePanel === "pendaftar"
-                ? "bg-white/15 text-white font-bold border border-white/20"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <span>👥</span>
-            <span>Data Pendaftar</span>
-            <span className="ml-auto bg-white/10 text-[#ecc94b] text-[10px] font-bold px-1.5 py-0.5 rounded font-mono">
-              {totalPendaftar}
-            </span>
-          </button>
+          {canAccessPanel("pendaftar") && (
+            <button
+              onClick={() => {
+                setActivePanel("pendaftar");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
+                activePanel === "pendaftar"
+                  ? "bg-white/15 text-white font-bold border border-white/20"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <span>👥</span>
+              <span>Data Pendaftar</span>
+              <span className="ml-auto bg-white/10 text-[#ecc94b] text-[10px] font-bold px-1.5 py-0.5 rounded font-mono">
+                {totalPendaftar}
+              </span>
+            </button>
+          )}
 
-          <button
-            onClick={() => {
-              setActivePanel("verifikasi");
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
-              activePanel === "verifikasi"
-                ? "bg-white/15 text-white font-bold border border-white/20"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <span>🛡️</span>
-            <span>Verifikasi Berkas</span>
-            <span className="ml-auto bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded font-mono">
-              {needVerif}
-            </span>
-          </button>
+          {canAccessPanel("seleksi") && (
+            <button
+              onClick={() => {
+                setActivePanel("seleksi");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
+                activePanel === "seleksi"
+                  ? "bg-white/15 text-white font-bold border border-white/20"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <span>🎓</span>
+              <span>Seleksi CBT & NIM</span>
+              <span className="ml-auto bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-1.5 py-0.5 rounded font-mono">
+                {applicants.filter((a) => ["selesai_ujian", "diterima"].includes(a.currentStage)).length}
+              </span>
+            </button>
+          )}
 
-          <p className="px-3 text-[9px] font-bold text-white/50 uppercase tracking-widest mb-2 mt-5 pt-3 border-t border-white/10">
-            Konfigurasi
-          </p>
+          {canAccessPanel("verifikasi") && (
+            <button
+              onClick={() => {
+                setActivePanel("verifikasi");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
+                activePanel === "verifikasi"
+                  ? "bg-white/15 text-white font-bold border border-white/20"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <span>🛡️</span>
+              <span>Verifikasi Berkas</span>
+              <span className="ml-auto bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded font-mono">
+                {needVerif}
+              </span>
+            </button>
+          )}
 
-          <button
-            onClick={() => {
-              setActivePanel("gelombang");
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
-              activePanel === "gelombang"
-                ? "bg-white/15 text-white font-bold border border-white/20"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <span>📅</span>
-            <span>Gelombang & Kuota</span>
-          </button>
+          {canAccessPanel("pembayaran") && (
+            <button
+              onClick={() => {
+                setActivePanel("pembayaran");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
+                activePanel === "pembayaran"
+                  ? "bg-white/15 text-white font-bold border border-white/20"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <span>💳</span>
+              <span>Pembayaran</span>
+            </button>
+          )}
+
+          {canAccessPanel("komunikasi") && (
+            <button
+              onClick={() => {
+                setActivePanel("komunikasi");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
+                activePanel === "komunikasi"
+                  ? "bg-white/15 text-white font-bold border border-white/20"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <span>📢</span>
+              <span>Komunikasi</span>
+            </button>
+          )}
+
+          {/* Configuration section - only for Super Admin */}
+          {canAccessPanel("gelombang") && (
+            <>
+              <p className="px-3 text-[9px] font-bold text-white/50 uppercase tracking-widest mb-2 mt-5 pt-3 border-t border-white/10">
+                Konfigurasi
+              </p>
+
+              <button
+                onClick={() => {
+                  setActivePanel("gelombang");
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
+                  activePanel === "gelombang"
+                    ? "bg-white/15 text-white font-bold border border-white/20"
+                    : "text-white/70 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <span>📅</span>
+                <span>Gelombang & Kuota</span>
+              </button>
+            </>
+          )}
+
+          {canAccessPanel("pengaturan") && (
+            <button
+              onClick={() => {
+                setActivePanel("pengaturan");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
+                activePanel === "pengaturan"
+                  ? "bg-white/15 text-white font-bold border border-white/20"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <span>⚙️</span>
+              <span>Pengaturan</span>
+            </button>
+          )}
         </nav>
 
         <div className="p-4 border-t border-white/10 shrink-0 flex flex-col gap-2">
-          <button
-            onClick={handleSeedDb}
-            disabled={isSeeding}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500/10 text-yellow-300 font-bold rounded-lg hover:bg-yellow-500 hover:text-slate-900 transition-colors text-xs border border-yellow-500/20 disabled:opacity-50"
-          >
-            ✨ {isSeeding ? "Seeding..." : "Seed Mock Data"}
-          </button>
+          {canSeed() && (
+            <button
+              onClick={handleSeedDb}
+              disabled={isSeeding}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500/10 text-yellow-300 font-bold rounded-lg hover:bg-yellow-500 hover:text-slate-900 transition-colors text-xs border border-yellow-500/20 disabled:opacity-50"
+            >
+              ✨ {isSeeding ? "Seeding..." : "Seed Mock Data"}
+            </button>
+          )}
           <button 
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-rose-500/10 text-rose-300 font-bold rounded-lg hover:bg-rose-500 hover:text-white transition-colors text-xs border border-rose-500/20"
@@ -653,16 +817,20 @@ export default function AdminPage() {
                   ? "Data Pendaftar"
                   : activePanel === "verifikasi"
                   ? "Verifikasi Berkas Masuk"
+                  : activePanel === "pembayaran"
+                  ? "Manajemen Pembayaran"
                   : activePanel === "komunikasi"
                   ? "Komunikasi & Blast Kampanye"
-                  : "Pengaturan Gelombang"}
+                  : activePanel === "gelombang"
+                  ? "Pengaturan Gelombang"
+                  : "Pengaturan Sistem"}
               </h1>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
               <p className="text-xs font-bold text-slate-800">{adminUser?.name || "Admin"}</p>
-              <p className="text-[10px] text-slate-500">{adminUser?.role === "admin" ? "Super Admin" : adminUser?.role}</p>
+              <p className="text-[10px] text-slate-500">{adminUser?.roleDisplayName || getRoleDisplayName(adminUser?.role || "")}</p>
             </div>
             <img
               src={`https://ui-avatars.com/api/?name=${encodeURIComponent(adminUser?.name || "Admin")}&background=f0f4f8&color=0f487b&rounded=true&bold=true`}
@@ -978,7 +1146,211 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* PANEL 5: KOMUNIKASI */}
+          {/* PANEL SELEKSI CBT & PENERBITAN NIM */}
+          {activePanel === "seleksi" && (
+            <div className="space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-800">Seleksi CBT & Penerbitan NIM ke SIAKAD</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Penetapan status kelulusan hasil ujian CBT dan penerbitan NIM resmi mahasiswa baru.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+                    NIM Diterbitkan: {applicants.filter(a => a.nim).length} Mahasiswa
+                  </span>
+                </div>
+              </div>
+
+              {/* Table of Candidates */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm text-slate-600">
+                    <thead className="bg-slate-50 text-slate-500 uppercase tracking-widest text-[10px] font-bold border-b border-slate-200">
+                      <tr>
+                        <th className="px-6 py-4">Pendaftar</th>
+                        <th className="px-6 py-4">No. Reg / Prodi</th>
+                        <th className="px-6 py-4 text-center">Skor CBT</th>
+                        <th className="px-6 py-4 text-center">Rekomendasi</th>
+                        <th className="px-6 py-4 text-center">Status Kelulusan</th>
+                        <th className="px-6 py-4 text-center">NIM (SIAKAD)</th>
+                        <th className="px-6 py-4 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {applicants.map((a) => (
+                        <tr key={a.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-slate-800">{a.fullName}</div>
+                            <div className="text-xs text-slate-400">{a.email}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="font-mono font-bold text-xs text-[#0f487b]">{a.registrationNumber}</div>
+                            <div className="text-xs text-slate-500">{a.studyProgram}</div>
+                          </td>
+                          <td className="px-6 py-4 text-center font-mono font-bold text-slate-800">
+                            {a.totalExamScore ? `${a.totalExamScore} / 100` : "-"}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full border ${
+                              a.passingRecommendation === "DIREKOMENDASIKAN" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                              a.passingRecommendation === "PERLU_PERTIMBANGAN" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                              a.passingRecommendation === "TIDAK_LULUS" ? "bg-rose-50 text-rose-700 border-rose-200" :
+                              "bg-slate-100 text-slate-500 border-slate-200"
+                            }`}>
+                              {a.passingRecommendation?.replace("_", " ") || "BELUM UJIAN"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`px-2.5 py-1 text-xs font-bold rounded-md ${
+                              a.currentStage === "diterima" ? "bg-emerald-100 text-emerald-800" :
+                              a.currentStage === "tidak_lulus" ? "bg-rose-100 text-rose-800" :
+                              a.currentStage === "selesai_ujian" ? "bg-blue-100 text-blue-800" :
+                              "bg-slate-100 text-slate-600"
+                            }`}>
+                              {a.currentStage === "diterima" ? "DITERIMA" :
+                               a.currentStage === "tidak_lulus" ? "TIDAK LULUS" :
+                               a.currentStage === "selesai_ujian" ? "SELESAI UJIAN" :
+                               a.currentStage.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            {a.nim ? (
+                              <span className="font-mono font-bold text-xs bg-blue-50 text-[#0f487b] px-2.5 py-1 rounded-lg border border-blue-200">
+                                🎓 {a.nim}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 text-xs italic">Belum diterbitkan</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-right space-x-2">
+                            {a.currentStage === "diterima" && !a.nim && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    triggerToast(`Menerbitkan NIM untuk ${a.fullName}...`);
+                                    const res = await fetch("/api/admin/applicants/publish-nim", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ applicantId: a.id }),
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                      triggerToast(data.message);
+                                      fetchData();
+                                    } else {
+                                      triggerToast("Gagal penerbitan NIM: " + data.error);
+                                    }
+                                  } catch (err: any) {
+                                    triggerToast("Galat: " + err.message);
+                                  }
+                                }}
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow transition-all"
+                              >
+                                🎓 Terbitkan NIM
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleViewDetail(a.id)}
+                              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all"
+                            >
+                              Detail & Nilai
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* PANEL 5: PEMBAYARAN */}
+          {activePanel === "pembayaran" && (
+            <div className="space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-800">Manajemen Transaksi Pembayaran</h2>
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                  <span className="text-2xl">💰</span>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-3 mb-1">Total Tagihan</p>
+                  <p className="font-display font-black text-2xl text-slate-800">{applicants.length}</p>
+                </div>
+                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                  <span className="text-2xl">✅</span>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-3 mb-1">Lunas</p>
+                  <p className="font-display font-black text-2xl text-emerald-600">{applicants.filter(a => a.paymentStatus === "lunas").length}</p>
+                </div>
+                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                  <span className="text-2xl">⏳</span>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-3 mb-1">Belum Bayar</p>
+                  <p className="font-display font-black text-2xl text-amber-600">{applicants.filter(a => a.paymentStatus === "belum_bayar").length}</p>
+                </div>
+                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                  <span className="text-2xl">📊</span>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-3 mb-1">Realisasi</p>
+                  <p className="font-display font-black text-2xl text-slate-800">{formatCurrency(totalRevenue)}</p>
+                </div>
+              </div>
+
+              {/* Transactions Table */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                {applicants.length === 0 ? (
+                  <div className="p-10 text-center text-slate-400">
+                    <p className="font-semibold text-sm">Belum ada data transaksi.</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-left text-sm text-slate-600">
+                    <thead className="bg-slate-50 text-slate-500 uppercase tracking-widest text-[10px] font-bold border-b border-slate-200">
+                      <tr>
+                        <th className="px-6 py-4">Pendaftar</th>
+                        <th className="px-6 py-4">No. Registrasi</th>
+                        <th className="px-6 py-4">Jalur Masuk</th>
+                        <th className="px-6 py-4">Biaya Formulir</th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {applicants.map((a) => (
+                        <tr key={a.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-slate-800">{a.fullName}</div>
+                            <div className="text-xs text-slate-400">{a.email}</div>
+                          </td>
+                          <td className="px-6 py-4 font-mono font-bold text-xs text-[#0f487b]">{a.registrationNumber}</td>
+                          <td className="px-6 py-4 font-semibold">{a.entryPath}</td>
+                          <td className="px-6 py-4 font-bold">{a.entryPathFee ? `Rp ${parseInt(a.entryPathFee).toLocaleString("id-ID")}` : "-"}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-0.5 text-xs font-bold rounded-md ${
+                              a.paymentStatus === "lunas" 
+                                ? "bg-emerald-100 text-emerald-700" 
+                                : "bg-amber-100 text-amber-700"
+                            }`}>
+                              {a.paymentStatus === "lunas" ? "Lunas" : "Belum Bayar"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <button
+                              onClick={() => handleViewDetail(a.id)}
+                              className="px-3 py-1.5 bg-[#0f487b] hover:bg-[#00719f] text-white rounded-lg text-xs font-bold transition-all"
+                            >
+                              Detail
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* PANEL 6: KOMUNIKASI */}
           {activePanel === "komunikasi" && (
             <div className="space-y-6 max-w-5xl mx-auto fade-in">
               <h2 className="text-lg font-bold text-slate-800">Komunikasi Massal & Kampanye</h2>
@@ -1083,6 +1455,198 @@ export default function AdminPage() {
                     )}
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* PANEL 7: PENGATURAN SISTEM */}
+          {activePanel === "pengaturan" && (
+            <div className="space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-800">Pengaturan Sistem PMB</h2>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* General Settings */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                  <h3 className="text-sm font-bold text-slate-800 border-b pb-2">Konfigurasi Umum</h3>
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Nama Institusi</label>
+                      <input
+                        type="text"
+                        defaultValue="Universitas Siber Asia"
+                        className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0f487b]"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Singkatan Institusi</label>
+                      <input
+                        type="text"
+                        defaultValue="UNSIA"
+                        className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0f487b]"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Format Nomor Registrasi</label>
+                      <input
+                        type="text"
+                        defaultValue="PMB{TAHUN}-{NO_URUT}"
+                        className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0f487b]"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Batas Akhir Pembayaran (hari)</label>
+                      <input
+                        type="number"
+                        defaultValue="7"
+                        className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0f487b]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Gateway Settings */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                  <h3 className="text-sm font-bold text-slate-800 border-b pb-2">Konfigurasi Pembayaran</h3>
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Payment Gateway</label>
+                      <select className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0f487b]">
+                        <option value="midtrans">Midtrans</option>
+                        <option value="xendit">Xendit</option>
+                        <option value="manual">Manual (Simulasi)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Mode Pembayaran</label>
+                      <select className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0f487b]">
+                        <option value="sandbox">Sandbox / Development</option>
+                        <option value="production">Production</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Metode Pembayaran Aktif</label>
+                      <div className="space-y-2 mt-1">
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" defaultChecked className="rounded" />
+                          <span>Virtual Account</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" defaultChecked className="rounded" />
+                          <span>QRIS</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" defaultChecked className="rounded" />
+                          <span>E-Wallet (GoPay, OVO, Dana)</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Transfer Bank Manual</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notification Settings */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                  <h3 className="text-sm font-bold text-slate-800 border-b pb-2">Konfigurasi Notifikasi</h3>
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Provider Email</label>
+                      <select className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0f487b]">
+                        <option value="smtp">SMTP Server</option>
+                        <option value="sendgrid">SendGrid</option>
+                        <option value="ses">Amazon SES</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Provider WhatsApp</label>
+                      <select className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0f487b]">
+                        <option value="whatsapp_business">WhatsApp Business API</option>
+                        <option value="fonnte">Fonnte</option>
+                        <option value="wablas">Wablas</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Notifikasi Otomatis</label>
+                      <div className="space-y-2 mt-1">
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" defaultChecked className="rounded" />
+                          <span>Welcome Email setelah daftar</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" defaultChecked className="rounded" />
+                          <span>Reminder pembayaran (3 hari)</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" defaultChecked className="rounded" />
+                          <span>Notifikasi verifikasi berkas</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" defaultChecked className="rounded" />
+                          <span>Acceptance Letter otomatis</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Exam Settings */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                  <h3 className="text-sm font-bold text-slate-800 border-b pb-2">Konfigurasi Ujian CBT</h3>
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Durasi Default per Modul (menit)</label>
+                      <input
+                        type="number"
+                        defaultValue="60"
+                        className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0f487b]"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Nilai Minimal Kelulusan</label>
+                      <input
+                        type="number"
+                        defaultValue="60"
+                        className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0f487b]"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Kebijakan Retake Ujian</label>
+                      <select className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0f487b]">
+                        <option value="no_retake">Tidak boleh retake</option>
+                        <option value="once">1 kali retake</option>
+                        <option value="twice">2 kali retake</option>
+                        <option value="unlimited">Unlimited (dengan jeda)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-500 block mb-1">Deteksi Kecurangan</label>
+                      <div className="space-y-2 mt-1">
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" defaultChecked className="rounded" />
+                          <span>Aktifkan deteksi tab switch</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" defaultChecked className="rounded" />
+                          <span>Batas maksimal tab switch: 3 kali</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="flex justify-end">
+                <button
+                  onClick={() => triggerToast("Pengaturan berhasil disimpan!")}
+                  className="px-8 py-3 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold rounded-xl text-xs transition-all shadow-md"
+                >
+                  Simpan Pengaturan
+                </button>
               </div>
             </div>
           )}

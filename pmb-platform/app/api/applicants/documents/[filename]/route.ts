@@ -3,46 +3,65 @@ import { db } from "@/db";
 import { pmbApplicantDocuments, pmbApplicants } from "@/db/schema/applicants";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { verifySignedUrl } from "@/lib/document-security";
+import { ALL_PMB_ROLES } from "@/lib/sso-middleware";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const { filename } = await params;
 
   try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("pmb_user");
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // 1. Check for signed URL parameters (public access with signature)
+    const { searchParams } = new URL(request.url);
+    const expires = searchParams.get("expires");
+    const sig = searchParams.get("sig");
 
-    const sessionUser = JSON.parse(sessionCookie.value);
-    
-    // Find candidate documents matching this filename
-    const documents = await db
-      .select({
-        id: pmbApplicantDocuments.id,
-        applicantId: pmbApplicantDocuments.applicantId,
-        fileUrl: pmbApplicantDocuments.fileUrl,
-        email: pmbApplicants.email,
-      })
-      .from(pmbApplicantDocuments)
-      .innerJoin(pmbApplicants, eq(pmbApplicantDocuments.applicantId, pmbApplicants.id))
-      .where(eq(pmbApplicantDocuments.fileUrl, filename));
-
-    const doc = documents[0];
-
-    // Authorization checks
-    if (sessionUser.role === "candidate") {
-      const isOwner = doc && (sessionUser.id === doc.applicantId || sessionUser.email === doc.email);
-      if (!isOwner) {
-        return NextResponse.json({ error: "Forbidden: Anda tidak memiliki akses ke berkas ini" }, { status: 403 });
+    if (expires && sig) {
+      // Verify signed URL
+      const isValid = verifySignedUrl(filename, expires, sig);
+      if (!isValid) {
+        return NextResponse.json(
+          { error: "Link akses tidak valid atau sudah kedaluwarsa" },
+          { status: 403 }
+        );
       }
+      // Signed URL is valid — allow access without session check
     } else {
-      // Staff roles allowed to view: super_admin_pmb, verifikator_berkas, staff_keuangan
-      const allowedRoles = ["super_admin_pmb", "verifikator_berkas", "staff_keuangan", "staff_marketing"];
-      if (!allowedRoles.includes(sessionUser.role)) {
+      // 2. No signed URL — require session-based auth
+      const cookieStore = await cookies();
+      const sessionCookie = cookieStore.get("pmb_user");
+      if (!sessionCookie) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const sessionUser = JSON.parse(sessionCookie.value);
+      
+      // Find candidate documents matching this filename
+      const documents = await db
+        .select({
+          id: pmbApplicantDocuments.id,
+          applicantId: pmbApplicantDocuments.applicantId,
+          fileUrl: pmbApplicantDocuments.fileUrl,
+          email: pmbApplicants.email,
+        })
+        .from(pmbApplicantDocuments)
+        .innerJoin(pmbApplicants, eq(pmbApplicantDocuments.applicantId, pmbApplicants.id))
+        .where(eq(pmbApplicantDocuments.fileUrl, filename));
+
+      const doc = documents[0];
+
+      // Authorization checks
+      if (sessionUser.role === "applicant" || sessionUser.role === "candidate") {
+        const isOwner = doc && (sessionUser.userId === doc.applicantId || sessionUser.email === doc.email);
+        if (!isOwner) {
+          return NextResponse.json({ error: "Forbidden: Anda tidak memiliki akses ke berkas ini" }, { status: 403 });
+        }
+      } else if (sessionUser.isAdmin || ALL_PMB_ROLES.includes(sessionUser.role)) {
+        // Staff roles allowed to view all documents
+        // No additional check needed
+      } else {
         return NextResponse.json({ error: "Forbidden: Peran Anda tidak memiliki akses" }, { status: 403 });
       }
     }

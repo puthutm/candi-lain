@@ -1,10 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/db";
-import { studentInvoices } from "@/db/schema/schema";
+import { studentInvoices } from "@/db/schema/invoices";
 import { eq } from "drizzle-orm";
+import { cookies } from "next/headers";
+import { gatewayRegistry } from "@/lib/payment/gateway-registry";
 
 export async function POST(request: NextRequest) {
   try {
+    // 1. Validate session
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("keuangan_user");
+    if (!sessionCookie) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const sessionUser = JSON.parse(sessionCookie.value);
+
     const body = await request.json();
     const { invoiceId } = body;
 
@@ -12,7 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "invoiceId is required" }, { status: 400 });
     }
 
-    // 1. Fetch invoice details
+    // 2. Fetch invoice details
     const [invoice] = await db
       .select()
       .from(studentInvoices)
@@ -23,45 +33,57 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invoice not found" }, { status: 404 });
     }
 
+    // Verify ownership
+    if (invoice.studentUserId !== sessionUser.userId) {
+      return NextResponse.json({ success: false, error: "Forbidden: not your invoice" }, { status: 403 });
+    }
+
     if (invoice.status === "lunas") {
       return NextResponse.json({ success: false, error: "Tagihan ini sudah lunas" }, { status: 400 });
     }
 
-    // 2. Call the payment webhook dynamically to simulate payment success
-    const host = request.headers.get("host") || "localhost:3005";
-    const protocol = request.headers.get("x-forwarded-proto") || "http";
-    const webhookUrl = `${protocol}://${host}/api/webhooks/payment`;
-
-    const webhookBody = {
-      order_id: invoice.invoiceNumber,
-      transaction_status: "settlement",
-      payment_type: "bank_transfer",
-      gross_amount: invoice.outstandingAmount,
-      transaction_id: `mock-trx-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+    // 3. Create payment transaction via gateway
+    const amount = parseFloat(invoice.outstandingAmount);
+    const customerDetails = {
+      firstName: sessionUser.name || "Mahasiswa",
+      lastName: "",
+      email: sessionUser.email || "",
+      phone: sessionUser.phone || "",
     };
 
-    console.log(`Triggering payment webhook at: ${webhookUrl}`);
-    const webhookRes = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(webhookBody),
+    const transaction = await gatewayRegistry.getProvider().createTransaction({
+      orderId: invoice.invoiceNumber,
+      grossAmount: amount,
+      customerDetails,
+      itemDetails: [
+        {
+          id: invoice.id,
+          name: `Tagihan ${invoice.invoiceType.toUpperCase()} - ${invoice.academicPeriodLabel}`,
+          quantity: 1,
+          price: amount,
+        },
+      ],
     });
 
-    const webhookData = await webhookRes.json();
-    if (!webhookRes.ok || !webhookData.success) {
-      return NextResponse.json({ 
-        success: false, 
-        error: webhookData.error || "Gagal memproses pembayaran melalui webhook internal" 
-      }, { status: 500 });
-    }
-
-    return NextResponse.json({ 
-      success: true, 
-      message: "Pembayaran tagihan disimulasikan berhasil!" 
+    // 4. Return payment instructions
+    return NextResponse.json({
+      success: true,
+      transaction: {
+        token: transaction.token,
+        redirectUrl: transaction.redirectUrl,
+        transactionId: transaction.transactionId,
+      },
+      invoice: {
+        id: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        amount: invoice.outstandingAmount,
+        dueDate: invoice.dueDate,
+      },
+      message: "Silakan selesaikan pembayaran melalui saluran yang dipilih",
     });
 
   } catch (error: any) {
-    console.error("Mock payment API error:", error);
+    console.error("Payment API error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

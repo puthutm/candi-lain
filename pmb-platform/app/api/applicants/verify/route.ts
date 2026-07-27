@@ -2,20 +2,15 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbApplicantDocuments, pmbApplicants, pmbApplicantStatusHistory } from "@/db/schema/applicants";
 import { eq } from "drizzle-orm";
-
-import { cookies } from "next/headers";
+import { getStaffId, requireRole, PMB_ROLES } from "@/lib/sso-middleware";
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("pmb_user");
-    if (!sessionCookie) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const sessionUser = JSON.parse(sessionCookie.value);
-    if (sessionUser.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
-    }
+    // RBAC: Only Super Admin and Verifikator can verify documents
+    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN, PMB_ROLES.VERIFIKATOR]);
+    if (auth instanceof NextResponse) return auth;
+
+    const staffId = await getStaffId();
     const body = await req.json();
     const evaluations = Array.isArray(body) ? body : [body];
 
@@ -40,6 +35,7 @@ export async function POST(req: Request) {
         .set({
           status,
           revisionNote: status === "perlu_revisi" ? revisionNote.trim() : null,
+          verifiedByStaffId: staffId,
           verifiedAt: new Date(),
         })
         .where(eq(pmbApplicantDocuments.id, documentId));
@@ -86,6 +82,7 @@ export async function POST(req: Request) {
               applicantId: targetApplicantId,
               fromStage,
               toStage,
+              changedByStaffId: staffId,
               note: toStage === "siap_ujian"
                 ? "Semua berkas persyaratan lolos verifikasi. Akses CBT dibuka."
                 : "Berkas persyaratan memerlukan revisi. Silakan upload ulang.",

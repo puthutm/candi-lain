@@ -1,8 +1,45 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { tuitionRates } from "@/db/schema/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { cookies } from "next/headers";
+
+export async function GET(req: Request) {
+  try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("keuangan_user");
+    if (!sessionCookie) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const sessionUser = JSON.parse(sessionCookie.value);
+    if (sessionUser.role === "mahasiswa") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const studyProgramRef = searchParams.get("studyProgramRef");
+    const academicPeriodLabel = searchParams.get("academicPeriodLabel");
+    const requiresApproval = searchParams.get("requiresApproval");
+
+    let query = db.select().from(tuitionRates).orderBy(desc(tuitionRates.effectiveDate)).$dynamic();
+
+    if (studyProgramRef) {
+      query = query.where(eq(tuitionRates.studyProgramRef, studyProgramRef));
+    }
+    if (academicPeriodLabel) {
+      query = query.where(eq(tuitionRates.academicPeriodLabel, academicPeriodLabel));
+    }
+    if (requiresApproval === "true") {
+      query = query.where(eq(tuitionRates.requiresYayasanApproval, true));
+    }
+
+    const rates = await query;
+
+    return NextResponse.json({ success: true, tuitionRates: rates });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
 
 export async function POST(req: Request) {
   try {

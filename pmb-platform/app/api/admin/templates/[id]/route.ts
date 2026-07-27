@@ -1,28 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbMessageTemplates } from "@/db/schema/communication";
 import { eq } from "drizzle-orm";
-import { cookies } from "next/headers";
 
 export async function PUT(
-  req: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const cookie = (await cookies()).get("pmb_user");
-    if (!cookie?.value) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const user = JSON.parse(cookie.value);
-    if (user.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Admin only" }, { status: 403 });
-    }
-
-    const { id } = await params;
-    const body = await req.json();
+    const body = await request.json();
     const { name, triggerEvent, channel, subject, body: templateBody, isActive } = body;
 
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (name !== undefined) updateData.name = name;
     if (triggerEvent !== undefined) updateData.triggerEvent = triggerEvent;
     if (channel !== undefined) updateData.channel = channel;
@@ -37,43 +27,34 @@ export async function PUT(
       .returning();
 
     if (!updated) {
-      return NextResponse.json({ success: false, error: "Template not found" }, { status: 404 });
+      return NextResponse.json({ error: "Template tidak ditemukan" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, template: updated });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("[API Templates] Gagal mengupdate template:", error);
+    return NextResponse.json({ error: "Gagal mengupdate template" }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  _req: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const cookie = (await cookies()).get("pmb_user");
-    if (!cookie?.value) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const user = JSON.parse(cookie.value);
-    if (user.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Admin only" }, { status: 403 });
-    }
-
-    const { id } = await params;
-
-    const deleted = await db
+    const [deleted] = await db
       .delete(pmbMessageTemplates)
       .where(eq(pmbMessageTemplates.id, id))
       .returning();
 
-    if (!deleted.length) {
-      return NextResponse.json({ success: false, error: "Template not found" }, { status: 404 });
+    if (!deleted) {
+      return NextResponse.json({ error: "Template tidak ditemukan" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, message: "Template deleted" });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ message: "Template berhasil dihapus" });
+  } catch (error) {
+    console.error("[API Templates] Gagal menghapus template:", error);
+    return NextResponse.json({ error: "Gagal menghapus template" }, { status: 500 });
   }
 }
-export const dynamic = "force-dynamic";

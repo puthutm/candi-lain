@@ -75,6 +75,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Rate limiting per IP: max 20 requests per minute per IP address
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+               request.headers.get("x-real-ip") || 
+               "127.0.0.1";
+    const ipRateLimitKey = `rate_limit:token:ip:${ip}`;
+    const ipRateCheck = await rateLimit(ipRateLimitKey, 20, 60);
+    if (!ipRateCheck.success) {
+      return NextResponse.json(
+        { error: "slow_down", error_description: "Too many requests from this IP address. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     if (grantType === "authorization_code") {
       const code = body.get("code");
       const codeVerifier = body.get("code_verifier");
@@ -110,6 +123,16 @@ export async function POST(request: NextRequest) {
         refreshToken,
         clientId,
         clientSecret,
+      });
+
+      return NextResponse.json(tokens);
+    } else if (grantType === "client_credentials") {
+      const scope = body.get("scope") || "";
+
+      const tokens = await OAuth2Service.clientCredentialsGrant({
+        clientId,
+        clientSecret,
+        scope,
       });
 
       return NextResponse.json(tokens);

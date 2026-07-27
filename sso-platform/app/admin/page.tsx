@@ -128,6 +128,11 @@ export default function AdminDashboardPage() {
             <div className="text-3xl">⚙️</div>
             <p className="text-xs font-semibold text-center text-slate-300 group-hover:text-white transition">Konfigurasi</p>
           </a>
+
+          <a href="/admin/monitoring" className="group rounded-lg border border-white/10 bg-white/[0.02] p-4 hover:bg-white/[0.05] hover:border-cyan-500/30 transition flex flex-col items-center gap-2">
+            <div className="text-3xl">📊</div>
+            <p className="text-xs font-semibold text-center text-slate-300 group-hover:text-white transition">Monitoring</p>
+          </a>
         </section>
 
         {/* Stats Grid */}

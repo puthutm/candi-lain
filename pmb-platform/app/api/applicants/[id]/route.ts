@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { pmbApplicants, pmbApplicantDocuments, pmbDocumentTypes, pmbApplicantProfiles } from "@/db/schema/applicants";
+import { pmbApplicants, pmbApplicantDocuments, pmbDocumentTypes, pmbApplicantProfiles, pmbApplicantStatusHistory } from "@/db/schema/applicants";
 import { pmbWaves, pmbEntryPaths, pmbStudyPrograms } from "@/db/schema/master";
 import { pmbExamResults, pmbExamModules } from "@/db/schema/exam";
 import { eq } from "drizzle-orm";
 import { env } from "@/lib/env";
+import { getStaffId, requireRole, PMB_ROLES } from "@/lib/sso-middleware";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -97,9 +98,28 @@ export async function GET(_req: Request, { params }: RouteParams) {
 // Update applicant info / stage / payment
 export async function PUT(req: Request, { params }: RouteParams) {
   try {
+    // RBAC: Only Super Admin and Verifikator can update applicant stage
+    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN, PMB_ROLES.VERIFIKATOR]);
+    if (auth instanceof NextResponse) return auth;
+
+    const staffId = await getStaffId();
     const { id } = await params;
     const body = await req.json();
     const { currentStage, paymentStatus } = body;
+
+    // Get current applicant data before update
+    const currentList = await db
+      .select()
+      .from(pmbApplicants)
+      .where(eq(pmbApplicants.id, id))
+      .limit(1);
+
+    if (currentList.length === 0) {
+      return NextResponse.json({ success: false, error: "Pendaftar tidak ditemukan" }, { status: 404 });
+    }
+
+    const currentApplicant = currentList[0]!;
+    const fromStage = currentApplicant.currentStage;
 
     const updated = await db
       .update(pmbApplicants)
@@ -116,6 +136,17 @@ export async function PUT(req: Request, { params }: RouteParams) {
     }
 
     const appRecord = updated[0]!;
+
+    // Log stage change to history if stage changed
+    if (currentStage && currentStage !== fromStage) {
+      await db.insert(pmbApplicantStatusHistory).values({
+        applicantId: id,
+        fromStage,
+        toStage: currentStage,
+        changedByStaffId: staffId,
+        note: `Status diubah oleh staf: ${fromStage} → ${currentStage}`,
+      });
+    }
 
     // Trigger webhook if applicant is accepted AND payment is paid
     if (appRecord.currentStage === "diterima" && appRecord.paymentStatus === "lunas") {

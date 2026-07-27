@@ -1,116 +1,121 @@
-import { NextResponse } from "next/server";
-import { redis, auditQueue } from "@/lib/redis";
-import { getAdminSession } from "@/lib/auth-helper";
-import { db } from "@/db";
-import { users } from "@/db/schema/users";
-import { inArray } from "drizzle-orm";
+import { NextResponse, type NextRequest } from "next/server";
+import { redis } from "@/lib/redis";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const adminSession = await getAdminSession();
-    if (!adminSession) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
+    const limit = parseInt(searchParams.get("limit") || "50");
 
-    const keys = await redis.keys("auth:session:*");
-    const sessionsList: any[] = [];
+    const sessions: Array<{
+      sessionId: string;
+      userId: string;
+      createdAt: string;
+      expiresAt: string;
+      userAgent?: string;
+      ipAddress?: string;
+    }> = [];
 
-    if (keys.length > 0) {
-      const rawSessions = await redis.mget(...keys);
-      const userIdsSet = new Set<string>();
+    let cursor = "0";
+    const sessionPattern = "auth:session:*";
 
-      rawSessions.forEach((data) => {
-        if (data) {
+    do {
+      const [newCursor, keys] = await redis.scan(cursor, "MATCH", sessionPattern, "COUNT", 100);
+      cursor = newCursor;
+
+      for (const key of keys) {
+        const sessionData = await redis.get(key);
+        if (sessionData) {
           try {
-            const parsed = JSON.parse(data);
-            userIdsSet.add(parsed.userId);
-          } catch {
-            // ignore
-          }
-        }
-      });
+            const parsed = JSON.parse(sessionData);
+            
+            // Filter by userId if provided
+            if (userId && parsed.userId !== userId) continue;
 
-      const userIds = Array.from(userIdsSet);
-      let userMap: Record<string, any> = {};
-
-      if (userIds.length > 0) {
-        const userRows = await db
-          .select({
-            id: users.id,
-            fullName: users.fullName,
-            email: users.email,
-            username: users.username,
-          })
-          .from(users)
-          .where(inArray(users.id, userIds));
-
-        userRows.forEach((u) => {
-          userMap[u.id] = u;
-        });
-      }
-
-      rawSessions.forEach((data) => {
-        if (data) {
-          try {
-            const sessionObj = JSON.parse(data);
-            const userObj = userMap[sessionObj.userId] || {
-              fullName: "Unknown User",
-              email: "-",
-              username: "-",
-            };
-            sessionsList.push({
-              id: sessionObj.id,
-              userId: sessionObj.userId,
-              userName: userObj.fullName,
-              userEmail: userObj.email,
-              username: userObj.username,
-              createdAt: sessionObj.createdAt,
-              expiresAt: sessionObj.expiresAt,
-              userAgent: sessionObj.userAgent || "Unknown Device",
-              ipAddress: sessionObj.ipAddress || "-",
+            const sessionId = key.replace("auth:session:", "");
+            sessions.push({
+              sessionId,
+              userId: parsed.userId,
+              createdAt: parsed.createdAt,
+              expiresAt: parsed.expiresAt,
+              userAgent: parsed.userAgent,
+              ipAddress: parsed.ipAddress,
             });
           } catch {
-            // ignore
+            // Skip invalid session data
           }
         }
-      });
-    }
+      }
+    } while (cursor !== "0");
 
-    return NextResponse.json({ success: true, list: sessionsList });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
-}
+    // Sort by createdAt descending (newest first)
+    sessions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-export async function DELETE(request: Request) {
-  try {
-    const adminSession = await getAdminSession();
-    if (!adminSession) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
+    // Apply limit
+    const limitedSessions = sessions.slice(0, limit);
 
-    const url = new URL(request.url);
-    const sessionId = url.searchParams.get("sessionId");
-
-    if (!sessionId) {
-      return NextResponse.json({ success: false, error: "sessionId is required" }, { status: 400 });
-    }
-
-    const sessionKey = `auth:session:${sessionId}`;
-    await redis.del(sessionKey);
-
-    await auditQueue.push({
-      actorUserId: adminSession.userId,
-      action: "SESSION_REMOTE_KILLED",
-      entityType: "session",
-      entityId: sessionId,
-      metadata: { revokedBy: adminSession.name },
+    return NextResponse.json({
+      sessions: limitedSessions,
+      total: sessions.length,
+      returned: limitedSessions.length,
     });
-
-    return NextResponse.json({ success: true, message: "Session revoked successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (err: any) {
+    console.error("Failed to fetch sessions:", err);
+    return NextResponse.json({ error: "Failed to fetch sessions" }, { status: 500 });
   }
 }
 
-export const dynamic = "force-dynamic";
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { sessionId, userId } = body;
+
+    if (!sessionId && !userId) {
+      return NextResponse.json(
+        { error: "Provide sessionId or userId to revoke sessions" },
+        { status: 400 }
+      );
+    }
+
+    let revokedCount = 0;
+
+    if (sessionId) {
+      // Revoke specific session
+      const sessionKey = `auth:session:${sessionId}`;
+      const deleted = await redis.del(sessionKey);
+      if (deleted > 0) revokedCount++;
+    } else if (userId) {
+      // Revoke all sessions for a user
+      let cursor = "0";
+      const sessionPattern = "auth:session:*";
+
+      do {
+        const [newCursor, keys] = await redis.scan(cursor, "MATCH", sessionPattern, "COUNT", 100);
+        cursor = newCursor;
+
+        for (const key of keys) {
+          const sessionData = await redis.get(key);
+          if (sessionData) {
+            try {
+              const parsed = JSON.parse(sessionData);
+              if (parsed.userId === userId) {
+                await redis.del(key);
+                revokedCount++;
+              }
+            } catch {
+              // Skip invalid session data
+            }
+          }
+        }
+      } while (cursor !== "0");
+    }
+
+    return NextResponse.json({
+      message: `Successfully revoked ${revokedCount} session(s)`,
+      revokedCount,
+    });
+  } catch (err: any) {
+    console.error("Failed to revoke sessions:", err);
+    return NextResponse.json({ error: "Failed to revoke sessions" }, { status: 500 });
+  }
+}

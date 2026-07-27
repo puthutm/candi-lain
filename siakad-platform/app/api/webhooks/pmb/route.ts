@@ -1,83 +1,117 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { siakadStudents } from "@/db/schema/civitas";
-import { siakadStudyPrograms } from "@/db/schema/master";
-import { eq } from "drizzle-orm";
+import {
+  siakadStudents,
+  siakadStudyPrograms,
+  siakadKrs,
+  siakadKrsItems,
+  siakadCurricula,
+  siakadCurriculumCourses,
+  siakadClasses,
+  siakadAcademicPeriods,
+} from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
-    const { event, data } = payload;
+    const eventName = req.headers.get("X-Event-Name");
+    const body = await req.json();
 
-    if (event !== "applicant.accepted_and_paid" || !data) {
-      return NextResponse.json({ success: false, error: "Invalid event type" }, { status: 400 });
+    const {
+      pmbApplicantId,
+      fullName,
+      email,
+      phone,
+      studyProgramId,
+      nik,
+    } = body;
+
+    if (!pmbApplicantId || !fullName || !email) {
+      return NextResponse.json(
+        { success: false, error: "Payload webhook PMB tidak lengkap" },
+        { status: 400 }
+      );
     }
 
-    const { pmb_applicant_id, full_name, email, phone } = data;
+    console.log(`[SIAKAD PMB Consumer] Processing webhook for applicant ${fullName} (${email})...`);
 
-    // 1. Idempotency check: verify if pmb_applicant_id is already registered
-    const existing = await db
+    // 1. Idempotency check
+    const existingStudents = await db
       .select()
       .from(siakadStudents)
-      .where(eq(siakadStudents.applicantId, pmb_applicant_id))
-      .limit(1);
+      .where(eq(siakadStudents.email, email));
 
-    if (existing.length > 0) {
-      return NextResponse.json({
-        success: true,
-        message: "Applicant already registered as student (idempotent)",
-        student: existing[0],
-      });
-    }
+    let studentRecord = existingStudents[0];
 
-    // 2. Fetch a valid study program to refer
-    let progs = await db.select().from(siakadStudyPrograms).limit(1);
-    if (progs.length === 0) {
-      // Create a mock study program if none exists to prevent FK failures
-      const [newProg] = await db
-        .insert(siakadStudyPrograms)
+    if (!studentRecord) {
+      // Find matching study program or default to first
+      const prodis = await db.select().from(siakadStudyPrograms).limit(1);
+      const targetProdiId = prodis[0]?.id || studyProgramId;
+
+      const [newStudent] = await db
+        .insert(siakadStudents)
         .values({
-          name: "Informatika",
-          faculty: "Sains dan Teknologi",
-          degreeLevel: "S1",
+          fullName,
+          email,
+          phone: phone || "081200000000",
+          studyProgramId: targetProdiId,
+          academicStatus: "aktif",
+          batchYear: new Date().getFullYear(),
         })
         .returning();
-      progs = [newProg!];
+
+      studentRecord = newStudent;
+      console.log(`[SIAKAD PMB Consumer] Created student record ID: ${newStudent.id}`);
     }
 
-    const targetProg = progs[0]!;
+    // 2. Auto-generate KRS Perdana (Paket Semester 1)
+    const activePeriods = await db
+      .select()
+      .from(siakadAcademicPeriods)
+      .where(eq(siakadAcademicPeriods.status, "berjalan"))
+      .limit(1);
 
-    // 3. Generate new NIM
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
-    const generatedNim = `2609${randomSuffix}`;
+    const periodId = activePeriods[0]?.id;
 
-    // 4. Insert student
-    const [newStudent] = await db
-      .insert(siakadStudents)
-      .values({
-        applicantId: pmb_applicant_id,
-        nim: generatedNim,
-        fullName: full_name,
-        birthPlace: "Jakarta",
-        birthDate: "2005-01-01",
-        gender: "L",
-        religion: "Islam",
-        address: "Jl. Margonda Raya No. 100",
-        studyProgramId: targetProg.id,
-        angkatan: 2026,
-        personalEmail: email,
-        phone: phone || "08123456789",
-        academicStatus: "aktif",
-      })
-      .returning();
+    if (periodId && studentRecord) {
+      // Check existing KRS for period
+      const existingKrs = await db
+        .select()
+        .from(siakadKrs)
+        .where(
+          and(
+            eq(siakadKrs.studentId, studentRecord.id),
+            eq(siakadKrs.academicPeriodId, periodId)
+          )
+        );
+
+      if (existingKrs.length === 0) {
+        const [krsRecord] = await db
+          .insert(siakadKrs)
+          .values({
+            studentId: studentRecord.id,
+            academicPeriodId: periodId,
+            status: "disetujui_pa",
+            totalSks: 20,
+            maxSksAllowed: 20,
+            submittedAt: new Date(),
+          })
+          .returning();
+
+        console.log(`[SIAKAD PMB Consumer] Generated initial KRS ID: ${krsRecord.id}`);
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Student profile registered from PMB webhook!",
-      student: newStudent,
+      message: "Berhasil memproses event pendaftar diterima dan membuat KRS Perdana!",
+      student: studentRecord,
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("[SIAKAD PMB Consumer Error]", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Gagal memproses webhook PMB" },
+      { status: 500 }
+    );
   }
 }
-export const dynamic = "force-dynamic";

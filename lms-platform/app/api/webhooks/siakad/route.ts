@@ -1,91 +1,96 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { classEnrollments, lmsClasses } from "@/db/schema/classes";
+import { lmsClasses, classEnrollments } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
-    const { event, data } = payload;
+    const eventName = req.headers.get("X-Event-Name");
+    const body = await req.json();
 
-    if (!event || !data) {
-      return NextResponse.json({ success: false, error: "Invalid payload format" }, { status: 400 });
-    }
+    if (eventName === "krs.approved") {
+      const { krsItemId, classId, studentUserId, courseCode, courseName, sks, academicPeriodLabel } = body;
 
-    const { krs_item_id, class_id, student_user_id } = data;
+      if (!classId || !studentUserId) {
+        return NextResponse.json(
+          { success: false, error: "classId dan studentUserId wajib diisi" },
+          { status: 400 }
+        );
+      }
 
-    // 1. Fetch matching LMS class by siakadClassId
-    const classesList = await db
-      .select()
-      .from(lmsClasses)
-      .where(eq(lmsClasses.siakadClassId, class_id))
-      .limit(1);
+      console.log(`[LMS SIAKAD Consumer] Processing krs.approved for user ${studentUserId} in class ${classId}...`);
 
-    if (classesList.length === 0) {
-      return NextResponse.json({ success: false, error: "LMS class mapping not found. Sync first." }, { status: 404 });
-    }
+      // 1. Ensure LMS Class exists
+      let [lmsClass] = await db
+        .select()
+        .from(lmsClasses)
+        .where(eq(lmsClasses.siakadClassId, classId));
 
-    const lmsClass = classesList[0]!;
+      if (!lmsClass) {
+        const [newClass] = await db
+          .insert(lmsClasses)
+          .values({
+            siakadClassId: classId,
+            courseCode: courseCode || "MKU101",
+            courseName: courseName || "Kelas Matakuliah SIAKAD",
+            sks: sks || 3,
+            academicPeriodLabel: academicPeriodLabel || "2026/2027 Ganjil",
+            dosenUserId: "00000000-0000-0000-0000-000000000001", // Placeholder Dosen
+            lastSyncedAt: new Date(),
+          })
+          .returning();
 
-    if (event === "krs.approved") {
-      // 2. Check if already enrolled
-      const existing = await db
+        lmsClass = newClass;
+      }
+
+      // 2. Idempotent Enrollment
+      const existingEnrollments = await db
         .select()
         .from(classEnrollments)
         .where(
           and(
             eq(classEnrollments.classId, lmsClass.id),
-            eq(classEnrollments.userId, student_user_id)
-          )
-        )
-        .limit(1);
-
-      if (existing.length > 0) {
-        return NextResponse.json({
-          success: true,
-          message: "Student already enrolled in class (idempotent)",
-          enrollment: existing[0],
-        });
-      }
-
-      // 3. Create class enrollment
-      const [newEnrollment] = await db
-        .insert(classEnrollments)
-        .values({
-          classId: lmsClass.id,
-          userId: student_user_id,
-          role: "mahasiswa",
-          krsItemRef: krs_item_id,
-        })
-        .returning();
-
-      return NextResponse.json({
-        success: true,
-        message: "KRS enrollment successfully processed in LMS!",
-        enrollment: newEnrollment,
-      });
-    }
-
-    if (event === "krs_item.cancelled") {
-      // 4. Delete the enrollment
-      await db
-        .delete(classEnrollments)
-        .where(
-          and(
-            eq(classEnrollments.classId, lmsClass.id),
-            eq(classEnrollments.userId, student_user_id)
+            eq(classEnrollments.userId, studentUserId)
           )
         );
 
+      if (existingEnrollments.length === 0) {
+        await db.insert(classEnrollments).values({
+          classId: lmsClass.id,
+          userId: studentUserId,
+          role: "mahasiswa",
+          krsItemRef: krsItemId || null,
+        });
+
+        console.log(`[LMS SIAKAD Consumer] Student ${studentUserId} successfully enrolled in LMS class ${lmsClass.id}`);
+      }
+
       return NextResponse.json({
         success: true,
-        message: "KRS item cancelled and student enrollment dropped in LMS.",
+        message: "Auto-enrolment krs.approved berhasil diproses!",
       });
     }
 
-    return NextResponse.json({ success: false, error: "Unsupported event type" }, { status: 400 });
+    if (eventName === "class.dosen_changed") {
+      const { classId, newDosenUserId } = body;
+      if (classId && newDosenUserId) {
+        await db
+          .update(lmsClasses)
+          .set({ dosenUserId: newDosenUserId, updatedAt: new Date() })
+          .where(eq(lmsClasses.siakadClassId, classId));
+      }
+      return NextResponse.json({ success: true, message: "Dosen pengampu berhasil diperbarui!" });
+    }
+
+    return NextResponse.json(
+      { success: false, error: `Event '${eventName}' tidak dikenal` },
+      { status: 400 }
+    );
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("[LMS SIAKAD Consumer Error]", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Gagal memproses webhook SIAKAD" },
+      { status: 500 }
+    );
   }
 }
-export const dynamic = "force-dynamic";

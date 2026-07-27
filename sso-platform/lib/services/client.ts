@@ -74,6 +74,9 @@ export class ClientService {
       allowedGrantTypes?: string[];
       logoUrl?: string;
       status?: "active" | "inactive" | string;
+      isPublicClient?: boolean;
+      accessTokenLifetime?: number | null;
+      refreshTokenLifetime?: number | null;
     }
   ): Promise<typeof applications.$inferSelect> {
     if (params.redirectUris) {
@@ -84,17 +87,23 @@ export class ClientService {
       }
     }
 
+    const updateData: Record<string, any> = {
+      updatedAt: new Date(),
+    };
+
+    if (params.name !== undefined) updateData.name = params.name;
+    if (params.description !== undefined) updateData.description = params.description;
+    if (params.redirectUris !== undefined) updateData.redirectUris = params.redirectUris;
+    if (params.allowedGrantTypes !== undefined) updateData.allowedGrantTypes = params.allowedGrantTypes;
+    if (params.logoUrl !== undefined) updateData.logoUrl = params.logoUrl;
+    if (params.status !== undefined) updateData.status = params.status;
+    if (params.isPublicClient !== undefined) updateData.isPublicClient = params.isPublicClient;
+    if (params.accessTokenLifetime !== undefined) updateData.accessTokenLifetime = params.accessTokenLifetime;
+    if (params.refreshTokenLifetime !== undefined) updateData.refreshTokenLifetime = params.refreshTokenLifetime;
+
     const [updated] = await db
       .update(applications)
-      .set({
-        name: params.name,
-        description: params.description,
-        redirectUris: params.redirectUris,
-        allowedGrantTypes: params.allowedGrantTypes,
-        logoUrl: params.logoUrl,
-        status: params.status,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(applications.id, id))
       .returning();
 
@@ -107,7 +116,7 @@ export class ClientService {
       action: "APPLICATION_UPDATED",
       entityType: "application",
       entityId: id,
-      metadata: { name: params.name, status: params.status },
+      metadata: { name: params.name, status: params.status, tokenLifetimes: { access: params.accessTokenLifetime, refresh: params.refreshTokenLifetime } },
     });
 
     return updated;

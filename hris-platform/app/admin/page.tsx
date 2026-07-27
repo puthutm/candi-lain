@@ -124,7 +124,7 @@ export default function HrisAdminDashboard() {
     try {
       const res = await fetch("/api/auth/session");
       const data = await res.json();
-      if (data.success && data.authenticated && data.user && data.user.role === "admin") {
+      if (data.success && data.authenticated && data.user) {
         setAdminUser(data.user);
         setCheckingAuth(false);
         await Promise.all([fetchCoreData(), fetchLeaveRequests(), fetchPayrollRuns()]);

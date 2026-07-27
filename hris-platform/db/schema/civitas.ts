@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, bigint, integer } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, bigint, integer, date } from "drizzle-orm/pg-core";
 import { organizationUnits, positions } from "./organization";
 
 export const employees = pgTable("employees", {
@@ -11,9 +11,16 @@ export const employees = pgTable("employees", {
   rankGroup: text("rank_group").notNull(),
   baseSalary: bigint("base_salary", { mode: "number" }).notNull(),
   status: text("status", { enum: ["aktif", "non_aktif", "pensiun", "cuti_panjang"] }).default("aktif").notNull(),
+  employmentStatus: text("employment_status", { enum: ["tetap", "kontrak", "dosen_lb", "magang"] }).default("tetap").notNull(),
+  nidn: text("nidn"),
+  npwp: text("npwp"),
+  ptkpStatus: text("ptkp_status").default("TK/0").notNull(),
+  bpjsKesehatanNumber: text("bpjs_kesehatan_number"),
+  bpjsKetenagakerjaanNumber: text("bpjs_ketenagakerjaan_number"),
+  joinDate: date("join_date"),
   bankAccountNumber: text("bank_account_number").notNull(),
   bankName: text("bank_name").notNull(),
-  ssoUserId: uuid("sso_user_id").notNull(),
+  ssoUserId: uuid("sso_user_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

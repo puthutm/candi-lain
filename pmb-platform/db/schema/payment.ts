@@ -19,6 +19,7 @@ export const pmbPaymentTransactions = pgTable("pmb_payment_transactions", {
   providerRef: text("provider_ref").notNull(),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   status: text("status", { enum: ["pending", "success", "failed"] }).default("pending").notNull(),
+  idempotencyKey: text("idempotency_key"),
   webhookPayload: jsonb("webhook_payload"),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

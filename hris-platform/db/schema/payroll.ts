@@ -46,7 +46,33 @@ export const payslips = pgTable("payslips", {
   id: uuid("id").primaryKey().defaultRandom(),
   payrollRunId: uuid("payroll_run_id").references(() => payrollRuns.id, { onDelete: "cascade" }).notNull(),
   employeeId: uuid("employee_id").references(() => employees.id, { onDelete: "cascade" }).notNull(),
+  grossSalary: bigint("gross_salary", { mode: "number" }).default(0).notNull(),
+  pph21Amount: bigint("pph21_amount", { mode: "number" }).default(0).notNull(),
+  bpjsKesehatanAmount: bigint("bpjs_kesehatan_amount", { mode: "number" }).default(0).notNull(),
+  bpjsKetenagakerjaanAmount: bigint("bpjs_ketenagakerjaan_amount", { mode: "number" }).default(0).notNull(),
+  totalDeductions: bigint("total_deductions", { mode: "number" }).default(0).notNull(),
+  netSalary: bigint("net_salary", { mode: "number" }).default(0).notNull(),
   status: text("status", { enum: ["draft", "published", "paid"] }).default("draft").notNull(),
   pdfUrl: text("pdf_url"),
   generatedAt: timestamp("generated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const taxBrackets = pgTable("tax_brackets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  category: text("category", { enum: ["TER_A", "TER_B", "TER_C", "PASAL_17"] }).notNull(),
+  minGross: bigint("min_gross", { mode: "number" }).notNull(),
+  maxGross: bigint("max_gross", { mode: "number" }).notNull(),
+  ratePercent: bigint("rate_percent", { mode: "number" }).notNull(), // dalam basis point atau % (e.g. 5 = 5%)
+  effectiveFrom: date("effective_from").notNull(),
+  effectiveTo: date("effective_to"),
+});
+
+export const payrollApprovals = pgTable("payroll_approvals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  payrollRunId: uuid("payroll_run_id").references(() => payrollRuns.id, { onDelete: "cascade" }).notNull(),
+  approverRole: text("approver_role", { enum: ["admin_payroll", "kabag_sdm", "warek_2"] }).notNull(),
+  approverName: text("approver_name").notNull(),
+  status: text("status", { enum: ["pending", "approved", "rejected"] }).default("pending").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });

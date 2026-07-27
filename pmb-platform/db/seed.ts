@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { pmbWaves, pmbEntryPaths, pmbStudyPrograms, pmbQuotas } from "@/db/schema/master";
 import { pmbApplicants, pmbDocumentTypes, pmbApplicantProfiles, pmbApplicantDocuments } from "@/db/schema/applicants";
 import { pmbExamModules, pmbExamQuestions } from "@/db/schema/exam";
+import { seedDefaultWorkflows } from "@/lib/automation";
 
 export async function ensurePmbSeeded() {
   try {
@@ -189,7 +190,10 @@ export async function ensurePmbSeeded() {
       }
     }
 
-    // 7. Seed Exam Modules & Questions
+    // 7. Seed Automation Workflows
+    await seedDefaultWorkflows();
+
+    // 8. Seed Exam Modules & Questions
     const examModulesCount = await db.select().from(pmbExamModules);
     if (examModulesCount.length === 0) {
       // Insert Modules

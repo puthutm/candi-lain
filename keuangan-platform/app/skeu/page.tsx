@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 interface TuitionRate {
   id: string;
@@ -54,6 +54,10 @@ export default function SkeuDashboard() {
   const [invoices, setInvoices] = useState<StudentInvoice[]>([]);
   const [payments, setPayments] = useState<PaymentLog[]>([]);
 
+  // Fase 2: Beasiswa & Keringanan
+  const [_scholarshipPrograms, setScholarshipPrograms] = useState<any[]>([]);
+  const [_reliefRequests, setReliefRequests] = useState<any[]>([]);
+
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [invoiceFilterStatus, setInvoiceFilterStatus] = useState<"all" | "outstanding" | "lunas">("all");
@@ -72,6 +76,137 @@ export default function SkeuDashboard() {
   const [newCoa, setNewCoa] = useState({ accountCode: "", accountName: "", accountType: "aset" });
 
   const [selectedInvoice, setSelectedInvoice] = useState<StudentInvoice | null>(null);
+
+  // Beasiswa modal
+  const [_showScholarshipModal, _setShowScholarshipModal] = useState(false);
+  const [_scholarshipForm, _setScholarshipForm] = useState({ code: "", name: "", fundingSource: "internal", quota: "", nominalPerSemester: "", description: "" });
+
+  // Fase 3: Pengeluaran
+  const [pengeluaranSubTab, setPengeluaranSubTab] = useState<"payroll" | "po" | "honorarium" | "referral">("payroll");
+  const [payrollRuns, setPayrollRuns] = useState<any[]>([]);
+  const [poList, setPoList] = useState<any[]>([]);
+  const [honorariumList, setHonorariumList] = useState<any[]>([]);
+  const [referralList, setReferralList] = useState<any[]>([]);
+
+  const [showPoModal, setShowPoModal] = useState(false);
+  const [poForm, setPoForm] = useState({ poNumber: "", vendorName: "", category: "", amount: "", dueDate: "", description: "", requiresQuotation: false, quotationCount: "0", createdBy: "" });
+
+  const [showHonorariumModal, setShowHonorariumModal] = useState(false);
+  const [honorariumForm, setHonorariumForm] = useState({ payeeName: "", payeeNpwp: "", payeeBankAccount: "", category: "honorarium_dosen", activityDescription: "", grossAmount: "", taxType: "none", approvedBy: "" });
+
+  const [showPayrollModal, setShowPayrollModal] = useState(false);
+  const [payrollForm, setPayrollForm] = useState({ period: "", source: "hris", totalGross: "", totalTax: "0", totalNet: "", approvedBy: "", items: "" });
+
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [referralForm, setReferralForm] = useState({ agentName: "", agentIdSnapshot: "", period: "", totalReferrals: "", ratePerReferral: "", taxType: "none", approvedBy: "" });
+
+  const fetchPengeluaranData = async () => {
+    try {
+      const [payrollRes, poRes, honorariumRes, referralRes] = await Promise.all([
+        fetch("/api/skeu/expenditure/payroll"),
+        fetch("/api/skeu/expenditure/purchase-orders"),
+        fetch("/api/skeu/expenditure/honorariums"),
+        fetch("/api/skeu/expenditure/referrals"),
+      ]);
+      const payrollData = await payrollRes.json();
+      const poData = await poRes.json();
+      const honorariumData = await honorariumRes.json();
+      const referralData = await referralRes.json();
+      if (payrollData.success) setPayrollRuns(payrollData.runs || []);
+      if (poData.success) setPoList(poData.orders || []);
+      if (honorariumData.success) setHonorariumList(honorariumData.list || []);
+      if (referralData.success) setReferralList(referralData.list || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCreatePo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/skeu/expenditure/purchase-orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(poForm),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToastMsg("PO berhasil dibuat");
+        setShowPoModal(false);
+        setPoForm({ poNumber: "", vendorName: "", category: "", amount: "", dueDate: "", description: "", requiresQuotation: false, quotationCount: "0", createdBy: "" });
+        fetchPengeluaranData();
+      } else {
+        setToastMsg(data.error || "Gagal membuat PO");
+      }
+    } catch (err: any) { setToastMsg(err.message); }
+  };
+
+  const handleCreateHonorarium = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/skeu/expenditure/honorariums", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(honorariumForm),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToastMsg("Honorarium berhasil dicatat");
+        setShowHonorariumModal(false);
+        setHonorariumForm({ payeeName: "", payeeNpwp: "", payeeBankAccount: "", category: "honorarium_dosen", activityDescription: "", grossAmount: "", taxType: "none", approvedBy: "" });
+        fetchPengeluaranData();
+      } else {
+        setToastMsg(data.error || "Gagal mencatat honorarium");
+      }
+    } catch (err: any) { setToastMsg(err.message); }
+  };
+
+  const handleCreatePayroll = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const items = payrollForm.items ? JSON.parse(payrollForm.items) : [];
+      const res = await fetch("/api/skeu/expenditure/payroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payrollForm, items }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToastMsg("Payroll run berhasil dicatat");
+        setShowPayrollModal(false);
+        setPayrollForm({ period: "", source: "hris", totalGross: "", totalTax: "0", totalNet: "", approvedBy: "", items: "" });
+        fetchPengeluaranData();
+      } else {
+        setToastMsg(data.error || "Gagal mencatat payroll");
+      }
+    } catch (err: any) { setToastMsg("JSON items tidak valid"); }
+  };
+
+  const handleCreateReferral = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/skeu/expenditure/referrals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(referralForm),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToastMsg("Komisi referral berhasil dicatat");
+        setShowReferralModal(false);
+        setReferralForm({ agentName: "", agentIdSnapshot: "", period: "", totalReferrals: "", ratePerReferral: "", taxType: "none", approvedBy: "" });
+        fetchPengeluaranData();
+      } else {
+        setToastMsg(data.error || "Gagal mencatat referral");
+      }
+    } catch (err: any) { setToastMsg(err.message); }
+  };
+
+  useEffect(() => {
+    if (activeTab === "pengeluaran") {
+      fetchPengeluaranData();
+    }
+  }, [activeTab]);
 
   const redirectToSSO = () => {
     window.location.href = "/api/auth/signin/unsia-sso";
@@ -93,7 +228,7 @@ export default function SkeuDashboard() {
     }
   };
 
-  const fetchData = async () => {
+    const fetchData = async () => {
     try {
       const res = await fetch("/api/skeu/data");
       const data = await res.json();
@@ -103,6 +238,20 @@ export default function SkeuDashboard() {
         setInvoices(data.invoices || []);
         setPayments(data.payments || []);
       }
+    } catch (err) {
+      console.error(err);
+    }
+
+    // Fase 2: Fetch beasiswa & keringangan
+    try {
+      const [schRes, relRes] = await Promise.all([
+        fetch("/api/skeu/scholarships"),
+        fetch("/api/skeu/relief/approvals"),
+      ]);
+      const schData = await schRes.json();
+      const relData = await relRes.json();
+      if (schData.success) setScholarshipPrograms(schData.programs || []);
+      if (relData.success) setReliefRequests(relData.plans || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -310,6 +459,20 @@ export default function SkeuDashboard() {
               {item.label}
             </button>
           ))}
+
+          {/* Quick Links */}
+          <div className="pt-4 mt-4 border-t border-slate-800 space-y-1.5">
+            <p className="px-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Halaman Khusus</p>
+            <a href="/skeu/events" className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition">
+              <span>🎓</span> Event & Kegiatan
+            </a>
+            <a href="/skeu/pmb" className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition">
+              <span>📈</span> Dashboard PMB
+            </a>
+            <a href="/skeu/beasiswa" className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition">
+              <span>💳</span> Kelola Beasiswa
+            </a>
+          </div>
         </nav>
 
         {/* Logout Button */}
@@ -546,26 +709,11 @@ export default function SkeuDashboard() {
           {activeTab === "beasiswa" && (
             <div className="space-y-6 animate-fade-in max-w-4xl">
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-                <h3 className="font-bold text-white text-xs uppercase tracking-wider border-b border-slate-800 pb-3">Daftar Pengajuan Keringanan & KIP-K</h3>
-                <div className="space-y-3">
-                  <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-bold text-slate-200">Muhammad Iqbal (NIM: 20260401)</div>
-                      <p className="text-[10px] text-slate-400 mt-1">Mengajukan Cicilan SPP Ganjil 2x - Alasan: Pemutusan Hubungan Kerja Orang Tua</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-bold rounded">Setujui</button>
-                      <button className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-400 text-[9px] font-bold rounded">Tolak</button>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-bold text-slate-200">Fitri Hapsari (NIM: 20260588)</div>
-                      <p className="text-[10px] text-slate-400 mt-1">Netting KIP-Kuliah Kemendikbud - Beasiswa Penuh Semester Ganjil</p>
-                    </div>
-                    <span className="text-[8px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-black uppercase">Otomatis Terverifikasi</span>
-                  </div>
-                </div>
+                <h3 className="font-bold text-white text-xs uppercase tracking-wider border-b border-slate-800 pb-3">Kelola Beasiswa & Keringanan</h3>
+                <p className="text-xs text-slate-400">Gunakan halaman khusus untuk mengelola program beasiswa dan approval pengajuan keringanan.</p>
+                <a href="/skeu/beasiswa" className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-md transition">
+                  Buka Halaman Beasiswa →
+                </a>
               </div>
             </div>
           )}
@@ -573,36 +721,161 @@ export default function SkeuDashboard() {
           {/* TAB 4: PENGELUARAN */}
           {activeTab === "pengeluaran" && (
             <div className="space-y-6 animate-fade-in max-w-4xl">
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-                <h3 className="font-bold text-white text-xs uppercase tracking-wider border-b border-slate-800 pb-3">Disbursement Payroll Karyawan (Dari HRIS)</h3>
-                <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl flex justify-between items-center">
-                  <div>
-                    <div className="text-xs font-bold text-slate-200">Payroll Periode Mei 2026</div>
-                    <p className="text-[10px] text-slate-500 mt-1">Jumlah: 8 Karyawan · Total Net: Rp 45.334.800</p>
-                  </div>
-                  <span className="text-[9px] font-black px-2 py-1 rounded bg-emerald-500/25 text-emerald-400 border border-emerald-500/20">
-                    Disbursed & Slip Terbit
-                  </span>
-                </div>
+              <div className="flex gap-2 border-b border-slate-800">
+                {[
+                  { id: "payroll", label: "Payroll" },
+                  { id: "po", label: "Purchase Order" },
+                  { id: "honorarium", label: "Honorarium" },
+                  { id: "referral", label: "Referral CRM" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setPengeluaranSubTab(tab.id as any)}
+                    className={`px-4 py-2 text-xs font-bold rounded-t-xl transition ${
+                      pengeluaranSubTab === tab.id
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/10"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-white text-xs uppercase tracking-wider">Daftar Purchase Order Belanja (PO)</h3>
-                  <button className="px-3 py-1 bg-blue-600 text-white font-bold text-[9px] rounded-lg">➕ Buat PO</button>
-                </div>
-                <div className="space-y-3">
-                  <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl flex justify-between items-center">
-                    <div>
-                      <div className="text-xs font-bold text-slate-200">PO-2026-001: Pengadaan Router Ruang Server</div>
-                      <p className="text-[10px] text-slate-500 mt-1">Vendor: Cisco System · Nominal: Rp 12.500.000</p>
-                    </div>
-                    <span className="text-[8px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-black uppercase">Approved</span>
+              {/* SUBTAB: PAYROLL */}
+              {pengeluaranSubTab === "payroll" && (
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-white text-xs uppercase tracking-wider">Disbursement Payroll</h3>
+                    <button onClick={() => setShowPayrollModal(true)} className="px-3 py-1 bg-blue-600 text-white font-bold text-[9px] rounded-lg">+ Tambah Payroll</button>
                   </div>
+                  {payrollRuns.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-slate-800 rounded-2xl"><p className="text-slate-500 text-xs">Belum ada data payroll.</p></div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="text-slate-500 border-b border-slate-800 uppercase tracking-wider font-semibold">
+                          <tr><th className="pb-3 px-2">Periode</th><th className="pb-3 px-2">Sumber</th><th className="pb-3 px-2">Total Net</th><th className="pb-3 px-2">Status</th><th className="pb-3 px-2">Disburse</th></tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50 text-slate-300">
+                          {payrollRuns.map((run) => (
+                            <tr key={run.id} className="hover:bg-slate-800/30 transition">
+                              <td className="py-3 px-2 font-bold text-white">{run.period}</td>
+                              <td className="py-3 px-2 uppercase">{run.source}</td>
+                              <td className="py-3 px-2 font-mono text-emerald-400">Rp {Number(run.totalNet).toLocaleString("id-ID")}</td>
+                              <td className="py-3 px-2"><span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${run.status === "disbursed" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : run.status === "disetujui" ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"}`}>{run.status.toUpperCase()}</span></td>
+                              <td className="py-3 px-2 font-mono text-slate-400">{run.approvedBy || "-"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
+
+              {/* SUBTAB: PO */}
+              {pengeluaranSubTab === "po" && (
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-white text-xs uppercase tracking-wider">Purchase Order Belanja</h3>
+                    <button onClick={() => setShowPoModal(true)} className="px-3 py-1 bg-blue-600 text-white font-bold text-[9px] rounded-lg">+ Buat PO</button>
+                  </div>
+                  {poList.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-slate-800 rounded-2xl"><p className="text-slate-500 text-xs">Belum ada PO.</p></div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="text-slate-500 border-b border-slate-800 uppercase tracking-wider font-semibold">
+                          <tr><th className="pb-3 px-2">Nomor PO</th><th className="pb-3 px-2">Vendor</th><th className="pb-3 px-2">Kategori</th><th className="pb-3 px-2">Nominal</th><th className="pb-3 px-2">Status</th><th className="pb-3 px-2">Tahap</th></tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50 text-slate-300">
+                          {poList.map((po) => (
+                            <tr key={po.id} className="hover:bg-slate-800/30 transition">
+                              <td className="py-3 px-2 font-bold text-white">{po.poNumber}</td>
+                              <td className="py-3 px-2">{po.vendorName}</td>
+                              <td className="py-3 px-2">{po.category}</td>
+                              <td className="py-3 px-2 font-mono text-emerald-400">Rp {Number(po.amount).toLocaleString("id-ID")}</td>
+                              <td className="py-3 px-2">
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${po.status === "approved" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : po.status === "paid" ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"}`}>
+                                  {po.status.toUpperCase()}
+                                </span>
+                              </td>
+                              <td className="py-3 px-2">{po.currentStage ? po.currentStage.replace("_", " ").toUpperCase() : "-"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SUBTAB: HONORARIUM */}
+              {pengeluaranSubTab === "honorarium" && (
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-white text-xs uppercase tracking-wider">Honorarium & Insentif</h3>
+                    <button onClick={() => setShowHonorariumModal(true)} className="px-3 py-1 bg-blue-600 text-white font-bold text-[9px] rounded-lg">+ Catat Honorarium</button>
+                  </div>
+                  {honorariumList.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-slate-800 rounded-2xl"><p className="text-slate-500 text-xs">Belum ada catatan honorarium.</p></div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="text-slate-500 border-b border-slate-800 uppercase tracking-wider font-semibold">
+                          <tr><th className="pb-3 px-2">Penerima</th><th className="pb-3 px-2">Kategori</th><th className="pb-3 px-2">Nominal Gross</th><th className="pb-3 px-2">Status</th></tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50 text-slate-300">
+                          {honorariumList.map((item) => (
+                            <tr key={item.id} className="hover:bg-slate-800/30 transition">
+                              <td className="py-3 px-2 font-bold text-white">{item.payeeName}</td>
+                              <td className="py-3 px-2">{item.category}</td>
+                              <td className="py-3 px-2 font-mono text-emerald-400">Rp {Number(item.grossAmount).toLocaleString("id-ID")}</td>
+                              <td className="py-3 px-2"><span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400">{item.status?.toUpperCase() || "PENDING"}</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SUBTAB: REFERRAL */}
+              {pengeluaranSubTab === "referral" && (
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-white text-xs uppercase tracking-wider">Komisi Referral Agent</h3>
+                    <button onClick={() => setShowReferralModal(true)} className="px-3 py-1 bg-blue-600 text-white font-bold text-[9px] rounded-lg">+ Catat Referral</button>
+                  </div>
+                  {referralList.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-slate-800 rounded-2xl"><p className="text-slate-500 text-xs">Belum ada komisi referral.</p></div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="text-slate-500 border-b border-slate-800 uppercase tracking-wider font-semibold">
+                          <tr><th className="pb-3 px-2">Agent</th><th className="pb-3 px-2">Periode</th><th className="pb-3 px-2">Jumlah</th><th className="pb-3 px-2">Rate/Mhs</th><th className="pb-3 px-2">Status</th></tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50 text-slate-300">
+                          {referralList.map((ref) => (
+                            <tr key={ref.id} className="hover:bg-slate-800/30 transition">
+                              <td className="py-3 px-2 font-bold text-white">{ref.agentName}</td>
+                              <td className="py-3 px-2">{ref.period}</td>
+                              <td className="py-3 px-2 font-mono">{ref.totalReferrals}</td>
+                              <td className="py-3 px-2 font-mono text-emerald-400">Rp {Number(ref.ratePerReferral).toLocaleString("id-ID")}</td>
+                              <td className="py-3 px-2"><span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400">{ref.status?.toUpperCase() || "PENDING"}</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
+
 
           {/* TAB 5: AKUNTANSI */}
           {activeTab === "akuntansi" && (
@@ -881,6 +1154,116 @@ export default function SkeuDashboard() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* MODAL: CREATE PO */}
+      {showPoModal && (
+        <div className="fixed inset-0 z-50 bg-[#0b0f19]/80 backdrop-blur-md flex items-center justify-center p-4">
+          <form onSubmit={handleCreatePo} className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
+            <h3 className="font-bold text-white text-sm uppercase tracking-wider">Buat Purchase Order (PO)</h3>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Nomor PO</label>
+              <input type="text" required value={poForm.poNumber} onChange={(e) => setPoForm({...poForm, poNumber: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Vendor</label>
+              <input type="text" required value={poForm.vendorName} onChange={(e) => setPoForm({...poForm, vendorName: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Kategori</label>
+              <input type="text" required value={poForm.category} onChange={(e) => setPoForm({...poForm, category: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Nominal (Rp)</label>
+              <input type="number" required value={poForm.amount} onChange={(e) => setPoForm({...poForm, amount: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+            </div>
+            <div className="flex justify-end gap-3 pt-3">
+              <button type="button" onClick={() => setShowPoModal(false)} className="px-4 py-2 bg-slate-800 text-slate-400 text-xs font-bold rounded-xl">Batal</button>
+              <button type="submit" className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl">Simpan</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL: CREATE HONORARIUM */}
+      {showHonorariumModal && (
+        <div className="fixed inset-0 z-50 bg-[#0b0f19]/80 backdrop-blur-md flex items-center justify-center p-4">
+          <form onSubmit={handleCreateHonorarium} className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
+            <h3 className="font-bold text-white text-sm uppercase tracking-wider">Catat Honorarium</h3>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Nama Penerima</label>
+              <input type="text" required value={honorariumForm.payeeName} onChange={(e) => setHonorariumForm({...honorariumForm, payeeName: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Kategori</label>
+              <select value={honorariumForm.category} onChange={(e) => setHonorariumForm({...honorariumForm, category: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600">
+                <option value="honorarium_dosen">Honorarium Dosen</option>
+                <option value="honorarium_narasumber">Honorarium Narasumber</option>
+                <option value="insentif_panitia">Insentif Panitia</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Nominal Gross (Rp)</label>
+              <input type="number" required value={honorariumForm.grossAmount} onChange={(e) => setHonorariumForm({...honorariumForm, grossAmount: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+            </div>
+            <div className="flex justify-end gap-3 pt-3">
+              <button type="button" onClick={() => setShowHonorariumModal(false)} className="px-4 py-2 bg-slate-800 text-slate-400 text-xs font-bold rounded-xl">Batal</button>
+              <button type="submit" className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl">Simpan</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL: CREATE PAYROLL */}
+      {showPayrollModal && (
+        <div className="fixed inset-0 z-50 bg-[#0b0f19]/80 backdrop-blur-md flex items-center justify-center p-4">
+          <form onSubmit={handleCreatePayroll} className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
+            <h3 className="font-bold text-white text-sm uppercase tracking-wider">Catat Payroll</h3>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Periode (misal: 2026-07)</label>
+              <input type="text" required value={payrollForm.period} onChange={(e) => setPayrollForm({...payrollForm, period: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Total Net (Rp)</label>
+              <input type="number" required value={payrollForm.totalNet} onChange={(e) => setPayrollForm({...payrollForm, totalNet: e.target.value, totalGross: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+            </div>
+            <div className="flex justify-end gap-3 pt-3">
+              <button type="button" onClick={() => setShowPayrollModal(false)} className="px-4 py-2 bg-slate-800 text-slate-400 text-xs font-bold rounded-xl">Batal</button>
+              <button type="submit" className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl">Simpan</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL: CREATE REFERRAL */}
+      {showReferralModal && (
+        <div className="fixed inset-0 z-50 bg-[#0b0f19]/80 backdrop-blur-md flex items-center justify-center p-4">
+          <form onSubmit={handleCreateReferral} className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
+            <h3 className="font-bold text-white text-sm uppercase tracking-wider">Catat Komisi Referral</h3>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Nama Agent</label>
+              <input type="text" required value={referralForm.agentName} onChange={(e) => setReferralForm({...referralForm, agentName: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Periode</label>
+              <input type="text" required value={referralForm.period} onChange={(e) => setReferralForm({...referralForm, period: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Total Referral</label>
+                <input type="number" required value={referralForm.totalReferrals} onChange={(e) => setReferralForm({...referralForm, totalReferrals: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">Rate Per Mahasiswa (Rp)</label>
+                <input type="number" required value={referralForm.ratePerReferral} onChange={(e) => setReferralForm({...referralForm, ratePerReferral: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-blue-600" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-3">
+              <button type="button" onClick={() => setShowReferralModal(false)} className="px-4 py-2 bg-slate-800 text-slate-400 text-xs font-bold rounded-xl">Batal</button>
+              <button type="submit" className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl">Simpan</button>
+            </div>
+          </form>
         </div>
       )}
 

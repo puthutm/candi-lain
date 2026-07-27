@@ -1,116 +1,152 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { pmbCampaigns, pmbMessageLogs } from "@/db/schema/communication";
 import { pmbApplicants } from "@/db/schema/applicants";
-import { eq, and, desc } from "drizzle-orm";
+import { pmbMessageTemplates, pmbMessageLogs } from "@/db/schema/communication";
+import { eq, and } from "drizzle-orm";
+import { sendEmail } from "@/lib/email";
+import { sendWhatsApp, formatPhoneNumber } from "@/lib/whatsapp";
 
-// GET all campaigns
-export async function GET() {
-  try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("pmb_user");
-    if (!sessionCookie) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const sessionUser = JSON.parse(sessionCookie.value);
-    if (sessionUser.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
-    }
-
-    const list = await db
-      .select()
-      .from(pmbCampaigns)
-      .orderBy(desc(pmbCampaigns.scheduledAt));
-
-    return NextResponse.json({ success: true, campaigns: list });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
+interface BlastRequest {
+  templateId: string;
+  channel: "email" | "whatsapp";
+  segmentFilter?: {
+    stage?: string;
+    paymentStatus?: string;
+    waveId?: string;
+    studyProgramId?: string;
+  };
+  testEmail?: string;
 }
 
-// POST to create and send a campaign blast
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("pmb_user");
-    if (!sessionCookie) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const sessionUser = JSON.parse(sessionCookie.value);
-    if (sessionUser.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
-    }
+    const body: BlastRequest = await request.json();
+    const { templateId, channel, segmentFilter, testEmail } = body;
 
-    const body = await req.json();
-    const { name, segment, channel, message } = body;
-
-    if (!name || !segment || !channel || !message) {
-      return NextResponse.json({ success: false, error: "Semua kolom wajib diisi" }, { status: 400 });
+    if (!templateId || !channel) {
+      return NextResponse.json(
+        { error: "Template ID dan channel wajib diisi" },
+        { status: 400 }
+      );
     }
 
-    // 1. Fetch matching applicants based on segment selection
-    let applicantsList = [];
+    // Ambil template
+    const [template] = await db
+      .select()
+      .from(pmbMessageTemplates)
+      .where(eq(pmbMessageTemplates.id, templateId))
+      .limit(1);
 
-    if (segment === "Tahap 4: Unggah Berkas (Belum Bayar)") {
-      applicantsList = await db
-        .select()
-        .from(pmbApplicants)
-        .where(
-          and(
-            eq(pmbApplicants.paymentStatus, "belum_bayar"),
-            eq(pmbApplicants.currentStage, "unggah_berkas")
-          )
-        );
-    } else if (segment === "Tahap 7: Selesai Ujian (Menunggu Kelulusan)") {
-      applicantsList = await db
-        .select()
-        .from(pmbApplicants)
-        .where(eq(pmbApplicants.currentStage, "selesai_ujian"));
-    } else {
-      // Semua Pendaftar Aktif
-      applicantsList = await db
-        .select()
-        .from(pmbApplicants);
+    if (!template) {
+      return NextResponse.json({ error: "Template tidak ditemukan" }, { status: 404 });
     }
 
-    // 2. Insert Campaign record
-    const [newCampaign] = await db
-      .insert(pmbCampaigns)
-      .values({
-        name,
-        segmentFilter: { segment, message },
-        channel: channel as "email" | "whatsapp",
-        status: "terkirim",
-        sentCount: applicantsList.length,
-        scheduledAt: new Date(),
-      })
-      .returning();
+    // Jika test mode, kirim ke 1 email saja
+    if (testEmail) {
+      const result = await sendEmail({
+        to: testEmail,
+        subject: `[TEST] ${template.subject || "Notifikasi PMB UNSIA"}`,
+        html: template.body,
+      });
 
-    if (!newCampaign) {
-      throw new Error("Gagal membuat data kampanye");
+      return NextResponse.json({
+        success: result.success,
+        message: result.success
+          ? `Test email berhasil dikirim ke ${testEmail}`
+          : `Gagal: ${result.error}`,
+        sentCount: result.success ? 1 : 0,
+      });
     }
 
-    // 3. Log messages for each applicant
-    if (applicantsList.length > 0) {
-      const logs = applicantsList.map((app) => ({
-        applicantId: app.id,
-        campaignId: newCampaign.id,
-        channel: channel as "email" | "whatsapp",
-        status: "terkirim" as const,
-        sentAt: new Date(),
-      }));
+    // Ambil pendaftar berdasarkan filter
+    const conditions = [];
+    if (segmentFilter?.stage) {
+      conditions.push(eq(pmbApplicants.currentStage, segmentFilter.stage as any));
+    }
+    if (segmentFilter?.paymentStatus) {
+      conditions.push(eq(pmbApplicants.paymentStatus, segmentFilter.paymentStatus as any));
+    }
+    if (segmentFilter?.waveId) {
+      conditions.push(eq(pmbApplicants.waveId, segmentFilter.waveId));
+    }
+    if (segmentFilter?.studyProgramId) {
+      conditions.push(eq(pmbApplicants.studyProgramId, segmentFilter.studyProgramId));
+    }
 
-      await db.insert(pmbMessageLogs).values(logs);
+    const applicants = conditions.length > 0
+      ? await db.select().from(pmbApplicants).where(and(...conditions))
+      : await db.select().from(pmbApplicants);
+
+    if (applicants.length === 0) {
+      return NextResponse.json(
+        { error: "Tidak ada pendaftar yang sesuai dengan filter" },
+        { status: 404 }
+      );
+    }
+
+    // Kirim pesan ke setiap pendaftar
+    let sentCount = 0;
+    let failedCount = 0;
+
+    for (const applicant of applicants) {
+      try {
+        const renderedBody = template.body
+          .replace(/{nama}/g, applicant.fullName)
+          .replace(/{name}/g, applicant.fullName)
+          .replace(/{no_pendaftaran}/g, applicant.registrationNumber)
+          .replace(/{registration_number}/g, applicant.registrationNumber)
+          .replace(/{email}/g, applicant.email)
+          .replace(/{tahapan}/g, applicant.currentStage)
+          .replace(/{stage}/g, applicant.currentStage)
+          .replace(/{status_pembayaran}/g, applicant.paymentStatus)
+          .replace(/{payment_status}/g, applicant.paymentStatus)
+          .replace(/{dashboard_url}/g, `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3002"}/dashboard`)
+          .replace(/{app_url}/g, process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3002");
+
+        let success = false;
+
+        if (channel === "email") {
+          const result = await sendEmail({
+            to: applicant.email,
+            subject: template.subject || "Notifikasi PMB UNSIA",
+            html: renderedBody,
+          });
+          success = result.success;
+        } else if (channel === "whatsapp") {
+          const phone = formatPhoneNumber(applicant.phone);
+          const result = await sendWhatsApp({
+            to: phone,
+            message: renderedBody,
+          });
+          success = result.success;
+        }
+
+        // Catat log
+        await db.insert(pmbMessageLogs).values({
+          applicantId: applicant.id,
+          messageTemplateId: template.id,
+          channel,
+          status: success ? "terkirim" : "gagal",
+          sentAt: new Date(),
+        });
+
+        if (success) sentCount++;
+        else failedCount++;
+      } catch (err) {
+        failedCount++;
+        console.error(`[Blast] Gagal kirim ke ${applicant.email}:`, err);
+      }
     }
 
     return NextResponse.json({
       success: true,
-      message: `Kampanye Blast '${name}' berhasil dikirim ke ${applicantsList.length} pendaftar!`,
-      campaign: newCampaign,
+      message: `Blast selesai: ${sentCount} terkirim, ${failedCount} gagal dari ${applicants.length} target`,
+      sentCount,
+      failedCount,
+      totalTarget: applicants.length,
     });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error("[API Blast] Gagal:", error);
+    return NextResponse.json({ error: "Gagal mengirim blast" }, { status: 500 });
   }
 }
-export const dynamic = "force-dynamic";

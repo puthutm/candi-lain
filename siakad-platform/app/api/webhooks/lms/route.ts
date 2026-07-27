@@ -1,94 +1,90 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { siakadGrades } from "@/db/schema/krs";
-import { siakadStudents } from "@/db/schema/civitas";
+import { siakadGrades, siakadStudents, siakadClasses } from "@/db/schema";
+import { convertScoreToGrade } from "@/lib/grade-calculator";
 import { eq, and } from "drizzle-orm";
 
-function getGradePoint(letter: string): string {
-  switch (letter) {
-    case "A": return "4.00";
-    case "B": return "3.00";
-    case "C": return "2.00";
-    case "D": return "1.00";
-    default: return "0.00";
-  }
-}
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
-    const { event, data } = payload;
+    const eventName = req.headers.get("X-Event-Name");
+    const body = await req.json();
 
-    if (event !== "grade.finalized" || !data) {
-      return NextResponse.json({ success: false, error: "Invalid event type" }, { status: 400 });
-    }
+    if (eventName === "grade.finalized") {
+      const { siakadClassId, studentUserId, finalScore, letterGrade, tugasScore, utsScore, uasScore } = body;
 
-    const { siakad_class_id, student_user_id, final_score, letter_grade } = data;
+      if (!studentUserId || finalScore === undefined) {
+        return NextResponse.json(
+          { success: false, error: "studentUserId dan finalScore wajib diisi" },
+          { status: 400 }
+        );
+      }
 
-    // 1. Resolve student UUID if passed as student NIM or user ID
-    let studentId = student_user_id;
-    const studentsList = await db
-      .select()
-      .from(siakadStudents)
-      .where(eq(siakadStudents.nim, student_user_id))
-      .limit(1);
+      console.log(`[SIAKAD LMS Consumer] Processing grade.finalized for user ${studentUserId} (Score: ${finalScore})...`);
 
-    if (studentsList.length > 0) {
-      studentId = studentsList[0]!.id;
-    }
+      // Match student by ID or email
+      const studentsList = await db
+        .select()
+        .from(siakadStudents)
+        .where(eq(siakadStudents.id, studentUserId));
 
-    // 2. Fetch existing grade record
-    const existing = await db
-      .select()
-      .from(siakadGrades)
-      .where(
-        and(
-          eq(siakadGrades.classId, siakad_class_id),
-          eq(siakadGrades.studentId, studentId)
-        )
-      )
-      .limit(1);
+      const studentId = studentsList[0]?.id || studentUserId;
 
-    const gradePoint = getGradePoint(letter_grade);
+      const scoreNum = parseFloat(finalScore);
+      const conversion = convertScoreToGrade(scoreNum);
 
-    let finalRecord;
+      // Check existing grade
+      const existingGrades = await db
+        .select()
+        .from(siakadGrades)
+        .where(
+          and(
+            eq(siakadGrades.studentId, studentId),
+            eq(siakadGrades.classId, siakadClassId || "00000000-0000-0000-0000-000000000001")
+          )
+        );
 
-    if (existing.length > 0) {
-      // Update
-      const [updated] = await db
-        .update(siakadGrades)
-        .set({
-          finalScore: Number(final_score).toFixed(2),
-          letterGrade: letter_grade,
-          gradePoint,
-          locked: true,
-        })
-        .where(eq(siakadGrades.id, existing[0]!.id))
-        .returning();
-      finalRecord = updated;
-    } else {
-      // Insert
-      const [inserted] = await db
-        .insert(siakadGrades)
-        .values({
+      if (existingGrades.length > 0) {
+        await db
+          .update(siakadGrades)
+          .set({
+            tugasScore: String(tugasScore || 0),
+            utsScore: String(utsScore || 0),
+            uasScore: String(uasScore || 0),
+            finalScore: String(scoreNum),
+            letterGrade: letterGrade || conversion.letterGrade,
+            gradePoint: String(conversion.gradePoint),
+            locked: true,
+          })
+          .where(eq(siakadGrades.id, existingGrades[0].id));
+      } else {
+        await db.insert(siakadGrades).values({
           studentId,
-          classId: siakad_class_id,
-          finalScore: Number(final_score).toFixed(2),
-          letterGrade: letter_grade,
-          gradePoint,
+          classId: siakadClassId || "00000000-0000-0000-0000-000000000001",
+          tugasScore: String(tugasScore || 0),
+          utsScore: String(utsScore || 0),
+          uasScore: String(uasScore || 0),
+          finalScore: String(scoreNum),
+          letterGrade: letterGrade || conversion.letterGrade,
+          gradePoint: String(conversion.gradePoint),
           locked: true,
-        })
-        .returning();
-      finalRecord = inserted;
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Nilai dari LMS ICEMS berhasil disinkronkan ke KHS SIAKAD!",
+      });
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Student grade finalized successfully from LMS webhook!",
-      grade: finalRecord,
-    });
+    return NextResponse.json(
+      { success: false, error: `Event '${eventName}' tidak dikenal` },
+      { status: 400 }
+    );
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("[SIAKAD LMS Consumer Error]", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Gagal memproses webhook LMS" },
+      { status: 500 }
+    );
   }
 }
-export const dynamic = "force-dynamic";

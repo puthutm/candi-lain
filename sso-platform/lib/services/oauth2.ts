@@ -1,6 +1,7 @@
 import crypto from "crypto";
+import * as jose from "jose";
 import { db } from "@/db";
-import { oauthAuthorizationCodes } from "@/db/schema/oauth";
+import { oauthAuthorizationCodes, oauthAccessTokens } from "@/db/schema/oauth";
 import { applications } from "@/db/schema/applications";
 import { eq } from "drizzle-orm";
 import { generateSecureRandomString } from "../utils";
@@ -46,6 +47,114 @@ export class OAuth2Service {
     }
 
     return false;
+  }
+
+  /**
+   * Client Credentials Grant: issue tokens for machine-to-machine communication
+   * No user context - tokens are for the application itself
+   */
+  static async clientCredentialsGrant(params: {
+    clientId: string;
+    clientSecret: string;
+    scope: string;
+  }): Promise<TokenResponse> {
+    // 1. Validate application
+    const appList = await db
+      .select()
+      .from(applications)
+      .where(eq(applications.clientId, params.clientId))
+      .limit(1);
+    
+    const app = appList[0];
+    if (!app || app.status !== "active") {
+      throw new Error("Invalid or inactive client application");
+    }
+
+    // 2. Validate client secret
+    const secretValid = await bcrypt.compare(params.clientSecret, app.clientSecretHash);
+    if (!secretValid) {
+      await auditQueue.push({
+        actorUserId: "system",
+        action: "LOGIN_FAILURE",
+        entityType: "application",
+        entityId: app.id,
+        metadata: { reason: "invalid_client_secret", grantType: "client_credentials" },
+      });
+      throw new Error("Invalid client credentials");
+    }
+
+    // 3. Validate that client_credentials is in allowed grant types
+    if (!app.allowedGrantTypes.includes("client_credentials")) {
+      throw new Error("Client credentials grant not allowed for this application");
+    }
+
+    // 4. Generate tokens (no user context - use app id as sub)
+    const { privateKey, kid } = await TokenService.getSigningKeys();
+    const { accessTokenExpiry } = TokenService.getTokenLifetimes(app);
+    const issuer = env.JWT_ISSUER;
+    const jti = crypto.randomUUID();
+
+    // Access Token for client credentials
+    const accessTokenJwt = await new jose.SignJWT({
+      sub: app.id,
+      aud: app.clientId,
+      scope: params.scope,
+      jti,
+      client_credentials: true,
+    })
+      .setProtectedHeader({ alg: "RS256", kid })
+      .setIssuedAt()
+      .setIssuer(issuer)
+      .setExpirationTime(`${accessTokenExpiry}s`)
+      .sign(privateKey);
+
+    // No refresh token for client_credentials (short-lived tokens)
+    const accessTokenHash = TokenService.hashToken(accessTokenJwt);
+
+    await db.insert(oauthAccessTokens).values({
+      tokenHash: accessTokenHash,
+      userId: "system", // system user for client credentials
+      applicationId: app.id,
+      scope: params.scope,
+      expiresAt: new Date(Date.now() + accessTokenExpiry * 1000),
+      revoked: false,
+    });
+
+    await auditQueue.push({
+      actorUserId: "system",
+      action: "TOKEN_ISSUED",
+      entityType: "application",
+      entityId: app.id,
+      metadata: {
+        scope: params.scope,
+        grantType: "client_credentials",
+      },
+    });
+
+    return {
+      access_token: accessTokenJwt,
+      refresh_token: "", // No refresh token for client credentials
+      id_token: "", // No ID token for client credentials
+      token_type: "Bearer",
+      expires_in: accessTokenExpiry,
+      scope: params.scope,
+    };
+  }
+
+  /**
+   * Validate if a client is a public client (no client_secret required)
+   */
+  static async isPublicClient(clientId: string): Promise<boolean> {
+    const appList = await db
+      .select()
+      .from(applications)
+      .where(eq(applications.clientId, clientId))
+      .limit(1);
+    
+    const app = appList[0];
+    if (!app) return false;
+    
+    return app.isPublicClient;
   }
 
   /**
@@ -167,7 +276,7 @@ export class OAuth2Service {
     code: string;
     codeVerifier: string;
     clientId: string;
-    clientSecret: string;
+    clientSecret?: string;
     redirectUri: string;
   }): Promise<TokenResponse> {
     // 1. Validate application
@@ -182,17 +291,22 @@ export class OAuth2Service {
       throw new Error("Invalid or inactive client application");
     }
 
-    // 2. Validate client secret
-    const secretValid = await bcrypt.compare(params.clientSecret, app.clientSecretHash);
-    if (!secretValid) {
-      await auditQueue.push({
-        actorUserId: "system",
-        action: "LOGIN_FAILURE",
-        entityType: "application",
-        entityId: app.id,
-        metadata: { reason: "invalid_client_secret" },
-      });
-      throw new Error("Invalid client credentials");
+    // 2. Validate client secret (skip for public clients)
+    if (!app.isPublicClient) {
+      if (!params.clientSecret) {
+        throw new Error("Client secret is required for confidential clients");
+      }
+      const secretValid = await bcrypt.compare(params.clientSecret, app.clientSecretHash);
+      if (!secretValid) {
+        await auditQueue.push({
+          actorUserId: "system",
+          action: "LOGIN_FAILURE",
+          entityType: "application",
+          entityId: app.id,
+          metadata: { reason: "invalid_client_secret" },
+        });
+        throw new Error("Invalid client credentials");
+      }
     }
 
     // 3. Validate authorization code
@@ -250,7 +364,7 @@ export class OAuth2Service {
   static async refreshAccessToken(params: {
     refreshToken: string;
     clientId: string;
-    clientSecret: string;
+    clientSecret?: string;
   }): Promise<TokenResponse> {
     // 1. Validate application
     const appList = await db
@@ -264,10 +378,15 @@ export class OAuth2Service {
       throw new Error("Invalid or inactive client application");
     }
 
-    // 2. Validate client secret
-    const secretValid = await bcrypt.compare(params.clientSecret, app.clientSecretHash);
-    if (!secretValid) {
-      throw new Error("Invalid client credentials");
+    // 2. Validate client secret (skip for public clients)
+    if (!app.isPublicClient) {
+      if (!params.clientSecret) {
+        throw new Error("Client secret is required for confidential clients");
+      }
+      const secretValid = await bcrypt.compare(params.clientSecret, app.clientSecretHash);
+      if (!secretValid) {
+        throw new Error("Invalid client credentials");
+      }
     }
 
     // 3. Perform Token Service refresh

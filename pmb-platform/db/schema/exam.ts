@@ -29,6 +29,8 @@ export const pmbExamSessions = pgTable("pmb_exam_sessions", {
   startedAt: timestamp("started_at", { withTimezone: true }),
   submittedAt: timestamp("submitted_at", { withTimezone: true }),
   timeRemainingSeconds: integer("time_remaining_seconds").notNull(),
+  retakeCount: integer("retake_count").default(0).notNull(),
+  maxRetakes: integer("max_retakes").default(1).notNull(),
 });
 
 export const pmbExamAnswers = pgTable("pmb_exam_answers", {

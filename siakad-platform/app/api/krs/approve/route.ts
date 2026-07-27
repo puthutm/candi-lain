@@ -1,77 +1,71 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { siakadKrsItems, siakadKrs } from "@/db/schema/krs";
-import { siakadStudents } from "@/db/schema/civitas";
+import { siakadKrs, siakadKrsItems, siakadKrsApprovals } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { env } from "@/lib/env";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { krsItemId, status } = await req.json();
+    const body = await req.json();
+    const { krsId, dosenPaId, action, note } = body;
 
-    if (!krsItemId || !status) {
-      return NextResponse.json({ success: false, error: "Missing krsItemId or status" }, { status: 400 });
+    if (!krsId || !action || !["approve", "reject"].includes(action)) {
+      return NextResponse.json(
+        { success: false, error: "krsId dan action ('approve'|'reject') wajib diisi" },
+        { status: 400 }
+      );
     }
 
-    // 1. Update krs item status
-    const updated = await db
+    if (action === "reject" && !note) {
+      return NextResponse.json(
+        { success: false, error: "Catatan alasan wajib diisi saat menolak KRS" },
+        { status: 400 }
+      );
+    }
+
+    const [krs] = await db.select().from(siakadKrs).where(eq(siakadKrs.id, krsId));
+
+    if (!krs) {
+      return NextResponse.json(
+        { success: false, error: "KRS tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    const newStatus = action === "approve" ? "disetujui_pa" : "ditolak";
+
+    // Update KRS status
+    await db
+      .update(siakadKrs)
+      .set({ status: newStatus })
+      .where(eq(siakadKrs.id, krsId));
+
+    // Update items status
+    await db
       .update(siakadKrsItems)
-      .set({ status })
-      .where(eq(siakadKrsItems.id, krsItemId))
-      .returning();
+      .set({ status: action === "approve" ? "disetujui" : "ditolak" })
+      .where(eq(siakadKrsItems.krsId, krsId));
 
-    if (updated.length === 0) {
-      return NextResponse.json({ success: false, error: "KRS item not found" }, { status: 404 });
-    }
-
-    const krsItem = updated[0]!;
-
-    // 2. Fetch student user ID
-    const krsList = await db
-      .select()
-      .from(siakadKrs)
-      .where(eq(siakadKrs.id, krsItem.krsId))
-      .limit(1);
-
-    if (krsList.length > 0) {
-      const krs = krsList[0]!;
-      const studentsList = await db
-        .select()
-        .from(siakadStudents)
-        .where(eq(siakadStudents.id, krs.studentId))
-        .limit(1);
-
-      if (studentsList.length > 0) {
-        const student = studentsList[0]!;
-        
-        // 3. Dispatch webhook to LMS
-        const eventType = status === "disetujui" ? "krs.approved" : "krs_item.cancelled";
-        const payload = {
-          event: eventType,
-          event_id: crypto.randomUUID(),
-          occurred_at: new Date().toISOString(),
-          data: {
-            krs_item_id: krsItem.id,
-            class_id: krsItem.classId,
-            student_user_id: student.userId || student.nim || "26090182",
-          }
-        };
-
-        fetch(env.LMS_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }).catch(err => console.error("LMS webhook failed", err));
-      }
+    // Insert approval log if dosenPaId is provided
+    if (dosenPaId) {
+      await db.insert(siakadKrsApprovals).values({
+        krsId,
+        dosenPaId,
+        action,
+        note: note || (action === "approve" ? "Disetujui oleh Pembimbing Akademik" : ""),
+      });
     }
 
     return NextResponse.json({
       success: true,
-      message: `KRS item status updated to ${status} and event dispatched to LMS!`,
-      krsItem,
+      message: `KRS berhasil di-${action === "approve" ? "setujui" : "tolak"}!`,
+      krsId,
+      status: newStatus,
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("[KRS Approve Error]", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Gagal memproses approval KRS" },
+      { status: 500 }
+    );
   }
 }
-export const dynamic = "force-dynamic";

@@ -2,21 +2,15 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbWaves } from "@/db/schema/master";
 import { eq } from "drizzle-orm";
-import { cookies } from "next/headers";
+import { requireRole, PMB_ROLES } from "@/lib/sso-middleware";
 
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookie = (await cookies()).get("pmb_user");
-    if (!cookie?.value) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const user = JSON.parse(cookie.value);
-    if (user.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Admin only" }, { status: 403 });
-    }
+    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN]);
+    if (auth instanceof NextResponse) return auth;
 
     const { id } = await params;
     const body = await req.json();
@@ -50,14 +44,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookie = (await cookies()).get("pmb_user");
-    if (!cookie?.value) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const user = JSON.parse(cookie.value);
-    if (user.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Admin only" }, { status: 403 });
-    }
+    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN]);
+    if (auth instanceof NextResponse) return auth;
 
     const { id } = await params;
 

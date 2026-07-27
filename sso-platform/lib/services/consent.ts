@@ -137,6 +137,105 @@ export class ConsentService {
   }
 
   /**
+   * Revoke specific scopes from a user's consent for an application
+   * (partial consent revocation)
+   */
+  static async revokeScopesFromConsent(userId: string, applicationId: string, scopesToRevoke: string[]): Promise<typeof oauthConsents.$inferSelect> {
+    const consentList = await db
+      .select()
+      .from(oauthConsents)
+      .where(
+        and(
+          eq(oauthConsents.userId, userId),
+          eq(oauthConsents.applicationId, applicationId),
+          isNull(oauthConsents.revokedAt)
+        )
+      )
+      .limit(1);
+
+    const consent = consentList[0];
+    if (!consent) throw new Error("No active consent found");
+
+    const existingScopes = parseScopes(consent.scope);
+    const remainingScopes = existingScopes.filter(s => !scopesToRevoke.includes(s));
+
+    if (remainingScopes.length === 0) {
+      // All scopes revoked → full consent revocation
+      await this.revokeConsent(userId, applicationId);
+      // Return a revoked consent-like object
+      return {
+        ...consent,
+        scope: "",
+        revokedAt: new Date(),
+        grantedAt: consent.grantedAt,
+      };
+    }
+
+    // Partial revocation: update scope list
+    const [updated] = await db
+      .update(oauthConsents)
+      .set({
+        scope: joinScopes(remainingScopes),
+        grantedAt: new Date(), // Refresh grant timestamp
+      })
+      .where(eq(oauthConsents.id, consent.id))
+      .returning();
+
+    if (!updated) throw new Error("Failed to update consent");
+
+    // Revoke tokens so the application re-fetches with new scope
+    await TokenService.revokeAllTokensForUserApp(userId, applicationId);
+
+    await auditQueue.push({
+      actorUserId: userId,
+      action: "CONSENT_SCOPES_REVOKED",
+      entityType: "application",
+      entityId: applicationId,
+      metadata: { removedScopes: scopesToRevoke, remainingScopes },
+    });
+
+    return updated;
+  }
+
+  /**
+   * Get consent history for a user (including revoked consents)
+   */
+  static async getConsentHistory(userId: string): Promise<Array<{
+    consentId: string;
+    applicationId: string;
+    applicationName: string;
+    applicationLogo: string | null;
+    scopes: string[];
+    grantedAt: Date;
+    revokedAt: Date | null;
+  }>> {
+    const list = await db
+      .select({
+        consentId: oauthConsents.id,
+        applicationId: oauthConsents.applicationId,
+        applicationName: applications.name,
+        applicationLogo: applications.logoUrl,
+        scope: oauthConsents.scope,
+        grantedAt: oauthConsents.grantedAt,
+        revokedAt: oauthConsents.revokedAt,
+      })
+      .from(oauthConsents)
+      .innerJoin(applications, eq(oauthConsents.applicationId, applications.id))
+      .where(eq(oauthConsents.userId, userId))
+      .orderBy(oauthConsents.grantedAt);
+
+    return list.map((item) => ({
+      consentId: item.consentId,
+      applicationId: item.applicationId,
+      applicationName: item.applicationName,
+      applicationLogo: item.applicationLogo,
+      scopes: parseScopes(item.scope),
+      grantedAt: item.grantedAt,
+      revokedAt: item.revokedAt,
+    }));
+  }
+
+  /**
    * Fetch all active consents for a user, including application details
    */
   static async getUserConsents(userId: string): Promise<Array<{

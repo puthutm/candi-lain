@@ -25,8 +25,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Sesi ujian tidak ditemukan" }, { status: 404 });
     }
 
-    if (session.status === "selesai_dikumpulkan") {
-      return NextResponse.json({ success: false, error: "Ujian untuk modul ini sudah dikumpulkan sebelumnya" }, { status: 400 });
+    if (session.status === "selesai_dikumpulkan" && session.retakeCount >= session.maxRetakes) {
+      return NextResponse.json({ success: false, error: "Batas maksimal pengulangan ujian untuk modul ini sudah tercapai" }, { status: 400 });
     }
 
     // 2. Fetch all questions for this module to grade them
@@ -73,13 +73,15 @@ export async function POST(req: Request) {
       gradedAt: new Date(),
     });
 
-    // Update exam session status
+    // Update exam session status — increment retake count if this is a retake
+    const newRetakeCount = session.status === "selesai_dikumpulkan" ? session.retakeCount + 1 : session.retakeCount;
     await db
       .update(pmbExamSessions)
       .set({
         status: "selesai_dikumpulkan",
         submittedAt: new Date(),
         timeRemainingSeconds: timeRemainingSeconds !== undefined ? timeRemainingSeconds : 0,
+        retakeCount: newRetakeCount,
       })
       .where(eq(pmbExamSessions.id, session.id));
 

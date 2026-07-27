@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { pmbExamModules, pmbExamSessions } from "@/db/schema/exam";
-import { eq, and } from "drizzle-orm";
+import { pmbExamModules, pmbExamSessions, pmbExamResults } from "@/db/schema/exam";
+import { eq, and, desc } from "drizzle-orm";
 
 export async function GET(req: Request) {
   try {
@@ -31,6 +31,7 @@ export async function GET(req: Request) {
             eq(pmbExamSessions.examModuleId, mod.id)
           )
         )
+        .orderBy(desc(pmbExamSessions.startedAt))
         .limit(1);
 
       let session = existing[0];
@@ -48,6 +49,21 @@ export async function GET(req: Request) {
         session = inserted!;
       }
 
+      // Check if retake is allowed
+      const canRetake = session.status === "selesai_dikumpulkan" && session.retakeCount < session.maxRetakes;
+
+      // Get previous results if any
+      const previousResults = await db
+        .select()
+        .from(pmbExamResults)
+        .where(
+          and(
+            eq(pmbExamResults.applicantId, applicantId),
+            eq(pmbExamResults.examModuleId, mod.id)
+          )
+        )
+        .orderBy(desc(pmbExamResults.gradedAt));
+
       mappedModules.push({
         id: mod.id,
         code: mod.code,
@@ -55,9 +71,17 @@ export async function GET(req: Request) {
         durationMinutes: mod.durationMinutes,
         questionCount: mod.questionCount,
         type: mod.type,
-        status: session.status, // "belum_dikerjakan", "draf", "selesai_dikumpulkan"
+        status: session.status,
         sessionId: session.id,
         timeRemainingSeconds: session.timeRemainingSeconds,
+        retakeCount: session.retakeCount,
+        maxRetakes: session.maxRetakes,
+        canRetake,
+        previousResults: previousResults.map(r => ({
+          score: r.score,
+          passed: r.passed,
+          gradedAt: r.gradedAt,
+        })),
       });
     }
 

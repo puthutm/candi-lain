@@ -7,6 +7,7 @@ import { OAuth2Service } from "@/lib/services/oauth2";
 import { parseScopes, isRedirectUriAllowed } from "@/lib/utils";
 import { env } from "@/lib/env";
 import { ensureDatabaseSeeded } from "@/lib/seed";
+import { rateLimit } from "@/lib/redis";
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,6 +39,19 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Rate limiting per IP: max 30 requests per minute per IP for authorize endpoint
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+               request.headers.get("x-real-ip") || 
+               "127.0.0.1";
+    const ipRateLimitKey = `rate_limit:authorize:ip:${ip}`;
+    const ipRateCheck = await rateLimit(ipRateLimitKey, 30, 60);
+    if (!ipRateCheck.success) {
+      return NextResponse.json(
+        { error: "slow_down", error_description: "Too many requests from this IP address. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     // 1. Basic parameter validation
     if (!clientId || !redirectUri || !codeChallenge) {
       return new NextResponse("Missing required parameters (client_id, redirect_uri, code_challenge)", { status: 400 });
@@ -56,6 +70,13 @@ export async function GET(request: NextRequest) {
     // Validate redirect URI against application whitelist
     if (!isRedirectUriAllowed(app.redirectUris, redirectUri)) {
       return new NextResponse("Invalid redirect_uri", { status: 400 });
+    }
+
+    // 2b. Enforce PKCE S256 for public clients (SPA/mobile)
+    if (app.isPublicClient && codeChallengeMethod !== "S256") {
+      return NextResponse.redirect(
+        `${redirectUri}?error=invalid_request&error_description=Public+clients+must+use+PKCE+with+S256+method&state=${encodeURIComponent(state)}`
+      );
     }
 
     // 3. User session check

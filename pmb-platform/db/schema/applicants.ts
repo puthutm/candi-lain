@@ -25,6 +25,10 @@ export const pmbApplicants = pgTable("pmb_applicants", {
     ]
   }).default("peminat").notNull(),
   paymentStatus: text("payment_status", { enum: ["belum_bayar", "lunas"] }).default("belum_bayar").notNull(),
+  nim: text("nim").unique(),
+  nimGeneratedAt: timestamp("nim_generated_at", { withTimezone: true }),
+  totalExamScore: text("total_exam_score"),
+  passingRecommendation: text("passing_recommendation"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

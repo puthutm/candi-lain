@@ -11,6 +11,8 @@ import AppActions from "./AppActions";
 import RolesManager from "./RolesManager";
 import AssignmentsManager from "./AssignmentsManager";
 import SecretManager from "./SecretManager";
+import TokenLifetimeManager from "./TokenLifetimeManager";
+import ScopeAssignmentManager from "./ScopeAssignmentManager";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -128,6 +130,14 @@ export default async function AppDetailPage({ params }: PageProps) {
                 ))}
               </ul>
             </div>
+
+            <TokenLifetimeManager
+              appId={id}
+              currentAccessTokenLifetime={app.accessTokenLifetime}
+              currentRefreshTokenLifetime={app.refreshTokenLifetime}
+            />
+
+            <ScopeAssignmentManager appId={id} />
           </div>
 
           <div className="lg:col-span-2 space-y-8">

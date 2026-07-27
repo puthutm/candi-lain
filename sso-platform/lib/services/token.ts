@@ -14,65 +14,68 @@ let cachedPublicKey: any = null;
 let activeKid = "sso-key-1";
 let keysForJwks: any[] = [];
 
-async function getSigningKeys() {
-  if (cachedPrivateKey && cachedPublicKey) {
-    return { privateKey: cachedPrivateKey, publicKey: cachedPublicKey, kid: activeKid };
-  }
-
-  // Load from environment if available
-  if (env.JWT_PRIVATE_KEY && env.JWT_PUBLIC_KEY) {
-    try {
-      const privKeyStr = env.JWT_PRIVATE_KEY.replace(/\\n/g, "\n");
-      const pubKeyStr = env.JWT_PUBLIC_KEY.replace(/\\n/g, "\n");
-      cachedPrivateKey = await jose.importPKCS8(privKeyStr, "RS256");
-      cachedPublicKey = await jose.importSPKI(pubKeyStr, "RS256");
-
-      const jwk = await jose.exportJWK(cachedPublicKey);
-      keysForJwks = [
-        {
-          kid: activeKid,
-          use: "sig",
-          alg: "RS256",
-          kty: "RSA",
-          ...jwk,
-        },
-      ];
-
-      return { privateKey: cachedPrivateKey, publicKey: cachedPublicKey, kid: activeKid };
-    } catch (err) {
-      console.error("Error importing keys from env, falling back to dynamic generation:", err);
-    }
-  }
-
-  // Fallback to dynamic key generation for local development
-  console.log("Generating temporary RS256 key pair for development...");
-  const { privateKey, publicKey } = await jose.generateKeyPair("RS256", {
-    modulusLength: 2048,
-  });
-
-  cachedPrivateKey = privateKey;
-  cachedPublicKey = publicKey;
-
-  const jwk = await jose.exportJWK(publicKey);
-  keysForJwks = [
-    {
-      kid: activeKid,
-      use: "sig",
-      alg: "RS256",
-      kty: "RSA",
-      ...jwk,
-    },
-  ];
-
-  return { privateKey, publicKey, kid: activeKid };
-}
-
 export class TokenService {
+  /**
+   * Get or generate signing keys (RS256)
+   */
+  static async getSigningKeys() {
+    if (cachedPrivateKey && cachedPublicKey) {
+      return { privateKey: cachedPrivateKey, publicKey: cachedPublicKey, kid: activeKid };
+    }
+
+    // Load from environment if available
+    if (env.JWT_PRIVATE_KEY && env.JWT_PUBLIC_KEY) {
+      try {
+        const privKeyStr = env.JWT_PRIVATE_KEY.replace(/\\n/g, "\n");
+        const pubKeyStr = env.JWT_PUBLIC_KEY.replace(/\\n/g, "\n");
+        cachedPrivateKey = await jose.importPKCS8(privKeyStr, "RS256");
+        cachedPublicKey = await jose.importSPKI(pubKeyStr, "RS256");
+
+        const jwk = await jose.exportJWK(cachedPublicKey);
+        keysForJwks = [
+          {
+            kid: activeKid,
+            use: "sig",
+            alg: "RS256",
+            kty: "RSA",
+            ...jwk,
+          },
+        ];
+
+        return { privateKey: cachedPrivateKey, publicKey: cachedPublicKey, kid: activeKid };
+      } catch (err) {
+        console.error("Error importing keys from env, falling back to dynamic generation:", err);
+      }
+    }
+
+    // Fallback to dynamic key generation for local development
+    console.log("Generating temporary RS256 key pair for development...");
+    const { privateKey, publicKey } = await jose.generateKeyPair("RS256", {
+      modulusLength: 2048,
+    });
+
+    cachedPrivateKey = privateKey;
+    cachedPublicKey = publicKey;
+
+    const jwk = await jose.exportJWK(publicKey);
+    keysForJwks = [
+      {
+        kid: activeKid,
+        use: "sig",
+        alg: "RS256",
+        kty: "RSA",
+        ...jwk,
+      },
+    ];
+
+    return { privateKey, publicKey, kid: activeKid };
+  }
+
   /**
    * Return JWKS (JSON Web Key Set) public keys
    */
   static async getJWKS() {
-    await getSigningKeys();
+    await this.getSigningKeys();
     return { keys: keysForJwks };
   }
 
@@ -84,6 +87,21 @@ export class TokenService {
   }
 
   /**
+   * Get effective token lifetime for an application (per-app override or global default)
+   */
+  static getTokenLifetimes(app: typeof applications.$inferSelect): {
+    accessTokenExpiry: number;
+    refreshTokenExpiry: number;
+    idTokenExpiry: number;
+  } {
+    return {
+      accessTokenExpiry: app.accessTokenLifetime ?? env.ACCESS_TOKEN_EXPIRY,
+      refreshTokenExpiry: app.refreshTokenLifetime ?? env.REFRESH_TOKEN_EXPIRY,
+      idTokenExpiry: env.ID_TOKEN_EXPIRY,
+    };
+  }
+
+  /**
    * Issue Access, Refresh, and ID tokens for a user and application
    */
   static async issueTokens(params: {
@@ -91,7 +109,7 @@ export class TokenService {
     applicationId: string;
     scope: string;
   }): Promise<{ accessToken: string; refreshToken: string; idToken: string; expiresIn: number }> {
-    const { privateKey, kid } = await getSigningKeys();
+    const { privateKey, kid } = await this.getSigningKeys();
     
     // 1. Fetch application details
     const appList = await db
@@ -101,6 +119,8 @@ export class TokenService {
       .limit(1);
     const app = appList[0];
     if (!app) throw new Error("Application not found");
+
+    const { accessTokenExpiry, refreshTokenExpiry, idTokenExpiry } = this.getTokenLifetimes(app);
 
     // 2. Fetch user details
     const userList = await db
@@ -131,10 +151,7 @@ export class TokenService {
     const issuer = env.JWT_ISSUER;
     const jti = crypto.randomUUID();
     
-    // Access Token Expiry (1 hour default)
-    const accessTokenExpiry = env.ACCESS_TOKEN_EXPIRY || 3600;
-    
-    // 4. Generate Access Token JWT (RS256)
+    // 4. Generate Access Token JWT (RS256) - use per-app lifetime
     const accessTokenJwt = await new jose.SignJWT({
       sub: params.userId,
       aud: app.clientId,
@@ -147,25 +164,26 @@ export class TokenService {
       .setExpirationTime(`${accessTokenExpiry}s`)
       .sign(privateKey);
 
-    // 5. Generate ID Token JWT (RS256)
+    // 5. Generate ID Token JWT (RS256) with standard OIDC claims
     const idTokenJwt = await new jose.SignJWT({
       sub: params.userId,
       aud: app.clientId,
       name: user.fullName,
-      email: user.email,
       preferred_username: user.username,
+      email: user.email,
+      email_verified: true,
       roles,
+      updated_at: Math.floor(user.updatedAt.getTime() / 1000),
     })
       .setProtectedHeader({ alg: "RS256", kid })
       .setIssuedAt()
       .setIssuer(issuer)
-      .setExpirationTime(`${env.ID_TOKEN_EXPIRY || 3600}s`)
+      .setExpirationTime(`${idTokenExpiry}s`)
       .sign(privateKey);
 
-    // 6. Generate Refresh Token (Opaque 32-char string)
+    // 6. Generate Refresh Token (Opaque 32-char string) - use per-app lifetime
     const rawRefreshToken = crypto.randomBytes(32).toString("hex");
-    const refreshLifespan = env.REFRESH_TOKEN_EXPIRY || 2592000; // 30 days
-    const refreshExpiresAt = new Date(Date.now() + refreshLifespan * 1000);
+    const refreshExpiresAt = new Date(Date.now() + refreshTokenExpiry * 1000);
 
     // Save tokens in database
     const accessTokenHash = this.hashToken(accessTokenJwt);
@@ -208,7 +226,7 @@ export class TokenService {
    * Verify and decode access token JWT
    */
   static async verifyAccessToken(token: string): Promise<jose.JWTPayload | null> {
-    const { publicKey } = await getSigningKeys();
+    const { publicKey } = await this.getSigningKeys();
 
     try {
       const issuer = env.JWT_ISSUER;

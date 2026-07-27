@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, jsonb, boolean, integer } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { users } from "./users";
 
@@ -13,6 +13,9 @@ export const applications = pgTable("applications", {
   logoUrl: text("logo_url"),
   ownerUserId: uuid("owner_user_id").references(() => users.id, { onDelete: "set null" }),
   status: text("status").default("active").notNull(), // "active" | "inactive"
+  isPublicClient: boolean("is_public_client").default(false).notNull(),
+  accessTokenLifetime: integer("access_token_lifetime"), // seconds, null = use global default
+  refreshTokenLifetime: integer("refresh_token_lifetime"), // seconds, null = use global default
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

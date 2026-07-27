@@ -9,6 +9,9 @@ export const tuitionRates = pgTable("tuition_rates", {
   bopAmount: numeric("bop_amount", { precision: 12, scale: 2 }).notNull(),
   totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(),
   requiresYayasanApproval: boolean("requires_yayasan_approval").default(false).notNull(),
+  approvalStatus: text("approval_status", { enum: ["draf", "menunggu_approval_yayasan", "disetujui", "ditolak"] }).default("disetujui").notNull(),
+  approvalNote: text("approval_note"),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
   effectiveDate: timestamp("effective_date", { withTimezone: true }).defaultNow().notNull(),
 });
 

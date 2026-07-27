@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { pmbApplicants } from "@/db/schema/applicants";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { ALL_PMB_ROLES, getRoleDisplayName } from "@/lib/sso-middleware";
 
 export async function GET() {
   try {
@@ -15,7 +16,31 @@ export async function GET() {
     const email = session.user.email?.toLowerCase();
     let userPayload = { ...session.user } as any;
 
-    if (email) {
+    // Check if user is an SSO admin with PMB role
+    const ssoRole = (session.user as any).role as string;
+    const isPmbAdmin = ssoRole && ALL_PMB_ROLES.includes(ssoRole as any);
+
+    if (isPmbAdmin) {
+      // This is an SSO admin user with PMB role
+      userPayload.role = ssoRole;
+      userPayload.roleDisplayName = getRoleDisplayName(ssoRole as any);
+      userPayload.isAdmin = true;
+      userPayload.staffId = (session.user as any).id;
+
+      // Write admin cookie for legacy API routes
+      const cookieStore = await cookies();
+      cookieStore.set(
+        "pmb_user",
+        JSON.stringify({
+          userId: (session.user as any).id,
+          name: session.user.name,
+          role: ssoRole,
+          isAdmin: true,
+        }),
+        { path: "/", maxAge: 86400 }
+      );
+    } else if (email) {
+      // Check if user is an applicant
       const applicantRows = await db
         .select()
         .from(pmbApplicants)
