@@ -351,7 +351,7 @@ export default function PmbDashboard() {
             <form onSubmit={handleSync} className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
               <h3 className="font-bold text-white text-sm">🔄 Sinkronisasi Data PMB</h3>
               <p className="text-[10px] text-slate-400">
-                Tempel data JSON array pendaftar dari SI-PMB. Format: <code className="text-slate-300">[{"{"}{"fullName":"...","waveLabel":"...","registrationStatus":"...","paymentStatus":"..."}{"}"]}]</code>
+                Tempel data JSON array pendaftar dari SI-PMB. Format: <code className="text-slate-300">{'[{"fullName":"...","waveLabel":"...","registrationStatus":"...","paymentStatus":"..."}]'}</code>
               </p>
               <textarea
                 required
