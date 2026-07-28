@@ -10,6 +10,10 @@ export const PMB_ROLES = {
   VERIFIKATOR: "verifikator_berkas",
   STAFF_KEUANGAN: "staff_keuangan",
   STAFF_MARKETING: "staff_marketing",
+  ADMIN: "admin",
+  SUPERADMIN: "superadmin",
+  SUPER_ADMIN_GENERIC: "super_admin",
+  ADMIN_PMB: "admin_pmb",
 } as const;
 
 export type PmbRole = (typeof PMB_ROLES)[keyof typeof PMB_ROLES];

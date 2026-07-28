@@ -5,18 +5,22 @@ import { pmbApplicants } from "@/db/schema/applicants";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 
+import { auth } from "@/auth";
+import { ALL_PMB_ROLES } from "@/lib/sso-middleware";
+
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
     const cookie = (await cookies()).get("pmb_user");
-    if (!cookie?.value) {
+    const user = cookie?.value ? JSON.parse(cookie.value) : null;
+    const role = (session?.user as any)?.role || user?.role;
+
+    const isAdmin = role && (ALL_PMB_ROLES.includes(role as any) || role === "admin" || user?.isAdmin);
+    if (!isAdmin) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const user = JSON.parse(cookie.value);
-    if (user.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Admin only" }, { status: 403 });
     }
 
     const { id } = await params;

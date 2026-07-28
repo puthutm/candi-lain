@@ -8,17 +8,22 @@ import { cookies } from "next/headers";
 import bcrypt from "bcrypt";
 import { env } from "@/lib/env";
 
+import { auth } from "@/auth";
+import { ALL_PMB_ROLES } from "@/lib/sso-middleware";
+
 // List all applicants
 export async function GET() {
   try {
+    const session = await auth();
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get("pmb_user");
-    if (!sessionCookie) {
+    const sessionUser = sessionCookie ? JSON.parse(sessionCookie.value) : null;
+    const role = (session?.user as any)?.role || sessionUser?.role;
+
+    const isAdmin = role && (ALL_PMB_ROLES.includes(role as any) || role === "admin" || sessionUser?.isAdmin);
+
+    if (!isAdmin) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const sessionUser = JSON.parse(sessionCookie.value);
-    if (sessionUser.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
     await ensurePmbSeeded();
