@@ -151,10 +151,6 @@ export default function StudentBiodataPage() {
         nilaiAkhir: "85.00",
       },
     ] as EducationItem[],
-    asalSekolah: "SMKN 1 Jakarta",
-    npsn: "20109283",
-    jurusanSekolah: "Teknik Komputer & Jaringan",
-    tahunLulus: "2020",
   });
 
   const [refData, setRefData] = useState<{
@@ -169,6 +165,8 @@ export default function StudentBiodataPage() {
     statusHidup: Array<{ code: string; name: string }>;
     tempatLahir: Array<{ code: string; name: string }>;
     jenjangPendidikan: Array<{ code: string; name: string }>;
+    prodi: Array<{ code: string; name: string }>;
+    semester: Array<{ code: string; name: string }>;
   }>({
     gender: [
       { code: "Male", name: "Male" },
@@ -241,6 +239,14 @@ export default function StudentBiodataPage() {
       { code: "medan", name: "medan" },
       { code: "bandung", name: "bandung" },
       { code: "semarang", name: "semarang" },
+    ],
+    jenjangPendidikan: [
+      { code: "SD", name: "SD / Sederajat" },
+      { code: "SMP", name: "SMP / Sederajat" },
+      { code: "SMA/SMK", name: "SMA / SMK / MA" },
+      { code: "Diploma", name: "Diploma (D3/D4)" },
+      { code: "Sarjana", name: "Sarjana (S1)" },
+      { code: "Magister", name: "Magister (S2)" },
     ],
     prodi: [
       { code: "S1_INF", name: "S1 Informatika" },
