@@ -1,12 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { LOGO_URL, INSTITUTION_SHORT_NAME } from "@/lib/client-config";
+import StudentSidebar, { TabType } from "./components/StudentSidebar";
+import StudentHeader from "./components/StudentHeader";
 
-type TabType = "dashboard" | "kurikulum" | "krs" | "khs" | "layanan";
+// Tab Components
+import DashboardTab from "./components/tabs/DashboardTab";
+import KurikulumTab from "./components/tabs/KurikulumTab";
+import KrsTab from "./components/tabs/KrsTab";
+import KhsTab from "./components/tabs/KhsTab";
+import LayananTab from "./components/tabs/LayananTab";
 
-interface StudentProfile {
+export interface StudentProfile {
   id: string;
   nim: string | null;
   fullName: string;
@@ -19,7 +24,7 @@ interface StudentProfile {
   dosenPaName: string;
 }
 
-interface KrsCourse {
+export interface KrsCourse {
   classId: string;
   className: string;
   courseCode: string;
@@ -42,6 +47,11 @@ export default function RegularStudentDashboard() {
   const [krsStatus, setKrsStatus] = useState<string | null>(null);
   const [periodName, setPeriodName] = useState("");
 
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(""), 3000);
+  };
+
   useEffect(() => {
     fetchProfile();
     fetchKrs();
@@ -54,7 +64,9 @@ export default function RegularStudentDashboard() {
       if (data.success && data.student) {
         setStudent(data.student);
       }
-    } catch {}
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const fetchKrs = async () => {
@@ -62,31 +74,21 @@ export default function RegularStudentDashboard() {
       const res = await fetch("/api/student/krs");
       const data = await res.json();
       if (data.success) {
-        if (data.krs) {
-          setKrsStatus(data.krs.status);
-        }
-        if (data.courses) {
-          setKrsCourses(data.courses);
-        }
-        if (data.availableClasses) {
-          setAvailableClasses(data.availableClasses);
-        }
-        if (data.period) {
-          setPeriodName(data.period.name || "");
-        }
+        setKrsStatus(data.krsStatus);
+        setKrsCourses(data.courses || []);
+        setAvailableClasses(data.availableClasses || []);
+        setPeriodName(data.academicPeriod?.name || "");
       }
-    } catch {}
-  };
-
-  const handleSelectCourse = (classId: string) => {
-    if (selectedKrs.includes(classId)) {
-      setSelectedKrs(selectedKrs.filter((id) => id !== classId));
-    } else {
-      setSelectedKrs([...selectedKrs, classId]);
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  const handleKrsSubmit = async () => {
+  const handleSubmitKrs = async () => {
+    if (selectedKrs.length === 0) {
+      triggerToast("Pilih setidaknya 1 mata kuliah.");
+      return;
+    }
     try {
       const res = await fetch("/api/student/krs", {
         method: "POST",
@@ -95,450 +97,76 @@ export default function RegularStudentDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        triggerToast(data.message || "KRS berhasil diajukan!");
+        triggerToast("KRS berhasil diajukan ke Dosen PA!");
         fetchKrs();
       } else {
-        triggerToast(data.error || "Gagal mengajukan KRS");
+        triggerToast("Gagal: " + data.error);
       }
     } catch (err: any) {
-      triggerToast("Galat jaringan: " + err.message);
+      triggerToast(err.message);
     }
   };
 
-  const triggerToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(""), 3000);
-  };
-
-  const currentYear = new Date().getFullYear();
-  const displayName = student?.fullName || "Mahasiswa";
-  const displayNim = student?.nim || "-";
-  const displayInitials = displayName.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase();
-  const displayProdi = student?.studyProgramName || "Program Studi";
-  const displaySemester = student?.currentSemester || 1;
-  const displayIpk = student?.ipk || "0.00";
-  const displaySksLulus = student?.totalSksLulus || 0;
-  const displayPa = student?.dosenPaName || "-";
-  const displayStatus = student?.academicStatus || "aktif";
-
-  // Use available classes for KRS form, fallback to enrolled KRS courses for display
-  const krsFormCourses = availableClasses.length > 0 ? availableClasses : krsCourses;
-
   return (
     <div className="flex h-screen overflow-hidden bg-[#f4f7f9] text-slate-800 font-sans">
-      {/* Sidebar Overlay (Mobile) */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900/50 z-30 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        ></div>
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`w-72 bg-gradient-to-b from-[#0f487b] to-[#00719f] flex-col flex z-40 shadow-xl shrink-0 h-full fixed lg:static inset-y-0 left-0 transform ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 transition-transform duration-300 ease-in-out`}
-      >
-        <div className="h-20 flex items-center px-6 border-b border-white/10 shrink-0">
-          <img
-            src={LOGO_URL}
-            alt={`Logo ${INSTITUTION_SHORT_NAME}`}
-            className="h-8 object-contain brightness-0 invert"
-          />
-        </div>
-
-        <div className="px-6 py-5 border-b border-white/10 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="relative shrink-0">
-              <div className="w-11 h-11 rounded-full bg-[#FED524] border-2 border-white/20 shadow-md flex items-center justify-center font-bold text-[#0f487b]">
-                {displayInitials}
-              </div>
-              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-[#0f487b] rounded-full"></div>
-            </div>
-            <div className="overflow-hidden">
-              <h3 className="font-bold text-white truncate text-sm">{displayName}</h3>
-              <p className="text-[10px] text-white/60 font-bold mt-0.5 tracking-wider font-mono">{displayNim}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto no-scrollbar py-4 px-3 space-y-1">
-          <p className="px-3 text-[9px] font-bold text-white/50 uppercase tracking-widest mb-2">
-            Akademik & Perkuliahan
-          </p>
-
-          <button
-            onClick={() => {
-              setActiveTab("dashboard");
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
-              activeTab === "dashboard"
-                ? "bg-white/15 text-white font-bold border border-white/20"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <span>🏠</span>
-            <span>Beranda</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab("kurikulum");
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
-              activeTab === "kurikulum"
-                ? "bg-white/15 text-white font-bold border border-white/20"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <span>📖</span>
-            <span>Data Kurikulum</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab("krs");
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
-              activeTab === "krs"
-                ? "bg-white/15 text-white font-bold border border-white/20"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <span>📚</span>
-            <span>Isi KRS</span>
-            <span className="ml-auto px-2 py-0.5 bg-yellow-400 text-slate-800 text-[8px] font-bold rounded uppercase">
-              Aktif
-            </span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab("khs");
-              setIsSidebarOpen(false);
-            }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
-              activeTab === "khs"
-                ? "bg-white/15 text-white font-bold border border-white/20"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <span>📊</span>
-            <span>KHS & Transkrip</span>
-          </button>
-        </nav>
-
-        <div className="p-4 border-t border-white/10 shrink-0">
-          <Link
-            href="/"
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#FED524] text-[#0f487b] font-bold rounded-lg hover:bg-yellow-400 text-xs"
-          >
-            🚪 Buka Portal Onboarding
-          </Link>
-        </div>
-      </aside>
+      {/* Sidebar Component */}
+      <StudentSidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        studentName={student?.fullName || "Budi Santoso"}
+        studentNim={student?.nim || "26090182"}
+      />
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 bg-[#f8fafc] relative w-full h-full">
-        {/* Top Header */}
-        <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-10 shrink-0">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="text-slate-500 hover:text-[#0f487b] transition-colors p-2 -ml-2 rounded-lg lg:hidden"
-            >
-              ☰
-            </button>
-            <div className="flex flex-col border-l border-slate-200 pl-4">
-              <h2 className="text-sm font-bold text-slate-800 tracking-tight">SIAKAD Reguler</h2>
-              <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-0.5">
-                Semester Ganjil {currentYear}/{currentYear + 1}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-500 font-bold">{displayName}</span>
-            <span className="h-8 w-px bg-slate-200"></span>
-            <span className="text-slate-400 cursor-pointer">🔔</span>
-          </div>
-        </header>
+        {/* Header Component */}
+        <StudentHeader
+          setIsSidebarOpen={setIsSidebarOpen}
+          studentName={student?.fullName || "Budi Santoso"}
+          periodName={periodName}
+        />
 
-        {/* Scrollable container */}
+        {/* Scrollable Container */}
         <div className="flex-grow overflow-y-auto p-4 sm:p-6 lg:p-10 pb-24">
-          {/* TAB 1: BERANDA */}
           {activeTab === "dashboard" && (
-            <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 fade-in">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Profile Card */}
-                <div className="lg:col-span-2 bg-gradient-to-r from-[#0f487b] to-[#00719f] rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow text-white">
-                  <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                    <div className="w-20 h-20 rounded-full bg-[#FED524] text-[#0f487b] font-extrabold text-3xl border-4 border-white/20 flex items-center justify-center shrink-0">
-                      {displayInitials}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold uppercase rounded-md tracking-wider">
-                          ✓ Status: {displayStatus}
-                        </span>
-                        <span className="px-2 py-0.5 bg-white/10 text-white/80 border border-white/20 text-[9px] font-bold uppercase rounded-md tracking-wider">
-                          Semester {displaySemester}
-                        </span>
-                      </div>
-                      <h1 className="font-display text-2xl font-bold mb-1">{displayName}</h1>
-                      <p className="text-brand-100 text-sm font-medium mb-3">{displayProdi}</p>
-                      <p className="text-xs text-white/80 bg-black/20 px-3 py-1 rounded-lg w-fit border border-white/10">
-                        PA Advisor: {displayPa}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Academic Metrics */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white rounded-2xl p-5 border border-slate-200 flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">IPK Kumulatif</p>
-                    <h3 className="font-display font-black text-3xl text-[#0f487b] mb-1">{displayIpk}</h3>
-                    <p className="text-[10px] text-emerald-500 font-semibold">Semester {displaySemester}</p>
-                  </div>
-                  <div className="bg-white rounded-2xl p-5 border border-slate-200 flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">NIM</p>
-                    <h3 className="font-display font-black text-xl text-[#0f487b] mb-1 font-mono">{displayNim}</h3>
-                    <p className="text-[10px] text-slate-500">Angkatan {student?.angkatan || "-"}</p>
-                  </div>
-                  <div className="col-span-2 bg-white rounded-2xl p-5 border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">SKS Lulus</p>
-                      <p className="font-display font-black text-2xl text-slate-800">
-                        {displaySksLulus} <span className="text-xs text-slate-400 font-semibold">/ 144 SKS</span>
-                      </p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-blue-50 text-[#0f487b] flex items-center justify-center font-bold text-xs">
-                      {Math.round((displaySksLulus / 144) * 100)}%
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Class Schedule & Announcements */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Daily Schedule */}
-                <div className="lg:col-span-2 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-                  <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-                    <h3 className="font-bold text-slate-800 text-base">Jadwal Kuliah Hari Ini</h3>
-                    <span className="text-xs font-bold text-[#0f487b] bg-blue-50 px-3 py-1 rounded-lg">Rabu, 16 Sep</span>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-[#0f487b]">08:00 - 10:30 WIB</span>
-                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-bold rounded">
-                          Sedang Berlangsung
-                        </span>
-                      </div>
-                      <h4 className="font-bold text-slate-800 text-sm">Struktur Data & Algoritma (Kelas A)</h4>
-                      <p className="text-xs text-slate-500 mt-1">Dosen: Dr. Budi Setiawan</p>
-                      <button className="mt-4 px-4 py-2 bg-[#0f487b] text-white text-xs font-bold rounded-lg hover:bg-[#00719f] shadow-md">
-                        📹 Buka Kelas Virtual (Zoom/LMS)
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Announcements */}
-                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-                  <h3 className="font-bold text-slate-800 mb-4 text-base">Pengumuman Akademik</h3>
-                  <div className="space-y-3 text-xs">
-                    <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl">
-                      <span className="text-[9px] font-bold text-rose-500 uppercase tracking-widest">Penting</span>
-                      <h4 className="text-xs font-bold text-slate-800 mt-1">Batas Akhir Pengisian KRS</h4>
-                      <p className="text-[10px] text-slate-600 mt-1">Harap ajukan KRS sebelum 20 Sep 2026.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <DashboardTab
+              student={student}
+              krsStatus={krsStatus}
+              triggerToast={triggerToast}
+            />
           )}
 
-          {/* TAB 2: KURIKULUM */}
-          {activeTab === "kurikulum" && (
-            <div className="max-w-4xl mx-auto space-y-6 fade-in">
-              <h2 className="text-xl font-bold text-slate-800">Kurikulum Program Studi S1 Informatika</h2>
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                <div className="p-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-500">
-                  Semester 1 - Semester 2
-                </div>
-                <div className="divide-y divide-slate-100 text-sm">
-                  {[
-                    { code: "INF101", name: "Pemrograman Dasar", sks: 4, status: "Lulus" },
-                    { code: "INF102", name: "Kalkulus I", sks: 3, status: "Lulus" },
-                    { code: "INF103", name: "Struktur Data & Algoritma", sks: 4, status: "Lulus" },
-                  ].map((c) => (
-                    <div key={c.code} className="p-4 flex justify-between items-center">
-                      <div>
-                        <span className="font-mono text-xs text-slate-500 pr-3">{c.code}</span>
-                        <span className="font-bold text-slate-800">{c.name}</span>
-                      </div>
-                      <div className="flex gap-3 items-center">
-                        <span className="text-xs text-slate-400">{c.sks} SKS</span>
-                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                          {c.status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          {activeTab === "kurikulum" && <KurikulumTab />}
 
-          {/* TAB 3: KRS */}
           {activeTab === "krs" && (
-            <div className="max-w-4xl mx-auto space-y-6 fade-in">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-800">Form Pengisian KRS {periodName || `Semester ${displaySemester}`}</h2>
-                  <p className="text-sm text-slate-500">
-                    {krsStatus === "diajukan" ? "KRS Anda sudah diajukan. Menunggu persetujuan Dosen PA." :
-                     krsStatus === "disetujui_pa" ? "KRS Anda telah disetujui oleh Dosen PA." :
-                     krsStatus === "ditolak" ? "KRS Anda ditolak. Silakan ajukan ulang." :
-                     "Tentukan mata kuliah pilihan dan wajib untuk semester ini."}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs text-slate-400">Total SKS Terpilih</span>
-                  <p className="text-2xl font-black text-[#0f487b]">
-                    {krsFormCourses.filter((c) => selectedKrs.includes(c.classId)).reduce((acc, c) => acc + c.sks, 0)} SKS
-                  </p>
-                </div>
-              </div>
-
-              {/* Enrolled courses (if KRS submitted) */}
-              {krsCourses.length > 0 && krsStatus && krsStatus !== "draft" && (
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                  <div className="p-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-500">
-                    Mata Kuliah Terdaftar ({krsStatus})
-                  </div>
-                  <div className="divide-y divide-slate-100">
-                    {krsCourses.map((c) => (
-                      <div key={c.classId || c.courseCode} className="p-4 flex items-center justify-between">
-                        <div>
-                          <p className="font-bold text-slate-800 text-sm">{c.courseName}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">{c.courseCode} — {c.className}</p>
-                        </div>
-                        <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{c.sks} SKS</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Available classes for selection */}
-              {(!krsStatus || krsStatus === "draft" || krsStatus === "ditolak") && krsFormCourses.length > 0 && (
-                <>
-                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                    <div className="p-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-500">
-                      Pilihan Kelas Tersedia
-                    </div>
-                    <div className="divide-y divide-slate-100">
-                      {krsFormCourses.map((c) => {
-                        const selected = selectedKrs.includes(c.classId);
-                        return (
-                          <div
-                            key={c.classId}
-                            onClick={() => handleSelectCourse(c.classId)}
-                            className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${
-                              selected ? "bg-blue-50/20" : "hover:bg-slate-50/50"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`w-5 h-5 rounded border flex items-center justify-center ${
-                                  selected ? "bg-[#0f487b] border-[#0f487b]" : "bg-white border-slate-300"
-                                }`}
-                              >
-                                {selected && <span className="text-white text-xs">✓</span>}
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-800 text-sm">{c.courseName}</p>
-                                <p className="text-xs text-slate-400 mt-0.5">{c.courseCode} — {c.className}</p>
-                              </div>
-                            </div>
-                            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded shrink-0">
-                              {c.sks} SKS
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleKrsSubmit}
-                    disabled={selectedKrs.length === 0}
-                    className="w-full py-3 bg-[#0f487b] text-white hover:bg-[#00719f] font-bold rounded-xl text-sm transition-all shadow-md disabled:opacity-50"
-                  >
-                    Kirim Pengajuan KRS ke Dosen PA
-                  </button>
-                </>
-              )}
-
-              {(!krsStatus || krsStatus === "draft") && krsFormCourses.length === 0 && (
-                <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-                  <p className="text-sm text-slate-500">Belum ada kelas tersedia untuk periode akademik saat ini.</p>
-                </div>
-              )}
-            </div>
+            <KrsTab
+              availableClasses={availableClasses}
+              selectedKrs={selectedKrs}
+              setSelectedKrs={setSelectedKrs}
+              handleSubmitKrs={handleSubmitKrs}
+              krsCourses={krsCourses}
+              krsStatus={krsStatus}
+              triggerToast={triggerToast}
+            />
           )}
 
-          {/* TAB 4: KHS */}
-          {activeTab === "khs" && (
-            <div className="max-w-4xl mx-auto space-y-6 fade-in">
-              <h2 className="text-xl font-bold text-slate-800">Kartu Hasil Studi (KHS) Semester Genap</h2>
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                <table className="w-full text-left text-sm text-slate-600">
-                  <thead className="bg-slate-50 text-slate-500 text-xs font-bold border-b border-slate-200">
-                    <tr>
-                      <th className="px-6 py-4">Mata Kuliah</th>
-                      <th className="px-6 py-4 text-center">SKS</th>
-                      <th className="px-6 py-4 text-center">Nilai Angka</th>
-                      <th className="px-6 py-4 text-center">Nilas Huruf</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    <tr>
-                      <td className="px-6 py-4 font-bold text-slate-800">Pemrograman Berorientasi Objek</td>
-                      <td className="px-6 py-4 text-center font-semibold">3</td>
-                      <td className="px-6 py-4 text-center">92.00</td>
-                      <td className="px-6 py-4 text-center font-bold text-emerald-600">A</td>
-                    </tr>
-                    <tr>
-                      <td className="px-6 py-4 font-bold text-slate-800">Kalkulus II</td>
-                      <td className="px-6 py-4 text-center font-semibold">3</td>
-                      <td className="px-6 py-4 text-center">88.50</td>
-                      <td className="px-6 py-4 text-center font-bold text-[#0f487b]">B+</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          {activeTab === "khs" && <KhsTab triggerToast={triggerToast} />}
+
+          {activeTab === "layanan" && <LayananTab triggerToast={triggerToast} />}
         </div>
       </main>
 
-      {/* TOAST */}
+      {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-[210] bg-white border border-slate-200 rounded-xl shadow-xl px-4 py-3 flex items-center gap-3 fade-up">
-          <span className="text-emerald-500 font-bold">✓</span>
-          <span className="text-sm font-medium text-slate-800">{toastMessage}</span>
+        <div className="fixed top-5 right-5 z-50 bg-[#0f487b] text-white border border-blue-400 px-4 py-3 rounded-xl shadow-xl text-xs font-bold flex items-center gap-2 fade-up">
+          <span className="text-[#FED524]">✓</span>
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>
   );
 }
+
 export const dynamic = "force-dynamic";

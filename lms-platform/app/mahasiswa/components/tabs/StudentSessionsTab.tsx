@@ -1,0 +1,73 @@
+"use client";
+
+export interface LMSClass {
+  id: string;
+  courseCode: string;
+  courseName: string;
+  sks: number;
+  academicPeriodLabel: string;
+  scheduleText: string;
+}
+
+export interface LMSSession {
+  id: string;
+  sessionNumber: number;
+  topic: string;
+  description: string;
+}
+
+interface StudentSessionsTabProps {
+  selectedClass: LMSClass | null;
+  sessions: LMSSession[];
+  selectedSession: LMSSession | null;
+  handleSelectSession: (sess: LMSSession) => void;
+}
+
+export default function StudentSessionsTab({
+  selectedClass,
+  sessions,
+  selectedSession,
+  handleSelectSession,
+}: StudentSessionsTabProps) {
+  if (!selectedClass) {
+    return (
+      <div className="bg-white rounded-2xl p-8 text-center border border-slate-200 text-slate-400 text-xs font-bold">
+        💡 Pilih kelas terlebih dahulu di tab "Kelas Terdaftar".
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 fade-in pb-10">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">
+            Sesi Pertemuan 1 - 16 ({selectedClass.courseName})
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Pilih sesi untuk mengunduh modul & mengikuti vicon tatap muka.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+        {sessions.map((sess) => (
+          <button
+            key={sess.id}
+            onClick={() => handleSelectSession(sess)}
+            className={`p-4 rounded-xl border text-left transition cursor-pointer ${
+              selectedSession?.id === sess.id
+                ? "border-[#0f487b] bg-blue-50 font-bold"
+                : "border-slate-200 bg-white hover:border-blue-300"
+            }`}
+          >
+            <span className="text-[10px] text-[#0f487b] uppercase font-mono block mb-1">
+              Pertemuan {sess.sessionNumber}
+            </span>
+            <p className="text-slate-800 font-bold truncate">{sess.topic}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
