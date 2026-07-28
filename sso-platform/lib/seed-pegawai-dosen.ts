@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { users, userRoles, roles, applications } from "@/db/schema";
+import { users, userApplicationRoles, applicationRoles, applications } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
@@ -104,8 +104,8 @@ async function seedPegawaiDosen() {
 
       const roleList = await db
         .select()
-        .from(roles)
-        .where(and(eq(roles.applicationId, app.id), eq(roles.name, roleName)))
+        .from(applicationRoles)
+        .where(and(eq(applicationRoles.applicationId, app.id), eq(applicationRoles.roleKey, roleName)))
         .limit(1);
 
       let targetRoleId = roleList[0]?.id;
@@ -113,11 +113,11 @@ async function seedPegawaiDosen() {
       if (!targetRoleId) {
         // Create role if missing
         const [newRole] = await db
-          .insert(roles)
+          .insert(applicationRoles)
           .values({
             applicationId: app.id,
-            name: roleName,
-            displayName: roleName.toUpperCase(),
+            roleKey: roleName,
+            roleName: roleName.toUpperCase(),
             description: `${roleName} role for ${clientId}`,
             isDefault: false,
           })
@@ -127,21 +127,22 @@ async function seedPegawaiDosen() {
 
       const existingAssignment = await db
         .select()
-        .from(userRoles)
+        .from(userApplicationRoles)
         .where(
           and(
-            eq(userRoles.userId, userId),
-            eq(userRoles.applicationId, app.id),
-            eq(userRoles.roleId, targetRoleId)
+            eq(userApplicationRoles.userId, userId),
+            eq(userApplicationRoles.applicationId, app.id),
+            eq(userApplicationRoles.roleId, targetRoleId)
           )
         )
         .limit(1);
 
       if (existingAssignment.length === 0) {
-        await db.insert(userRoles).values({
+        await db.insert(userApplicationRoles).values({
           userId,
           applicationId: app.id,
           roleId: targetRoleId,
+          status: "active",
         });
         console.log(`  └ Assigned role '${roleName}' on '${clientId}'`);
       }
