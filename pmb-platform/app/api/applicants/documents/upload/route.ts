@@ -37,18 +37,6 @@ export async function POST(req: Request) {
       .limit(1);
 
     if (docType.length === 0) {
-      // Create a document type entry if missing (for PAS_FOTO, TANDA_TANGAN etc.)
-      // Fallback: store using documentCode as label
-      const existing = await db
-        .select()
-        .from(pmbApplicantDocuments)
-        .where(
-          and(
-            eq(pmbApplicantDocuments.applicantId, applicantId),
-            // use file url uniqueness as key since we don't have documentTypeId
-          )
-        )
-        .limit(1);
       // If no docType found, still succeed but just store the file URL
       return NextResponse.json({
         success: true,
