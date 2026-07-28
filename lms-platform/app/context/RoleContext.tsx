@@ -40,16 +40,16 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       if (data.success && data.user) {
         setUser(data.user);
-        setCurrentRole(data.user.role);
+        setCurrentRole(data.user.role || "dosen");
       } else {
         setUser(null);
-        if (pathname !== "/login") {
+        if (pathname !== "/login" && !pathname.startsWith("/auth")) {
           redirectToSSO();
         }
       }
     } catch (err) {
       setUser(null);
-      if (pathname !== "/login") {
+      if (pathname !== "/login" && !pathname.startsWith("/auth")) {
         redirectToSSO();
       }
     } finally {

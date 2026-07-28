@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { organizationUnits, positions, employees, leaveTypes } from "@/db/schema";
 import { cookies } from "next/headers";
+import { auth } from "@/auth";
 import { pgTable, uuid, text } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
@@ -23,14 +24,15 @@ const refItems = pgTable("ref_items", {
 export async function GET() {
   let refClient;
   try {
+    const session = await auth();
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get("hris_user");
-    if (!sessionCookie) {
+    const sessionUser = sessionCookie ? JSON.parse(sessionCookie.value) : null;
+    const role = (session?.user as any)?.role || sessionUser?.role;
+    const adminRoles = ["admin", "superadmin", "super_admin", "super_admin_sdm", "staff_sdm", "kepala_biro_sdm"];
+
+    if (!role || !adminRoles.includes(role)) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const sessionUser = JSON.parse(sessionCookie.value);
-    if (sessionUser.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
     const units = await db.select().from(organizationUnits);
