@@ -91,74 +91,74 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     }
 
     // 2. Seed Users
+    const unifiedPasswordHash = await bcrypt.hash("password123", saltRounds);
+
     // admin
     let adminUser;
     const existingAdmin = await db.select().from(users).where(eq(users.username, "admin")).limit(1);
     if (existingAdmin.length === 0) {
-      const adminPasswordHash = await bcrypt.hash(env.SUPER_ADMIN_PASSWORD || "admin-password-123", saltRounds);
       const [inserted] = await db.insert(users).values({
         username: "admin",
         email: adminEmail,
-        passwordHash: adminPasswordHash,
+        passwordHash: unifiedPasswordHash,
         fullName: "Super Admin",
         status: "active",
       }).returning();
       adminUser = inserted;
     } else {
       adminUser = existingAdmin[0];
+      await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, adminUser.id));
     }
 
     // superadmin
     let superadminUser;
     const existingSuperadmin = await db.select().from(users).where(eq(users.username, "superadmin")).limit(1);
     if (existingSuperadmin.length === 0) {
-      const superadminPasswordHash = await bcrypt.hash(env.SUPERADMIN_PASSWORD || "superadmin-password-123", saltRounds);
       const [inserted] = await db.insert(users).values({
         username: "superadmin",
-        email: "superadmin@example.com",
-        passwordHash: superadminPasswordHash,
+        email: "superadmin@unsia.ac.id",
+        passwordHash: unifiedPasswordHash,
         fullName: "Super Administrator",
         status: "active",
       }).returning();
       superadminUser = inserted;
     } else {
       superadminUser = existingSuperadmin[0];
+      await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, superadminUser.id));
     }
 
     // mahasiswa
     let mahasiswaUser;
     const existingMahasiswa = await db.select().from(users).where(eq(users.username, "mahasiswa")).limit(1);
     if (existingMahasiswa.length === 0) {
-      const mahasiswapsd = "mahasiswa-password-123";
-      const mahasiswaPasswordHash = await bcrypt.hash(mahasiswapsd, saltRounds);
       const [inserted] = await db.insert(users).values({
         username: "mahasiswa",
-        email: "mahasiswa@example.com",
-        passwordHash: mahasiswaPasswordHash,
+        email: "mahasiswa@unsia.ac.id",
+        passwordHash: unifiedPasswordHash,
         fullName: "Budi Santoso",
         status: "active",
       }).returning();
       mahasiswaUser = inserted;
     } else {
       mahasiswaUser = existingMahasiswa[0];
+      await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, mahasiswaUser.id));
     }
 
     // dosen
     let dosenUser;
     const existingDosen = await db.select().from(users).where(eq(users.username, "dosen")).limit(1);
-    const defaultStaffPasswordHash = await bcrypt.hash("password123", saltRounds);
     if (existingDosen.length === 0) {
       const [inserted] = await db.insert(users).values({
         username: "dosen",
         email: "dosen@unsia.ac.id",
-        passwordHash: defaultStaffPasswordHash,
+        passwordHash: unifiedPasswordHash,
         fullName: "Dr. Hendra Setiawan, M.Kom.",
         status: "active",
       }).returning();
       dosenUser = inserted;
     } else {
       dosenUser = existingDosen[0];
-      await db.update(users).set({ passwordHash: defaultStaffPasswordHash }).where(eq(users.id, dosenUser.id));
+      await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, dosenUser.id));
     }
 
     // pegawai
@@ -168,14 +168,14 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       const [inserted] = await db.insert(users).values({
         username: "pegawai",
         email: "pegawai@unsia.ac.id",
-        passwordHash: defaultStaffPasswordHash,
+        passwordHash: unifiedPasswordHash,
         fullName: "Budi Prasetyo, S.Kom.",
         status: "active",
       }).returning();
       pegawaiUser = inserted;
     } else {
       pegawaiUser = existingPegawai[0];
-      await db.update(users).set({ passwordHash: defaultStaffPasswordHash }).where(eq(users.id, pegawaiUser.id));
+      await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, pegawaiUser.id));
     }
 
     // 3. Seed Applications

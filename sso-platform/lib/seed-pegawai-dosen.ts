@@ -21,6 +21,18 @@ async function seedPegawaiDosen() {
     // List of Users to Seed
     const targetUsers = [
       {
+        username: "admin",
+        email: "admin@unsia.ac.id",
+        fullName: "Super Admin",
+        status: "active" as const,
+      },
+      {
+        username: "superadmin",
+        email: "superadmin@unsia.ac.id",
+        fullName: "Super Administrator",
+        status: "active" as const,
+      },
+      {
         username: "dosen",
         email: "dosen@unsia.ac.id",
         fullName: "Dr. Hendra Setiawan, M.Kom.",
@@ -30,6 +42,12 @@ async function seedPegawaiDosen() {
         username: "pegawai",
         email: "pegawai@unsia.ac.id",
         fullName: "Budi Prasetyo, S.Kom.",
+        status: "active" as const,
+      },
+      {
+        username: "mahasiswa",
+        email: "mahasiswa@unsia.ac.id",
+        fullName: "Budi Santoso",
         status: "active" as const,
       },
     ];
@@ -129,6 +147,20 @@ async function seedPegawaiDosen() {
       }
     };
 
+    // Assign Roles for Admin & Superadmin
+    for (const adminKey of ["admin", "superadmin"]) {
+      if (seededUserMap[adminKey]) {
+        const uId = seededUserMap[adminKey].id;
+        console.log(`\n🔑 Assigning admin roles to '${adminKey}'...`);
+        await helperAssignRole(uId, "siakad-platform", "admin");
+        await helperAssignRole(uId, "lms-platform", "admin");
+        await helperAssignRole(uId, "hris-platform", "super_admin_sdm");
+        await helperAssignRole(uId, "keuangan-platform", "kepala_biro");
+        await helperAssignRole(uId, "pmb-platform", "admin");
+        await helperAssignRole(uId, "bank-konten-platform", "verifikator_prodi");
+      }
+    }
+
     // Assign Roles for Dosen
     if (seededUserMap["dosen"]) {
       const dosenId = seededUserMap["dosen"].id;
@@ -149,16 +181,25 @@ async function seedPegawaiDosen() {
       await helperAssignRole(pegawaiId, "pmb-platform", "verifikator_berkas");
     }
 
-    console.log("\n✅ Seeder Pegawai & Dosen completed successfully!");
-    console.log("==========================================");
-    console.log("Creds summary:");
-    console.log("  1. Username : dosen");
-    console.log("     Password : password123");
-    console.log("     Role     : Dosen (SIAKAD, LMS), Pegawai (HRIS)");
-    console.log("  2. Username : pegawai");
-    console.log("     Password : password123");
-    console.log("     Role     : Pegawai/Admin SDM (HRIS), Staf Keuangan/PMB");
-    console.log("==========================================");
+    // Assign Roles for Mahasiswa
+    if (seededUserMap["mahasiswa"]) {
+      const mhsId = seededUserMap["mahasiswa"].id;
+      console.log("\n🔑 Assigning roles to 'mahasiswa'...");
+      await helperAssignRole(mhsId, "siakad-platform", "mahasiswa");
+      await helperAssignRole(mhsId, "lms-platform", "mahasiswa");
+      await helperAssignRole(mhsId, "keuangan-platform", "mahasiswa");
+      await helperAssignRole(mhsId, "pmb-platform", "pendaftar");
+    }
+
+    console.log("\n✅ Seeder SELURUH Pengguna Platform (Semua SSO) berhasil diselesaikan!");
+    console.log("=================================================================");
+    console.log("SUMMARY AKUN SSO (Semua Password: password123):");
+    console.log("  1. Username : admin       | Role: Admin (Semua Aplikasi)");
+    console.log("  2. Username : superadmin  | Role: Superadmin (Semua Aplikasi)");
+    console.log("  3. Username : dosen       | Role: Dosen (SIAKAD, LMS, Bank Konten), Pegawai (HRIS)");
+    console.log("  4. Username : pegawai     | Role: Pegawai/Admin SDM (HRIS), Staf (Keuangan, PMB)");
+    console.log("  5. Username : mahasiswa   | Role: Mahasiswa (SIAKAD, LMS, Keuangan), Pendaftar (PMB)");
+    console.log("=================================================================");
 
     process.exit(0);
   } catch (error: any) {
