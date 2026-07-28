@@ -85,9 +85,10 @@ export default function PmbAdminDashboard() {
     endDate: "",
     status: "belum_dibuka",
   });
+  const [editingWaveId, setEditingWaveId] = useState<string | null>(null);
   const [isCreatingWave, setIsCreatingWave] = useState(false);
 
-  const handleCreateWave = async (e: React.FormEvent) => {
+  const handleSaveWave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!waveForm.name || !waveForm.code || !waveForm.startDate || !waveForm.endDate) {
       triggerToast("Mohon lengkapi seluruh field gelombang!");
@@ -95,19 +96,25 @@ export default function PmbAdminDashboard() {
     }
     setIsCreatingWave(true);
     try {
-      const res = await fetch("/api/admin/gelombang", {
-        method: "POST",
+      const isEdit = !!editingWaveId;
+      const url = "/api/admin/gelombang";
+      const method = isEdit ? "PATCH" : "POST";
+      const payload = isEdit ? { id: editingWaveId, ...waveForm } : waveForm;
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(waveForm),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
-        triggerToast("Gelombang baru berhasil ditambahkan!");
+        triggerToast(isEdit ? "Gelombang berhasil diperbarui!" : "Gelombang baru berhasil ditambahkan!");
         setShowWaveModal(false);
+        setEditingWaveId(null);
         setWaveForm({ name: "", code: "", academicPeriodLabel: "2026/2027 Ganjil", defaultPassword: "Pmb2026!", startDate: "", endDate: "", status: "belum_dibuka" });
         fetchData();
       } else {
-        triggerToast("Gagal menambah gelombang: " + data.error);
+        triggerToast("Gagal menyimpan gelombang: " + data.error);
       }
     } catch (err: any) {
       triggerToast("Galat: " + err.message);
@@ -1895,6 +1902,7 @@ export default function PmbAdminDashboard() {
                   onClick={() => {
                     const nextNum = waves.length + 1;
                     const year = new Date().getFullYear();
+                    setEditingWaveId(null);
                     setWaveForm({
                       name: `Gelombang ${nextNum}`,
                       code: `GEL-${nextNum}-${year}`,
@@ -1929,18 +1937,39 @@ export default function PmbAdminDashboard() {
                             {w.code} · Password Default: <span className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{w.defaultPassword || "Pmb2026!"}</span>
                           </p>
                         </div>
-                        <select
-                          value={w.status}
-                          onChange={(e) => handleToggleWaveStatus(w.id, e.target.value)}
-                          className={`px-2.5 py-1 text-xs font-bold rounded outline-none border cursor-pointer ${
-                            w.status === "aktif" ? "bg-emerald-100 text-emerald-700 border-emerald-300" :
-                            w.status === "belum_dibuka" ? "bg-amber-100 text-amber-700 border-amber-300" : "bg-slate-100 text-slate-600 border-slate-300"
-                          }`}
-                        >
-                          <option value="belum_dibuka">Belum Dibuka</option>
-                          <option value="aktif">Aktif (Buka)</option>
-                          <option value="tertutup">Tertutup (Tutup)</option>
-                        </select>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingWaveId(w.id);
+                              setWaveForm({
+                                name: w.name,
+                                code: w.code,
+                                academicPeriodLabel: w.academicPeriodLabel || "2026/2027 Ganjil",
+                                defaultPassword: w.defaultPassword || "Pmb2026!",
+                                startDate: w.startDate ? w.startDate.slice(0, 10) : "",
+                                endDate: w.endDate ? w.endDate.slice(0, 10) : "",
+                                status: w.status,
+                              });
+                              setShowWaveModal(true);
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold rounded border border-blue-200 bg-blue-50 text-[#0f487b] hover:bg-blue-100 transition cursor-pointer"
+                          >
+                            ✏️ Edit
+                          </button>
+                          <select
+                            value={w.status}
+                            onChange={(e) => handleToggleWaveStatus(w.id, e.target.value)}
+                            className={`px-2.5 py-1 text-xs font-bold rounded outline-none border cursor-pointer ${
+                              w.status === "aktif" ? "bg-emerald-100 text-emerald-700 border-emerald-300" :
+                              w.status === "belum_dibuka" ? "bg-amber-100 text-amber-700 border-amber-300" : "bg-slate-100 text-slate-600 border-slate-300"
+                            }`}
+                          >
+                            <option value="belum_dibuka">Belum Dibuka</option>
+                            <option value="aktif">Aktif (Buka)</option>
+                            <option value="tertutup">Tertutup (Tutup)</option>
+                          </select>
+                        </div>
                       </div>
 
                       {/* Wave Body / Quotas list */}
@@ -2330,7 +2359,7 @@ export default function PmbAdminDashboard() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4 fade-in">
           <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h3 className="font-bold text-slate-800 text-base">Tambah Gelombang PMB Baru</h3>
+              <h3 className="font-bold text-slate-800 text-base">{editingWaveId ? "Edit Data Gelombang PMB" : "Tambah Gelombang PMB Baru"}</h3>
               <button
                 onClick={() => setShowWaveModal(false)}
                 className="w-8 h-8 rounded-full hover:bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-xs transition-all cursor-pointer"
@@ -2338,7 +2367,7 @@ export default function PmbAdminDashboard() {
                 ✕
               </button>
             </div>
-            <form onSubmit={handleCreateWave} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleSaveWave} className="p-6 space-y-4 text-xs">
               <div>
                 <label className="font-bold text-slate-600 block mb-1">Nama Gelombang</label>
                 <input

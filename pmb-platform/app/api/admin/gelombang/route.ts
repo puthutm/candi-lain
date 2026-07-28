@@ -56,15 +56,20 @@ export async function PATCH(req: Request) {
     if (auth instanceof NextResponse) return auth;
 
     const body = await req.json();
-    const { id, status, defaultPassword } = body;
+    const { id, name, code, academicPeriodLabel, defaultPassword, startDate, endDate, status } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: "ID is required" }, { status: 400 });
     }
 
     const updateData: any = {};
-    if (status) updateData.status = status;
-    if (defaultPassword) updateData.defaultPassword = defaultPassword;
+    if (name !== undefined) updateData.name = name;
+    if (code !== undefined) updateData.code = code;
+    if (academicPeriodLabel !== undefined) updateData.academicPeriodLabel = academicPeriodLabel;
+    if (defaultPassword !== undefined) updateData.defaultPassword = defaultPassword;
+    if (startDate !== undefined) updateData.startDate = startDate;
+    if (endDate !== undefined) updateData.endDate = endDate;
+    if (status !== undefined) updateData.status = status;
 
     const { eq } = await import("drizzle-orm");
     const [updated] = await db
