@@ -11,9 +11,8 @@ export async function GET() {
       .orderBy(desc(employees.createdAt));
 
     if (list.length === 0) {
-      list = [
+      await db.insert(employees).values([
         {
-          id: "10000000-0000-0000-0000-000000000001",
           employeeNumber: "DOS-2026-001",
           fullName: "Dr. Hendra Setiawan, M.Kom.",
           employeeType: "dosen",
@@ -28,11 +27,8 @@ export async function GET() {
           bankName: "BCA",
           npwp: "98.765.432.1-098.000",
           ptkpStatus: "TK/0",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        } as any,
+        },
         {
-          id: "10000000-0000-0000-0000-000000000002",
           employeeNumber: "PEG-2026-002",
           fullName: "Budi Prasetyo, S.Kom.",
           employeeType: "tendik",
@@ -47,10 +43,29 @@ export async function GET() {
           bankName: "Mandiri",
           npwp: "12.345.678.9-012.000",
           ptkpStatus: "K/1",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        } as any,
-      ];
+        },
+        {
+          employeeNumber: "DOS-2026-003",
+          fullName: "Siti Rahmawati, M.T.",
+          employeeType: "dosen",
+          organizationUnitId: "00000000-0000-0000-0000-000000000001",
+          positionId: "00000000-0000-0000-0000-000000000001",
+          rankGroup: "III/b",
+          baseSalary: 6200000,
+          status: "aktif",
+          employmentStatus: "tetap",
+          nidn: "0498765432",
+          bankAccountNumber: "554433221100",
+          bankName: "BNI",
+          npwp: "45.678.901.2-034.000",
+          ptkpStatus: "TK/0",
+        },
+      ]);
+
+      list = await db
+        .select()
+        .from(employees)
+        .orderBy(desc(employees.createdAt));
     }
 
     return NextResponse.json({
