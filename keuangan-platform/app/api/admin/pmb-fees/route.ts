@@ -51,7 +51,6 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ success: false, error: "id wajib diisi" }, { status: 400 });
     }
 
-    const { eq } = await import("drizzle-orm");
     const updateData: any = {};
     if (waveLabel !== undefined) updateData.waveLabel = waveLabel;
     if (registrationFee !== undefined) updateData.registrationFee = String(registrationFee);

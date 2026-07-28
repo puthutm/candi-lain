@@ -4,7 +4,7 @@ import { pmbInvoices } from "@/db/schema/payment";
 import { pmbApplicants, pmbApplicantStatusHistory } from "@/db/schema/applicants";
 import { pmbEntryPaths, pmbWaves } from "@/db/schema/master";
 import { pmbFeeRates } from "@/db/schema/keuangan";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export async function GET(req: Request) {
   try {
