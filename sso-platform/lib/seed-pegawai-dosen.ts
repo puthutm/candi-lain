@@ -75,6 +75,9 @@ async function seedPegawaiDosen() {
           .returning();
         seededUserMap[u.username] = inserted;
       } else {
+        const userRecord = existing[0];
+        if (!userRecord) continue;
+
         console.log(`🔄 Updating password & details for user: ${u.username}...`);
         const [updated] = await db
           .update(users)
@@ -85,7 +88,7 @@ async function seedPegawaiDosen() {
             status: "active",
             updatedAt: new Date(),
           })
-          .where(eq(users.id, existing[0].id))
+          .where(eq(users.id, userRecord.id))
           .returning();
         seededUserMap[u.username] = updated;
       }
@@ -122,6 +125,7 @@ async function seedPegawaiDosen() {
             isDefault: false,
           })
           .returning();
+        if (!newRole) return;
         targetRoleId = newRole.id;
       }
 
