@@ -6,9 +6,13 @@ import { eq, and } from "drizzle-orm";
 import { sendEmail } from "@/lib/email";
 import { sendWhatsApp, formatPhoneNumber } from "@/lib/whatsapp";
 
+import { desc } from "drizzle-orm";
+
 interface BlastRequest {
-  templateId: string;
+  templateId?: string;
+  name?: string;
   channel: "email" | "whatsapp";
+  message?: string;
   segmentFilter?: {
     stage?: string;
     paymentStatus?: string;
@@ -18,35 +22,72 @@ interface BlastRequest {
   testEmail?: string;
 }
 
+export async function GET() {
+  try {
+    const logs = await db
+      .select({
+        id: pmbMessageLogs.id,
+        applicantId: pmbMessageLogs.applicantId,
+        channel: pmbMessageLogs.channel,
+        status: pmbMessageLogs.status,
+        sentAt: pmbMessageLogs.sentAt,
+        templateName: pmbMessageTemplates.name,
+      })
+      .from(pmbMessageLogs)
+      .leftJoin(
+        pmbMessageTemplates,
+        eq(pmbMessageLogs.messageTemplateId, pmbMessageTemplates.id)
+      )
+      .orderBy(desc(pmbMessageLogs.sentAt))
+      .limit(50);
+
+    return NextResponse.json({
+      success: true,
+      campaigns: logs || [],
+    });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: BlastRequest = await request.json();
-    const { templateId, channel, segmentFilter, testEmail } = body;
+    const { templateId, name, channel, message, segmentFilter, testEmail } = body;
 
-    if (!templateId || !channel) {
+    if (!channel) {
       return NextResponse.json(
-        { error: "Template ID dan channel wajib diisi" },
+        { success: false, error: "Channel wajib diisi" },
         { status: 400 }
       );
     }
 
-    // Ambil template
-    const [template] = await db
-      .select()
-      .from(pmbMessageTemplates)
-      .where(eq(pmbMessageTemplates.id, templateId))
-      .limit(1);
+    let templateObj: any = null;
+    if (templateId) {
+      const [tpl] = await db
+        .select()
+        .from(pmbMessageTemplates)
+        .where(eq(pmbMessageTemplates.id, templateId))
+        .limit(1);
+      templateObj = tpl;
+    }
 
-    if (!template) {
-      return NextResponse.json({ error: "Template tidak ditemukan" }, { status: 404 });
+    const templateBody = templateObj?.body || message || "";
+    const templateSubject = templateObj?.subject || name || "Notifikasi PMB UNSIA";
+
+    if (!templateBody) {
+      return NextResponse.json(
+        { success: false, error: "Pesan atau Template ID wajib diisi" },
+        { status: 400 }
+      );
     }
 
     // Jika test mode, kirim ke 1 email saja
     if (testEmail) {
       const result = await sendEmail({
         to: testEmail,
-        subject: `[TEST] ${template.subject || "Notifikasi PMB UNSIA"}`,
-        html: template.body,
+        subject: `[TEST] ${templateSubject}`,
+        html: templateBody,
       });
 
       return NextResponse.json({
@@ -90,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     for (const applicant of applicants) {
       try {
-        const renderedBody = template.body
+        const renderedBody = templateBody
           .replace(/{nama}/g, applicant.fullName)
           .replace(/{name}/g, applicant.fullName)
           .replace(/{no_pendaftaran}/g, applicant.registrationNumber)
@@ -108,7 +149,7 @@ export async function POST(request: NextRequest) {
         if (channel === "email") {
           const result = await sendEmail({
             to: applicant.email,
-            subject: template.subject || "Notifikasi PMB UNSIA",
+            subject: templateSubject || "Notifikasi PMB UNSIA",
             html: renderedBody,
           });
           success = result.success;
@@ -124,7 +165,7 @@ export async function POST(request: NextRequest) {
         // Catat log
         await db.insert(pmbMessageLogs).values({
           applicantId: applicant.id,
-          messageTemplateId: template.id,
+          messageTemplateId: templateObj?.id || null,
           channel,
           status: success ? "terkirim" : "gagal",
           sentAt: new Date(),
