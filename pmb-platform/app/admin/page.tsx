@@ -101,7 +101,7 @@ export default function PmbAdminDashboard() {
       if (data.success) {
         triggerToast("Gelombang baru berhasil ditambahkan!");
         setShowWaveModal(false);
-        setWaveForm({ name: "", code: "", startDate: "", endDate: "", status: "belum_dibuka" });
+        setWaveForm({ name: "", code: "", academicPeriodLabel: "2026/2027 Ganjil", startDate: "", endDate: "", status: "belum_dibuka" });
         fetchData();
       } else {
         triggerToast("Gagal menambah gelombang: " + data.error);
