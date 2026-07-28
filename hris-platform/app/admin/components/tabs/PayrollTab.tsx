@@ -40,7 +40,7 @@ interface PayrollTabProps {
 }
 
 export default function PayrollTab({
-  payrollRunsList,
+  payrollRunsList: _payrollRunsList,
   payslipsList,
   triggerNotice,
 }: PayrollTabProps) {
