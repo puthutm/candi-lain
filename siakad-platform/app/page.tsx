@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRole } from "./context/RoleContext";
 import { LOGO_URL, INSTITUTION_SHORT_NAME, INSTITUTION_NAME } from "@/lib/client-config";
+import { useRouter } from "next/navigation";
 
 type OnboardTab = "dashboard" | "ukt" | "krs" | "ktm";
 
 export default function OnboardingPage() {
-  const { user, logout, loading } = useRole();
+  const { user, currentRole, logout, loading } = useRole();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<OnboardTab>("dashboard");
   const [uktStatus, setUktStatus] = useState<"unpaid" | "processing" | "paid">("unpaid");
   const [nimIssued, setNimIssued] = useState(false);
@@ -19,6 +21,17 @@ export default function OnboardingPage() {
   const [selectedKrs, setSelectedKrs] = useState<string[]>([]);
   const [krsSubmitted, setKrsSubmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+
+  useEffect(() => {
+    if (!loading && user) {
+      const activeRole = currentRole || user.role;
+      if (activeRole === "admin" || activeRole === "superadmin" || activeRole === "kaprodi") {
+        router.replace("/admin");
+      } else if (activeRole === "dosen") {
+        router.replace("/dosen");
+      }
+    }
+  }, [user, currentRole, loading, router]);
 
   if (loading) {
     return (

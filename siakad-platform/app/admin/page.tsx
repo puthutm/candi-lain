@@ -34,7 +34,7 @@ export default function AcademicAdminPage() {
       try {
         const res = await fetch("/api/auth/session");
         const data = await res.json();
-        const adminRoles = ["admin", "superadmin", "super_admin", "admin_siakad", "super_admin_siakad", "staff_akademik", "dosen", "pegawai"];
+        const adminRoles = ["admin", "superadmin", "super_admin", "admin_siakad", "super_admin_siakad", "staff_akademik", "dosen", "pegawai", "kaprodi"];
         if (data.success && data.authenticated && data.user && adminRoles.includes(data.user.role)) {
           setAdminUser(data.user);
           setCheckingAuth(false);
