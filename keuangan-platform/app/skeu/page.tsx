@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import AppSwitcher from "@/app/components/AppSwitcher";
 
 interface TuitionRate {
   id: string;
@@ -508,6 +509,7 @@ export default function SkeuDashboard() {
 
           {/* Sync Actions */}
           <div className="flex items-center gap-3">
+            <AppSwitcher />
             <button
               onClick={handleSyncInvoices}
               className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] rounded-xl shadow-lg transition flex items-center gap-1.5"

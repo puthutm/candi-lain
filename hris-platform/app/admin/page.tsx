@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import AppSwitcher from "@/app/components/AppSwitcher";
 
 interface OrgUnit {
   id: string;
@@ -506,6 +507,7 @@ export default function HrisAdminDashboard() {
           </div>
 
           <div className="flex items-center gap-4">
+            <AppSwitcher />
             <input
               type="text"
               value={searchQuery}
