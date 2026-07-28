@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { siakadGrades, siakadStudents, siakadClasses } from "@/db/schema";
+import { siakadGrades, siakadStudents } from "@/db/schema";
 import { convertScoreToGrade } from "@/lib/grade-calculator";
 import { eq, and } from "drizzle-orm";
 
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
             gradePoint: String(conversion.gradePoint),
             locked: true,
           })
-          .where(eq(siakadGrades.id, existingGrades[0].id));
+          .where(eq(siakadGrades.id, existingGrades[0]!.id));
       } else {
         await db.insert(siakadGrades).values({
           studentId,

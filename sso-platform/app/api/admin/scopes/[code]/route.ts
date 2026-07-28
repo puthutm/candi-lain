@@ -5,7 +5,7 @@ import { eq, sql } from "drizzle-orm";
 import { auditQueue } from "@/lib/redis";
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ code: string }> }
 ) {
   try {

@@ -4,17 +4,14 @@ import {
   siakadStudents,
   siakadStudyPrograms,
   siakadKrs,
-  siakadKrsItems,
-  siakadCurricula,
-  siakadCurriculumCourses,
-  siakadClasses,
   siakadAcademicPeriods,
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
   try {
-    const eventName = req.headers.get("X-Event-Name");
+    const _eventName = req.headers.get("X-Event-Name");
+    void _eventName;
     const body = await req.json();
 
     const {
@@ -23,7 +20,6 @@ export async function POST(req: NextRequest) {
       email,
       phone,
       studyProgramId,
-      nik,
     } = body;
 
     if (!pmbApplicantId || !fullName || !email) {
@@ -39,7 +35,7 @@ export async function POST(req: NextRequest) {
     const existingStudents = await db
       .select()
       .from(siakadStudents)
-      .where(eq(siakadStudents.email, email));
+      .where(eq(siakadStudents.personalEmail, email));
 
     let studentRecord = existingStudents[0];
 
@@ -52,16 +48,21 @@ export async function POST(req: NextRequest) {
         .insert(siakadStudents)
         .values({
           fullName,
-          email,
+          personalEmail: email,
           phone: phone || "081200000000",
+          birthPlace: "Jakarta",
+          birthDate: "2005-01-01",
+          gender: "L",
+          religion: "Islam",
+          address: "-",
           studyProgramId: targetProdiId,
           academicStatus: "aktif",
-          batchYear: new Date().getFullYear(),
+          angkatan: new Date().getFullYear(),
         })
         .returning();
 
-      studentRecord = newStudent;
-      console.log(`[SIAKAD PMB Consumer] Created student record ID: ${newStudent.id}`);
+      studentRecord = newStudent!;
+      console.log(`[SIAKAD PMB Consumer] Created student record ID: ${newStudent!.id}`);
     }
 
     // 2. Auto-generate KRS Perdana (Paket Semester 1)
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
           })
           .returning();
 
-        console.log(`[SIAKAD PMB Consumer] Generated initial KRS ID: ${krsRecord.id}`);
+        console.log(`[SIAKAD PMB Consumer] Generated initial KRS ID: ${krsRecord!.id}`);
       }
     }
 

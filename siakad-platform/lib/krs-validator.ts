@@ -1,13 +1,10 @@
 import { db } from "@/db";
 import {
   siakadStudents,
-  siakadKrs,
-  siakadKrsItems,
   siakadClasses,
   siakadCourses,
   siakadCoursePrerequisites,
   siakadGrades,
-  siakadClassSchedules,
 } from "@/db/schema";
 import { eq, inArray, and } from "drizzle-orm";
 
@@ -41,7 +38,7 @@ export interface KrsValidationResult {
 export async function validateKrsSubmission(
   studentId: string,
   classIds: string[],
-  academicPeriodId: string
+  _academicPeriodId: string
 ): Promise<KrsValidationResult> {
   const errors: string[] = [];
 
@@ -63,7 +60,7 @@ export async function validateKrsSubmission(
   const selectedClasses = await db
     .select({
       classId: siakadClasses.id,
-      className: siakadClasses.name,
+      className: siakadClasses.className,
       courseId: siakadCourses.id,
       courseName: siakadCourses.name,
       sks: siakadCourses.sks,

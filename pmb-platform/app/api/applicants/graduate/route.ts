@@ -4,7 +4,6 @@ import { pmbApplicants, pmbApplicantProfiles, pmbApplicantStatusHistory } from "
 import { pmbStudyPrograms, pmbEntryPaths } from "@/db/schema/master";
 import { pmbExamResults } from "@/db/schema/exam";
 import { eq } from "drizzle-orm";
-import { env } from "@/lib/env";
 import { getStaffId, requireRole, PMB_ROLES } from "@/lib/sso-middleware";
 import { publishAcceptedApplicantToSiakad } from "@/lib/siakad-publisher";
 

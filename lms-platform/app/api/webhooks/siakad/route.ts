@@ -49,20 +49,20 @@ export async function POST(req: NextRequest) {
         .from(classEnrollments)
         .where(
           and(
-            eq(classEnrollments.classId, lmsClass.id),
+            eq(classEnrollments.classId, lmsClass!.id),
             eq(classEnrollments.userId, studentUserId)
           )
         );
 
       if (existingEnrollments.length === 0) {
         await db.insert(classEnrollments).values({
-          classId: lmsClass.id,
+          classId: lmsClass!.id,
           userId: studentUserId,
           role: "mahasiswa",
           krsItemRef: krsItemId || null,
         });
 
-        console.log(`[LMS SIAKAD Consumer] Student ${studentUserId} successfully enrolled in LMS class ${lmsClass.id}`);
+        console.log(`[LMS SIAKAD Consumer] Student ${studentUserId} successfully enrolled in LMS class ${lmsClass!.id}`);
       }
 
       return NextResponse.json({

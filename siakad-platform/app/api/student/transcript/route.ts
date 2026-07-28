@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
         id: siakadStudents.id,
         fullName: siakadStudents.fullName,
         nim: siakadStudents.nim,
-        email: siakadStudents.email,
+        personalEmail: siakadStudents.personalEmail,
         academicStatus: siakadStudents.academicStatus,
         prodiName: siakadStudyPrograms.name,
       })

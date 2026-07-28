@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
           publishedAt: new Date(),
           updatedAt: new Date(),
         })
-        .where(eq(lmsGrades.id, existingGrades[0].id))
+        .where(eq(lmsGrades.id, existingGrades[0]!.id))
         .returning();
 
       gradeRecord = updated;
