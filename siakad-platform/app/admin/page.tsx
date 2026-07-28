@@ -634,36 +634,647 @@ export default function AcademicAdminPage() {
             </div>
           )}
 
-          {/* DYNAMIC VIEW FOR ALL OTHER TABS */}
-          {activeTab !== "dashboard" && activeTab !== "krs_validation" && (
+          {/* TAB: TAHUN AJARAN */}
+          {activeTab === "tahun_ajaran" && (
             <div className="max-w-5xl mx-auto space-y-6 fade-in">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    Modul Akademik Terintegrasi
-                  </span>
-                  <h2 className="text-2xl font-black text-slate-800 capitalize mt-0.5">
-                    {activeTab.replace("_", " ")}
-                  </h2>
+                  <h2 className="text-xl font-bold text-slate-800">Master Tahun Ajaran</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Kelola kalender dan rentang tahun akademik kampus.</p>
                 </div>
                 <button
-                  onClick={() => triggerToast(`Memperbarui data ${activeTab} dari database...`)}
+                  onClick={() => triggerToast("Form tambah tahun ajaran baru dibuka.")}
                   className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-xl shadow-xs"
                 >
-                  🔄 Refresh Data DB
+                  + Tambah Tahun Ajaran
                 </button>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center space-y-4">
-                <span className="text-4xl">⚡</span>
-                <h3 className="text-lg font-bold text-slate-800 capitalize">
-                  Manajemen Modul {activeTab.replace("_", " ")} (Dinamis DB & Cross-Platform)
-                </h3>
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-5 py-3.5">Tahun Ajaran</th>
+                      <th className="px-5 py-3.5">Kode TA</th>
+                      <th className="px-5 py-3.5">Status</th>
+                      <th className="px-5 py-3.5">Jumlah Semester</th>
+                      <th className="px-5 py-3.5 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-5 py-4 font-bold text-slate-800">2026 / 2027</td>
+                      <td className="px-5 py-4 font-mono font-semibold">2026</td>
+                      <td className="px-5 py-4">
+                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">
+                          Aktif
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">2 (Ganjil & Genap)</td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          onClick={() => triggerToast("Tahun ajaran 2026/2027 sedang aktif")}
+                          className="text-[#0f487b] hover:underline font-bold"
+                        >
+                          Kelola →
+                        </button>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-5 py-4 font-bold text-slate-800">2025 / 2026</td>
+                      <td className="px-5 py-4 font-mono font-semibold">2025</td>
+                      <td className="px-5 py-4">
+                        <span className="px-2.5 py-1 bg-slate-100 text-slate-600 font-bold text-[10px] rounded-full">
+                          Selesai / Arsip
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">2 (Ganjil & Genap)</td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          onClick={() => triggerToast("Melihat arsip 2025/2026")}
+                          className="text-slate-500 hover:underline font-bold"
+                        >
+                          Arsip →
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: PERIODE AKADEMIK */}
+          {activeTab === "periode" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Periode Akademik Aktif</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Konfigurasi jadwal KRS, Perkuliahan, UTS & UAS.</p>
+                </div>
+                <button
+                  onClick={() => triggerToast("Status periode akademik diperbarui.")}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs"
+                >
+                  ✓ Periode Berjalan (Ganjil 2026/2027)
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Durasi Perkuliahan</span>
+                  <p className="text-lg font-bold text-slate-800">01 Sep 2026 – 28 Feb 2027</p>
+                  <p className="text-xs text-emerald-600 font-bold">● Minggu ke-10 Berjalan</p>
+                </div>
+
+                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Jadwal UTS</span>
+                  <p className="text-lg font-bold text-slate-800">27 Okt – 07 Nov 2026</p>
+                  <p className="text-xs text-amber-600 font-bold">📌 Selesai (Nilai 92% masuk)</p>
+                </div>
+
+                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Jadwal UAS</span>
+                  <p className="text-lg font-bold text-slate-800">12 Jan – 23 Jan 2027</p>
+                  <p className="text-xs text-slate-400 font-bold">⏳ Mendatang</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: KURIKULUM */}
+          {activeTab === "kurikulum" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Manajemen Kurikulum Master</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Daftar kurikulum resmi prodi dan pemetaan SKS.</p>
+                </div>
+                <button
+                  onClick={() => triggerToast("Form tambah kurikulum dibuka.")}
+                  className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-xl shadow-xs"
+                >
+                  + Buat Kurikulum Baru
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-5 py-3.5">Nama Kurikulum</th>
+                      <th className="px-5 py-3.5">Program Studi</th>
+                      <th className="px-5 py-3.5">Tahun Berlaku</th>
+                      <th className="px-5 py-3.5">Total SKS</th>
+                      <th className="px-5 py-3.5">Status</th>
+                      <th className="px-5 py-3.5 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-5 py-4 font-bold text-slate-800">Kurikulum S1 Informatika 2024</td>
+                      <td className="px-5 py-4">S1 Informatika (FTI)</td>
+                      <td className="px-5 py-4 font-mono font-bold">2024</td>
+                      <td className="px-5 py-4 font-bold">144 SKS</td>
+                      <td className="px-5 py-4">
+                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">
+                          Aktif
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          onClick={() => triggerToast("Membuka detail kurikulum S1 Informatika")}
+                          className="text-[#0f487b] hover:underline font-bold"
+                        >
+                          Detail & MK →
+                        </button>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-5 py-4 font-bold text-slate-800">Kurikulum S1 Sistem Informasi 2024</td>
+                      <td className="px-5 py-4">S1 Sistem Informasi (FTI)</td>
+                      <td className="px-5 py-4 font-mono font-bold">2024</td>
+                      <td className="px-5 py-4 font-bold">144 SKS</td>
+                      <td className="px-5 py-4">
+                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">
+                          Aktif
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          onClick={() => triggerToast("Membuka detail kurikulum S1 Sistem Informasi")}
+                          className="text-[#0f487b] hover:underline font-bold"
+                        >
+                          Detail & MK →
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: MATA KULIAH */}
+          {activeTab === "matakuliah" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Katalog Mata Kuliah</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Daftar mata kuliah aktif seluruh program studi.</p>
+                </div>
+                <button
+                  onClick={() => triggerToast("Form tambah matakuliah dibuka.")}
+                  className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-xl shadow-xs"
+                >
+                  + Tambah Mata Kuliah Baru
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-5 py-3.5">Kode</th>
+                      <th className="px-5 py-3.5">Nama Mata Kuliah</th>
+                      <th className="px-5 py-3.5">SKS</th>
+                      <th className="px-5 py-3.5">Jenis</th>
+                      <th className="px-5 py-3.5">Semester</th>
+                      <th className="px-5 py-3.5">Mode Pembelajaran</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {[
+                      { code: "INF101", name: "Pemrograman Dasar", sks: 4, type: "Wajib Prodi", sem: 1, mode: "Async PJJ" },
+                      { code: "INF102", name: "Kalkulus I", sks: 3, type: "Wajib Prodi", sem: 1, mode: "Async PJJ" },
+                      { code: "INF201", name: "Algoritma Lanjut & Kompleksitas", sks: 4, type: "Wajib Prodi", sem: 3, mode: "Async PJJ" },
+                      { code: "INF202", name: "Basis Data Terdistribusi", sks: 3, type: "Wajib Prodi", sem: 3, mode: "Async PJJ" },
+                      { code: "INF203", name: "Kecerdasan Buatan", sks: 3, type: "Wajib Prodi", sem: 3, mode: "Async PJJ" },
+                    ].map((item) => (
+                      <tr key={item.code} className="hover:bg-slate-50">
+                        <td className="px-5 py-4 font-mono font-bold text-[#0f487b]">{item.code}</td>
+                        <td className="px-5 py-4 font-bold text-slate-800">{item.name}</td>
+                        <td className="px-5 py-4 font-bold">{item.sks} SKS</td>
+                        <td className="px-5 py-4">{item.type}</td>
+                        <td className="px-5 py-4 font-semibold">Semester {item.sem}</td>
+                        <td className="px-5 py-4">
+                          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded">
+                            {item.mode}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: KELAS KULIAH */}
+          {activeTab === "kelas" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Kelas Kuliah Paralel</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Daftar kelas perkuliahan aktif yang disinkronkan ke LMS.</p>
+                </div>
+                <button
+                  onClick={() => triggerToast("Form buka kelas paralel dibuka.")}
+                  className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-xl shadow-xs"
+                >
+                  + Buka Kelas Paralel
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-5 py-3.5">Nama Kelas</th>
+                      <th className="px-5 py-3.5">Mata Kuliah</th>
+                      <th className="px-5 py-3.5">Dosen Pengampu</th>
+                      <th className="px-5 py-3.5">Kapasitas</th>
+                      <th className="px-5 py-3.5">Status Sync LMS</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {[
+                      { name: "Kelas A PJJ", course: "INF101 · Pemrograman Dasar", dosen: "Dr. Hendra Setiawan, M.Kom.", cap: "38 / 40", status: "Synced to LMS" },
+                      { name: "Kelas A PJJ", course: "INF102 · Kalkulus I", dosen: "Dr. Hendra Setiawan, M.Kom.", cap: "40 / 40", status: "Synced to LMS" },
+                      { name: "Kelas A PJJ", course: "INF201 · Algoritma Lanjut", dosen: "Dr. Hendra Setiawan, M.Kom.", cap: "35 / 40", status: "Synced to LMS" },
+                    ].map((cls, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50">
+                        <td className="px-5 py-4 font-bold text-slate-800">{cls.name}</td>
+                        <td className="px-5 py-4 font-semibold text-[#0f487b]">{cls.course}</td>
+                        <td className="px-5 py-4">{cls.dosen}</td>
+                        <td className="px-5 py-4 font-mono font-bold">{cls.cap}</td>
+                        <td className="px-5 py-4">
+                          <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">
+                            ● {cls.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: JADWAL & SESI */}
+          {activeTab === "jadwal" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Jadwal & Sesi Pertemuan (1-16)</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Matriks jadwal sesi reguler, UTS & UAS perkuliahan PJJ.</p>
+                </div>
+                <button
+                  onClick={() => triggerToast("Jadwal sesi diperbarui dari LMS.")}
+                  className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-xl shadow-xs"
+                >
+                  🔄 Refresh Jadwal LMS
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-5 py-3.5">Sesi</th>
+                      <th className="px-5 py-3.5">Topik Pertemuan</th>
+                      <th className="px-5 py-3.5">Tanggal & Waktu</th>
+                      <th className="px-5 py-3.5">Tipe Sesi</th>
+                      <th className="px-5 py-3.5">Virtual Room</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-5 py-4 font-mono font-bold">Sesi 1</td>
+                      <td className="px-5 py-4 font-bold text-slate-800">Pengenalan Lingkungan Pemrograman & Logika Dasar</td>
+                      <td className="px-5 py-4">07 Sep 2026 · 08:00 - 10:30</td>
+                      <td className="px-5 py-4"><span className="px-2 py-0.5 bg-blue-100 text-blue-800 font-bold text-[10px] rounded">Reguler</span></td>
+                      <td className="px-5 py-4 text-brand-600 font-mono text-[11px] font-bold">meet.jit.si/unsia-pjj</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50 bg-amber-50/40">
+                      <td className="px-5 py-4 font-mono font-bold text-amber-700">Sesi 8</td>
+                      <td className="px-5 py-4 font-bold text-amber-900">Ujian Tengah Semester (UTS) Online</td>
+                      <td className="px-5 py-4 text-amber-800 font-semibold">26 Okt 2026 · 08:00 - 10:30</td>
+                      <td className="px-5 py-4"><span className="px-2 py-0.5 bg-amber-200 text-amber-900 font-bold text-[10px] rounded">UTS</span></td>
+                      <td className="px-5 py-4 text-amber-700 font-mono text-[11px] font-bold">CBT System Online</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: NILAI & KHS */}
+          {activeTab === "nilai" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Rekapitulasi Nilai & KHS Mahasiswa</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Input nilai Tugas, Quiz, UTS, UAS & Konversi Bobot Nilai.</p>
+                </div>
+                <button
+                  onClick={() => triggerToast("Rekapitulasi nilai KHS dikunci dan dipublikasikan.")}
+                  className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-xl shadow-xs"
+                >
+                  🔒 Lock & Publicate KHS
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-5 py-3.5">NIM</th>
+                      <th className="px-5 py-3.5">Nama Mahasiswa</th>
+                      <th className="px-5 py-3.5">Tugas (20%)</th>
+                      <th className="px-5 py-3.5">Quiz (20%)</th>
+                      <th className="px-5 py-3.5">UTS (30%)</th>
+                      <th className="px-5 py-3.5">UAS (30%)</th>
+                      <th className="px-5 py-3.5">Nilai Akhir</th>
+                      <th className="px-5 py-3.5">Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-5 py-4 font-mono font-bold text-[#0f487b]">26090182</td>
+                      <td className="px-5 py-4 font-bold text-slate-800">Budi Santoso</td>
+                      <td className="px-5 py-4 font-semibold">88.0</td>
+                      <td className="px-5 py-4 font-semibold">85.0</td>
+                      <td className="px-5 py-4 font-semibold">90.0</td>
+                      <td className="px-5 py-4 font-semibold">87.0</td>
+                      <td className="px-5 py-4 font-bold text-slate-900">87.7</td>
+                      <td className="px-5 py-4 font-bold text-emerald-600">A (4.00)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: DATA MAHASISWA */}
+          {activeTab === "mahasiswa" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Data Master Mahasiswa</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Daftar mahasiswa terdaftar di SIAKAD terintegrasi PMB.</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => triggerToast("Sinkronisasi data dari PMB berhasil.")}
+                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs"
+                  >
+                    📥 Impor dari PMB
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-5 py-3.5">NIM</th>
+                      <th className="px-5 py-3.5">Nama Lengkap</th>
+                      <th className="px-5 py-3.5">Program Studi</th>
+                      <th className="px-5 py-3.5">Angkatan</th>
+                      <th className="px-5 py-3.5">Status</th>
+                      <th className="px-5 py-3.5">Dosen PA</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-5 py-4 font-mono font-bold text-[#0f487b]">26090182</td>
+                      <td className="px-5 py-4 font-bold text-slate-800">Budi Santoso</td>
+                      <td className="px-5 py-4">S1 Informatika (FTI)</td>
+                      <td className="px-5 py-4 font-mono font-semibold">2026</td>
+                      <td className="px-5 py-4">
+                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">
+                          Aktif
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 font-semibold">Dr. Hendra Setiawan, M.Kom.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: DOSEN & PENGAMPU */}
+          {activeTab === "dosen" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Data Dosen & Pengampu</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Daftar tenaga pengajar terintegrasi HRIS Platform.</p>
+                </div>
+                <button
+                  onClick={() => triggerToast("Sinkronisasi data dosen dari HRIS berhasil.")}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs"
+                >
+                  🔄 Sinkron dari HRIS
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-5 py-3.5">NIDN</th>
+                      <th className="px-5 py-3.5">Nama Dosen</th>
+                      <th className="px-5 py-3.5">Homebase Prodi</th>
+                      <th className="px-5 py-3.5">Jabatan Fungsional</th>
+                      <th className="px-5 py-3.5">Status Pengampu</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-5 py-4 font-mono font-bold text-[#0f487b]">0421098501</td>
+                      <td className="px-5 py-4 font-bold text-slate-800">Dr. Hendra Setiawan, M.Kom.</td>
+                      <td className="px-5 py-4">S1 Informatika (FTI)</td>
+                      <td className="px-5 py-4 font-semibold">Lektor Kepala</td>
+                      <td className="px-5 py-4">
+                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">
+                          Dosen Tetap
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: PERSURATAN */}
+          {activeTab === "persuratan" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Layanan Persuratan Akademik</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Pengajuan Surat Keterangan Aktif Kuliah & Rekomendasi.</p>
+                </div>
+                <span className="px-3 py-1 bg-rose-100 text-rose-800 text-xs font-bold rounded-full border border-rose-200">
+                  7 Surat Pending
+                </span>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-5 py-3.5">No. Pengajuan</th>
+                      <th className="px-5 py-3.5">Pemohon (NIM / Nama)</th>
+                      <th className="px-5 py-3.5">Jenis Surat</th>
+                      <th className="px-5 py-3.5">Tanggal Pengajuan</th>
+                      <th className="px-5 py-3.5">Status</th>
+                      <th className="px-5 py-3.5 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {[
+                      { id: "SRT-2026-001", mhs: "26090182 · Budi Santoso", type: "Surat Keterangan Aktif Kuliah", date: "28 Jul 2026", status: "Menunggu Approval BAAK" },
+                    ].map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50">
+                        <td className="px-5 py-4 font-mono font-bold text-[#0f487b]">{item.id}</td>
+                        <td className="px-5 py-4 font-bold text-slate-800">{item.mhs}</td>
+                        <td className="px-5 py-4 font-semibold">{item.type}</td>
+                        <td className="px-5 py-4">{item.date}</td>
+                        <td className="px-5 py-4">
+                          <span className="px-2.5 py-1 bg-rose-100 text-rose-800 font-bold text-[10px] rounded-full">
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <button
+                            onClick={() => triggerToast(`Surat ${item.id} berhasil disetujui!`)}
+                            className="px-3 py-1 bg-[#0f487b] text-white font-bold text-[10px] rounded-lg hover:bg-[#00719f]"
+                          >
+                            Setujui & Terbitkan
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: SINKRONISASI PDDIKTI */}
+          {activeTab === "pddikti" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <h2 className="text-xl font-bold text-slate-800">Sinkronisasi Feeder PDDikti v2.0</h2>
+              <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center space-y-4">
+                <span className="text-4xl">☁️</span>
+                <h3 className="font-bold text-slate-800">UNSIA Feeder Sync Agent</h3>
                 <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  Data pada modul {activeTab.replace("_", " ")} ini dikoneksikan secara langsung dengan database SIAKAD (`drizzle-orm`) serta tersinkronisasi lintas sistem (HRIS, PMB, Reference-Data, Keuangan, LMS & PDDikti).
+                  Sinkronisasikan data mahasiswa, krs, nilai semester & lulusan ke server PDDikti pusat secara otomatis.
                 </p>
-                <div className="inline-block px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-semibold text-slate-700">
-                  Status Data: Connected & Active
+                <button
+                  onClick={() => triggerToast("Proses sync PDDikti berhasil dijalankan di latar belakang!")}
+                  className="px-6 py-2.5 bg-[#0f487b] text-white font-bold text-xs rounded-xl hover:bg-[#00719f] shadow-md"
+                >
+                  🚀 Jalankan Sync Feeder PDDikti Sekarang
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: AUDIT LOGS */}
+          {activeTab === "audit" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <h2 className="text-xl font-bold text-slate-800">Audit Logs Sistem Akademik</h2>
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-5 py-3.5">Aktor</th>
+                      <th className="px-5 py-3.5">Aksi / Operasi</th>
+                      <th className="px-5 py-3.5">Platform Target</th>
+                      <th className="px-5 py-3.5">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-5 py-4 font-bold text-slate-800">Admin BAAK (Bu Ratri)</td>
+                      <td className="px-5 py-4 font-semibold text-emerald-700">Approve KRS Mahasiswa (26090182)</td>
+                      <td className="px-5 py-4 font-mono font-bold">SIAKAD Platform</td>
+                      <td className="px-5 py-4 text-slate-400 font-mono">Hari ini, 01:30:00</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: LAPORAN */}
+          {activeTab === "laporan" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Laporan & Analitik Akademik</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Ringkasan laporan IPK, kelulusan, dan beban mengajar dosen.</p>
+                </div>
+                <button
+                  onClick={() => triggerToast("Mengunduh Laporan Akademik (PDF/Excel)...")}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs"
+                >
+                  📥 Export Laporan PDF
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                  <h3 className="text-sm font-bold text-slate-800">Laporan Rata-rata IPK per Prodi</h3>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between font-bold"><span>S1 Informatika</span><span className="text-emerald-600">3.52</span></div>
+                    <div className="flex justify-between font-bold"><span>S1 Sistem Informasi</span><span className="text-emerald-600">3.48</span></div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                  <h3 className="text-sm font-bold text-slate-800">Laporan Rasio Dosen : Mahasiswa</h3>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between font-bold"><span>Total Dosen Aktif</span><span>152 Dosen</span></div>
+                    <div className="flex justify-between font-bold"><span>Total Mahasiswa Aktif</span><span>3.719 Mahasiswa</span></div>
+                    <div className="flex justify-between font-bold text-[#0f487b]"><span>Rasio Akademik</span><span>1 : 24.4 (Ideal)</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: PENGATURAN */}
+          {activeTab === "pengaturan" && (
+            <div className="max-w-5xl mx-auto space-y-6 fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Pengaturan Parameter Akademik</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Batas SKS maksimum, bobot evaluasi nilai & aturan KRS.</p>
+                </div>
+                <button
+                  onClick={() => triggerToast("Pengaturan akademik berhasil disimpan.")}
+                  className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-xl shadow-xs"
+                >
+                  💾 Simpan Pengaturan
+                </button>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Maksimum SKS untuk IPK {">"}= 3.00</label>
+                    <input type="number" defaultValue={24} className="w-full p-2.5 border border-slate-200 rounded-xl outline-none font-bold" />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Maksimum SKS untuk IPK {"<"} 3.00</label>
+                    <input type="number" defaultValue={20} className="w-full p-2.5 border border-slate-200 rounded-xl outline-none font-bold" />
+                  </div>
                 </div>
               </div>
             </div>
