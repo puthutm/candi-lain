@@ -57,6 +57,7 @@ export async function POST(req: Request) {
       name: applicant.fullName,
       role: "applicant",
       registrationNumber: applicant.registrationNumber,
+      mustChangePassword: applicant.mustChangePassword ?? false,
     }), {
       httpOnly: true,
       secure: isSecure,
@@ -72,6 +73,7 @@ export async function POST(req: Request) {
         fullName: applicant.fullName,
         registrationNumber: applicant.registrationNumber,
         currentStage: applicant.currentStage,
+        mustChangePassword: applicant.mustChangePassword ?? false,
       }
     });
   } catch (error: any) {

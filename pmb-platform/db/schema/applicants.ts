@@ -29,6 +29,7 @@ export const pmbApplicants = pgTable("pmb_applicants", {
   nimGeneratedAt: timestamp("nim_generated_at", { withTimezone: true }),
   totalExamScore: text("total_exam_score"),
   passingRecommendation: text("passing_recommendation"),
+  mustChangePassword: boolean("must_change_password").default(true).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

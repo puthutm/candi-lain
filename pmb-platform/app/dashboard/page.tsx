@@ -29,6 +29,13 @@ export default function ApplicantDashboard() {
   const [invoice, setInvoice] = useState<any>(null);
   const [submittingPayment, setSubmittingPayment] = useState(false);
 
+  // Mandatory change password state
+  const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+
   // Biodata form states
   const [nik, setNik] = useState("");
   const [birthPlace, setBirthPlace] = useState("");
@@ -116,6 +123,11 @@ export default function ApplicantDashboard() {
           setProdiName(data.applicant.studyProgramName || "");
           setEntryPathName(data.applicant.entryPathName || "");
           setFormFee(parseFloat(data.applicant.entryPathFee || "0"));
+
+          if (data.applicant.mustChangePassword) {
+            setMustChangePassword(true);
+            setShowPasswordModal(true);
+          }
 
           if (data.applicant.paymentStatus === "lunas") {
             setPaymentStatus("paid");
@@ -295,6 +307,39 @@ export default function ApplicantDashboard() {
       .finally(() => setSubmittingPayment(false));
   };
 
+  const handlePasswordChangeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      triggerToast("Password baru minimal 6 karakter");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      triggerToast("Konfirmasi password tidak cocok");
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const res = await fetch("/api/applicants/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword, confirmPassword }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast("Kata sandi berhasil diperbarui! Silakan melanjutkan.");
+        setShowPasswordModal(false);
+        setMustChangePassword(false);
+      } else {
+        triggerToast("Gagal ubah kata sandi: " + data.error);
+      }
+    } catch (err: any) {
+      triggerToast("Galat: " + err.message);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -302,6 +347,10 @@ export default function ApplicantDashboard() {
         const data = await res.json();
         if (data.success && data.authenticated && data.user && data.user.role === "applicant") {
           setCandidateId(data.user.userId);
+          if (data.user.mustChangePassword) {
+            setMustChangePassword(true);
+            setShowPasswordModal(true);
+          }
           fetchApplicantDetails(data.user.userId);
           fetchMeta();
         } else {
@@ -583,6 +632,21 @@ export default function ApplicantDashboard() {
             <span className="text-slate-500 hover:text-[#0f487b] cursor-pointer">🔔</span>
           </div>
         </header>
+
+        {mustChangePassword && (
+          <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center justify-between text-amber-800 text-xs">
+            <div className="flex items-center gap-2">
+              <span>⚠️</span>
+              <span className="font-medium">Anda masih menggunakan kata sandi default. Silakan perbarui demi keamanan akun pendaftaran Anda.</span>
+            </div>
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-[10px] transition-all shadow cursor-pointer"
+            >
+              🔒 Ubah Password
+            </button>
+          </div>
+        )}
 
         {/* Scrollable Container */}
         <div className="flex-grow overflow-y-auto p-4 sm:p-6 lg:p-10 pb-24">
@@ -1573,6 +1637,59 @@ export default function ApplicantDashboard() {
           )}
         </div>
       </main>
+
+      {/* MODAL GANTI PASSWORD PERTAMA KALI */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[300] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100">
+            <div className="text-center space-y-3 mb-6">
+              <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-inner">
+                🔒
+              </div>
+              <h3 className="font-display font-black text-xl text-slate-800">Ubah Kata Sandi Pertama Kali</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Akun Anda terdaftar menggunakan kata sandi default. Demi keamanan pendaftaran Anda, silakan buat kata sandi baru sebelum melanjutkan.
+              </p>
+            </div>
+
+            <form onSubmit={handlePasswordChangeSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Kata Sandi Baru</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Minimal 6 karakter"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-[#0f487b] focus:ring-2 focus:ring-[#0f487b]/10"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Konfirmasi Kata Sandi Baru</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Ketik ulang kata sandi baru"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-[#0f487b] focus:ring-2 focus:ring-[#0f487b]/10"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={changingPassword}
+                className="w-full py-3.5 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold text-xs rounded-xl shadow-lg transition-all mt-2 disabled:opacity-50 cursor-pointer"
+              >
+                {changingPassword ? "Menyimpan Password Baru..." : "Simpan & Lanjutkan Dashboard ➔"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* TOAST */}
       {toastMessage && (

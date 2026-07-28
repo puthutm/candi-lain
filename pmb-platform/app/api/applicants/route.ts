@@ -191,6 +191,7 @@ export async function POST(req: Request) {
           studyProgramId,
           currentStage: "pendaftar",
           paymentStatus: "belum_bayar",
+          mustChangePassword: true,
         })
         .returning();
 
