@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
-type Role = "dosen" | "mahasiswa";
+type Role = "dosen" | "mahasiswa" | "admin" | "superadmin" | "kaprodi" | "pegawai" | string;
 
 interface UserProfile {
   userId: string;

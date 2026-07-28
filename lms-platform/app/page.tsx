@@ -29,8 +29,8 @@ export default function HomeDashboard() {
 
   useEffect(() => {
     if (!loading && user) {
-      const activeRole = currentRole || user.role;
-      if (activeRole === "dosen" || activeRole === "admin" || activeRole === "superadmin") {
+      const activeRole = String(currentRole || user.role || "");
+      if (["dosen", "admin", "superadmin", "kaprodi", "pegawai"].includes(activeRole)) {
         router.replace("/dosen");
       } else if (activeRole === "mahasiswa") {
         router.replace("/mahasiswa");
