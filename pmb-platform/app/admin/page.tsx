@@ -1163,13 +1163,13 @@ export default function PmbAdminDashboard() {
               {/* Queue List */}
               <div className="lg:col-span-2 space-y-3">
                 <h3 className="text-sm font-bold text-slate-500 mb-2">Antrean Dokumen Pendaftar</h3>
-                {applicants.filter((a) => a.currentStage === "unggah_berkas").length === 0 ? (
+                {applicants.filter((a) => a.currentStage === "unggah_berkas" || (a.docsCount && a.docsCount > 0)).length === 0 ? (
                   <div className="bg-white p-10 rounded-2xl border border-slate-200 text-center text-slate-400 text-sm font-semibold">
                     🎉 Tidak ada berkas masuk yang perlu diverifikasi saat ini.
                   </div>
                 ) : (
                   applicants
-                    .filter((a) => a.currentStage === "unggah_berkas")
+                    .filter((a) => a.currentStage === "unggah_berkas" || (a.docsCount && a.docsCount > 0))
                     .map((a) => (
                       <button
                         key={a.id}

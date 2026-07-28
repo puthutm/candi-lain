@@ -105,7 +105,9 @@ export async function getAdminSession() {
  */
 export async function getStaffId(): Promise<string | null> {
   const admin = await getAdminSession();
-  return admin?.id || null;
+  if (!admin?.id) return null;
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(admin.id);
+  return isUuid ? admin.id : null;
 }
 
 /**

@@ -49,7 +49,7 @@ export async function POST(req: Request) {
         .from(pmbApplicantDocuments)
         .where(eq(pmbApplicantDocuments.applicantId, targetApplicantId));
 
-      const allVerified = docs.every((d) => d.status === "terverifikasi") && docs.length === 4;
+      const allVerified = docs.length > 0 && docs.every((d) => d.status === "terverifikasi");
       const hasRejections = docs.some((d) => d.status === "perlu_revisi");
 
       const applicantList = await db
@@ -69,13 +69,12 @@ export async function POST(req: Request) {
           toStage = "isi_biodata";
         }
 
-        // If transition occurs, record in history and update stage
-        if (toStage !== fromStage) {
-          await db
-            .update(pmbApplicants)
-            .set({ currentStage: toStage, updatedAt: new Date() })
-            .where(eq(pmbApplicants.id, targetApplicantId));
+        await db
+          .update(pmbApplicants)
+          .set({ currentStage: toStage, updatedAt: new Date() })
+          .where(eq(pmbApplicants.id, targetApplicantId));
 
+        if (toStage !== fromStage) {
           await db
             .insert(pmbApplicantStatusHistory)
             .values({
