@@ -11,7 +11,7 @@ export async function POST() {
       ? `${ssoAppUrl}/api/auth/sso-logout?redirect_to=${encodeURIComponent("/auth/login")}`
       : "/auth/login";
 
-    await signOut({ redirect: false });
+    await signOut();
     return NextResponse.redirect(ssoLogoutUrl, 303);
   } catch (error: any) {
     return NextResponse.json(
