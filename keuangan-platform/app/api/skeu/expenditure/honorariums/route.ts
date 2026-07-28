@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { externalHonorariums } from "@/db/schema/expenditure";
-import { eq, desc } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import { cookies } from "next/headers";
 
 export async function GET() {

@@ -202,9 +202,6 @@ export async function POST(req: Request) {
 
         for (const { employee, position } of activeEmployees) {
           const result = calculateEmployeePayroll({
-            employeeId: employee.id,
-            fullName: employee.fullName,
-            employeeType: employee.employeeType as any,
             baseSalary: employee.baseSalary,
             ptkpStatus: employee.ptkpStatus || "TK/0",
             functionalAllowance: position?.functionalAllowance || 0,

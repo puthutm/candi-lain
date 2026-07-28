@@ -32,9 +32,9 @@ export async function POST(req: NextRequest) {
         .set({
           status,
           notes: notes || (status === "approved" ? "Disetujui" : "Ditolak"),
-          approverName: approverName || existing[0].approverName,
+          approverName: approverName || existing[0]!.approverName,
         })
-        .where(eq(payrollApprovals.id, existing[0].id));
+        .where(eq(payrollApprovals.id, existing[0]!.id));
     } else {
       await db.insert(payrollApprovals).values({
         payrollRunId,

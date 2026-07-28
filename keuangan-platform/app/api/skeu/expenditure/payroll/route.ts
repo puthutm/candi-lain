@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { payrollDisbursements, payrollDisbursementItems } from "@/db/schema/expenditure";
-import { eq, desc } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import { cookies } from "next/headers";
 
 export async function GET() {
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
     if (Array.isArray(items) && items.length > 0) {
       const values = items.map((item: any) => ({
-        payrollDisbursementId: run.id,
+        payrollDisbursementId: run!.id,
         employeeName: item.employeeName,
         employeeRole: item.employeeRole || "",
         grossAmount: item.grossAmount.toString(),

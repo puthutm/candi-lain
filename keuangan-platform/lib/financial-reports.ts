@@ -1,6 +1,5 @@
 import { db } from "@/db";
-import { chartOfAccounts, journalEntries, journalEntryLines, bankAccounts } from "@/db/schema";
-import { eq, gte, lte, and } from "drizzle-orm";
+import { chartOfAccounts, journalEntryLines } from "@/db/schema";
 
 export interface AccountReportItem {
   accountCode: string;
@@ -52,8 +51,8 @@ export async function generateIncomeStatement(
     if (!accountBalances[line.accountId]) {
       accountBalances[line.accountId] = { debit: 0, credit: 0 };
     }
-    accountBalances[line.accountId].debit += parseFloat(line.debit || "0");
-    accountBalances[line.accountId].credit += parseFloat(line.credit || "0");
+    accountBalances[line.accountId]!.debit += parseFloat(line.debit ?? "0");
+    accountBalances[line.accountId]!.credit += parseFloat(line.credit ?? "0");
   });
 
   const revenueItems: AccountReportItem[] = [];
@@ -122,8 +121,8 @@ export async function generateBalanceSheet(
     if (!accountBalances[line.accountId]) {
       accountBalances[line.accountId] = { debit: 0, credit: 0 };
     }
-    accountBalances[line.accountId].debit += parseFloat(line.debit || "0");
-    accountBalances[line.accountId].credit += parseFloat(line.credit || "0");
+    accountBalances[line.accountId]!.debit += parseFloat(line.debit ?? "0");
+    accountBalances[line.accountId]!.credit += parseFloat(line.credit ?? "0");
   });
 
   const assetItems: AccountReportItem[] = [];
@@ -176,7 +175,7 @@ export async function generateBalanceSheet(
   const isBalanced = Math.abs(totalAssets - (totalLiabilities + totalEquity)) < 1.0;
 
   return {
-    asOfDate: asOfDate || new Date().toISOString().split("T")[0],
+    asOfDate: (asOfDate || new Date().toISOString().split("T")[0]) ?? "",
     assetItems,
     liabilityItems,
     equityItems,

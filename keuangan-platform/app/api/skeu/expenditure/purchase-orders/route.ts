@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { purchaseOrders, poApprovals } from "@/db/schema/expenditure";
-import { eq, desc, sql } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import { cookies } from "next/headers";
 
 export async function GET() {
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
     // Create initial approval stage
     await db.insert(poApprovals).values({
-      purchaseOrderId: order.id,
+      purchaseOrderId: order!.id,
       stage: "kepala_biro",
       approverRole: "kepala_biro",
       action: "pending",

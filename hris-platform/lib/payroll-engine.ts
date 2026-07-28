@@ -7,7 +7,7 @@ import {
   payrollApprovals,
 } from "@/db/schema";
 import { calculateEmployeePayroll } from "./payroll-calculator";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export interface PayrollRunExecutionResult {
   payrollRunId: string;
@@ -60,7 +60,7 @@ export async function processPayrollRun(
   for (const stepName of steps) {
     const stepStatus = stepName === "persetujuan" ? "berjalan" : "selesai";
     await db.insert(payrollRunSteps).values({
-      payrollRunId: run.id,
+      payrollRunId: run!.id,
       stepName,
       status: stepStatus,
       completedAt: stepName === "persetujuan" ? null : new Date(),
@@ -81,7 +81,7 @@ export async function processPayrollRun(
     totalNet += summary.netSalary;
 
     await db.insert(payslips).values({
-      payrollRunId: run.id,
+      payrollRunId: run!.id,
       employeeId: emp.id,
       grossSalary: summary.grossSalary,
       pph21Amount: summary.pph21.pph21Amount,
@@ -100,13 +100,13 @@ export async function processPayrollRun(
       totalGross,
       totalNet,
     })
-    .where(eq(payrollRuns.id, run.id));
+    .where(eq(payrollRuns.id, run!.id));
 
   // 6. Init Approvals
   const roles = ["admin_payroll", "kabag_sdm", "warek_2"] as const;
   for (const r of roles) {
     await db.insert(payrollApprovals).values({
-      payrollRunId: run.id,
+      payrollRunId: run!.id,
       approverRole: r,
       approverName: r === "admin_payroll" ? "Admin Payroll SDM" : r === "kabag_sdm" ? "Kabag SDM" : "Wakil Rektor II",
       status: r === "admin_payroll" ? "approved" : "pending",
@@ -114,7 +114,7 @@ export async function processPayrollRun(
   }
 
   return {
-    payrollRunId: run.id,
+    payrollRunId: run!.id,
     period,
     eligibleCount,
     totalGross,

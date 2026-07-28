@@ -1,12 +1,5 @@
 import { db } from "@/db";
-import {
-  bankMutations,
-  bankAccounts,
-  studentInvoices,
-  journalEntries,
-  journalEntryLines,
-  chartOfAccounts,
-} from "@/db/schema";
+import { bankMutations, studentInvoices } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export interface ReconciliationResult {

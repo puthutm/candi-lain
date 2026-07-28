@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { leaveRequests, leaveTypes, leaveBalances } from "@/db/schema/leave";
+import { leaveRequests, leaveTypes } from "@/db/schema/leave";
 import { employees } from "@/db/schema/civitas";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { cookies } from "next/headers";
 
 // GET: Get employee leave requests and balance
@@ -28,11 +28,11 @@ export async function GET(req: Request) {
         .limit(1);
 
       if (emp) {
-        employeeId = emp.id;
+        employeeId = emp!.id;
       } else {
         // Fallback: pick first active employee for dev mode preview
         const [firstEmp] = await db.select().from(employees).limit(1);
-        employeeId = firstEmp?.id;
+        employeeId = firstEmp?.id ?? null;
       }
     }
 

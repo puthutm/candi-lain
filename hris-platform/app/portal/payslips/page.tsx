@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import AppSwitcher from "@/app/components/AppSwitcher";
 
 interface Payslip {
@@ -114,13 +114,13 @@ export default function EmployeePayslipPortal() {
                       <td className="py-3 px-2 font-bold text-white">{ps.employeeName}</td>
                       <td className="py-3 px-2 font-mono text-slate-400">{ps.employeeNumber}</td>
                       <td className="py-3 px-2 font-mono text-slate-200">
-                        Rp {(ps.grossSalary || ps.baseSalary || 0).toLocaleString("id-ID")}
+                        Rp {(ps.grossSalary || 0).toLocaleString("id-ID")}
                       </td>
                       <td className="py-3 px-2 font-mono text-rose-400">
                         -Rp {(ps.totalDeductions || 0).toLocaleString("id-ID")}
                       </td>
                       <td className="py-3 px-2 font-mono font-bold text-emerald-400">
-                        Rp {(ps.netSalary || ps.baseSalary || 0).toLocaleString("id-ID")}
+                        Rp {(ps.netSalary || 0).toLocaleString("id-ID")}
                       </td>
                       <td className="py-3 px-2 text-right">
                         <button
