@@ -116,7 +116,7 @@ const FALLBACK_REFERENCES: Record<string, Array<{ code: string; name: string }>>
 };
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ categoryCode: string }> }
 ) {
   const { categoryCode } = await params;
