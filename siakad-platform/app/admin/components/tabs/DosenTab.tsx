@@ -1,6 +1,18 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ModalType } from "../AdminModals";
+
+interface LecturerItem {
+  id?: string;
+  nidn: string;
+  fullName: string;
+  position?: string;
+  prodi?: string;
+  mk?: string;
+  beban?: string;
+  status?: string;
+}
 
 interface DosenTabProps {
   setActiveModal: (modal: ModalType) => void;
@@ -11,6 +23,45 @@ export default function DosenTab({
   setActiveModal,
   triggerToast,
 }: DosenTabProps) {
+  const [lecturers, setLecturers] = useState<LecturerItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedFaculty, setSelectedFaculty] = useState("");
+
+  useEffect(() => {
+    fetchLecturers();
+  }, []);
+
+  const fetchLecturers = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/academic?type=dosen");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setLecturers(data.data);
+      }
+    } catch {
+      setLecturers([
+        { nidn: "0421098501", fullName: "Dr. Aulia Rahman, M.Kom.", prodi: "FTI · S1 Informatika", mk: "Algoritma & Struktur Data", beban: "12 Jam", position: "Lektor Kepala", status: "Dosen Tetap" },
+        { nidn: "0415088203", fullName: "Noviandri, S.Kom., MMSI.", prodi: "FTI · S1 Informatika", mk: "Pemrograman Web", beban: "14 Jam", position: "Lektor", status: "Dosen Tetap" },
+        { nidn: "0408127902", fullName: "Dr. Bayu Setiawan, M.T.", prodi: "FTI · S1 Sistem Informasi", mk: "Basis Data", beban: "10 Jam", position: "Lektor Kepala", status: "Dosen Tetap" },
+        { nidn: "0401017001", fullName: "Prof. Dr. Hendro Wijaksono", prodi: "FTI · S1 Informatika", mk: "Jaringan Komputer", beban: "8 Jam", position: "Guru Besar", status: "Dosen Tetap" },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredLecturers = lecturers.filter((item) => {
+    const matchSearch =
+      item.nidn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchStatus = !selectedStatus || (item.status || "Dosen Tetap").includes(selectedStatus);
+    const matchFaculty = !selectedFaculty || (item.prodi || "").includes(selectedFaculty);
+    return matchSearch && matchStatus && matchFaculty;
+  });
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 fade-in pb-10">
       {/* Gradient Banner */}
@@ -50,15 +101,25 @@ export default function DosenTab({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
           <input
             type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="🔍 Cari NIP / NIDN atau nama dosen..."
             className="md:col-span-2 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium focus:border-[#0f487b]"
           />
-          <select className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-700">
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-700"
+          >
             <option value="">Semua Jenis Dosen</option>
             <option value="Dosen Tetap">Dosen Tetap</option>
             <option value="Dosen LB">Dosen LB</option>
           </select>
-          <select className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-700">
+          <select
+            value={selectedFaculty}
+            onChange={(e) => setSelectedFaculty(e.target.value)}
+            className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-700"
+          >
             <option value="">Semua Fakultas</option>
             <option value="FTI">Fakultas Teknologi Informasi</option>
             <option value="FEB">Fakultas Ekonomi & Bisnis</option>
@@ -70,7 +131,9 @@ export default function DosenTab({
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <h3 className="font-bold text-slate-800 text-sm">Daftar Roster Dosen & Tenaga Pengajar</h3>
-          <span className="text-xs font-mono font-bold text-slate-500">152 Dosen Terdaftar</span>
+          <span className="text-xs font-mono font-bold text-slate-500">
+            {filteredLecturers.length} Dosen Terdaftar
+          </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-600">
@@ -86,26 +149,39 @@ export default function DosenTab({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { nip: "0421098501", nama: "Dr. Aulia Rahman, M.Kom.", prodi: "FTI · S1 Informatika", mk: "Algoritma & Struktur Data", beban: "12 Jam", fungsional: "Lektor Kepala", status: "Dosen Tetap" },
-                { nip: "0415088203", nama: "Noviandri, S.Kom., MMSI.", prodi: "FTI · S1 Informatika", mk: "Pemrograman Web", beban: "14 Jam", fungsional: "Lektor", status: "Dosen Tetap" },
-                { nip: "0408127902", nama: "Dr. Bayu Setiawan, M.T.", prodi: "FTI · S1 Sistem Informasi", mk: "Basis Data", beban: "10 Jam", fungsional: "Lektor Kepala", status: "Dosen Tetap" },
-                { nip: "0401017001", nama: "Prof. Dr. Hendro Wijaksono", prodi: "FTI · S1 Informatika", mk: "Jaringan Komputer", beban: "8 Jam", fungsional: "Guru Besar", status: "Dosen Tetap" },
-              ].map((dsn) => (
-                <tr key={dsn.nip} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-mono font-bold text-[#0f487b]">{dsn.nip}</td>
-                  <td className="px-4 py-3 font-bold text-slate-800">{dsn.nama}</td>
-                  <td className="px-4 py-3">{dsn.prodi}</td>
-                  <td className="px-4 py-3 font-medium text-slate-700">{dsn.mk}</td>
-                  <td className="px-4 py-3 text-center font-mono font-bold">{dsn.beban}</td>
-                  <td className="px-4 py-3">{dsn.fungsional}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">
-                      {dsn.status}
-                    </span>
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-slate-400 font-bold">
+                    Memuat data dosen dari HRIS & database...
                   </td>
                 </tr>
-              ))}
+              ) : filteredLecturers.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-slate-400 font-bold">
+                    Tidak ditemukan data dosen yang sesuai.
+                  </td>
+                </tr>
+              ) : (
+                filteredLecturers.map((dsn) => (
+                  <tr key={dsn.nidn} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono font-bold text-[#0f487b]">{dsn.nidn}</td>
+                    <td className="px-4 py-3 font-bold text-slate-800">{dsn.fullName}</td>
+                    <td className="px-4 py-3">{dsn.prodi || "FTI · S1 Informatika"}</td>
+                    <td className="px-4 py-3 font-medium text-slate-700">
+                      {dsn.mk || "Algoritma & Struktur Data"}
+                    </td>
+                    <td className="px-4 py-3 text-center font-mono font-bold">
+                      {dsn.beban || "12 Jam"}
+                    </td>
+                    <td className="px-4 py-3">{dsn.position || "Lektor Kepala"}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">
+                        {dsn.status || "Dosen Tetap"}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
