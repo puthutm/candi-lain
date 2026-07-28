@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRole } from "./context/RoleContext";
 import { INSTITUTION_NAME, INSTITUTION_SHORT_NAME, APP_NAME } from "@/lib/client-config";
 
+import { useRouter } from "next/navigation";
+
 interface LMSClass {
   id: string;
   courseCode: string;
@@ -18,11 +20,23 @@ interface LMSClass {
 
 export default function HomeDashboard() {
   const { currentRole, user, toggleRole, logout, loading } = useRole();
+  const router = useRouter();
   const [classes, setClasses] = useState<LMSClass[]>([]);
   const [fetching, setFetching] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string>("");
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
+
+  useEffect(() => {
+    if (!loading && user) {
+      const activeRole = currentRole || user.role;
+      if (activeRole === "dosen" || activeRole === "admin" || activeRole === "superadmin") {
+        router.replace("/dosen");
+      } else if (activeRole === "mahasiswa") {
+        router.replace("/mahasiswa");
+      }
+    }
+  }, [user, currentRole, loading, router]);
 
   useEffect(() => {
     if (user) {
