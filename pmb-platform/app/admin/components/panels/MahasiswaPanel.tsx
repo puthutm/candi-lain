@@ -22,6 +22,12 @@ export default function MahasiswaPanel({
             Terbitkan Nomor Induk Mahasiswa (NIM) & ekspor otomatis data registrasi ke SIAKAD Platform.
           </p>
         </div>
+        <button
+          onClick={() => triggerToast("Memperbarui data penerimaan mahasiswa...")}
+          className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer"
+        >
+          🔄 Refresh Status
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden text-xs">

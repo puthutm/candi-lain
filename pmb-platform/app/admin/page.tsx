@@ -269,6 +269,11 @@ export default function PmbAdminDashboard() {
 
         {/* Scrollable Workspace */}
         <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+          {error && (
+            <div className="mb-4 p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-bold">
+              ⚠️ {error}
+            </div>
+          )}
           {activePanel === "dashboard" && (
             <DashboardPanel
               applicantsCount={applicants.length}

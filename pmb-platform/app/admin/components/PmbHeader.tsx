@@ -10,7 +10,7 @@ export default function PmbHeader({ activeWaveName }: PmbHeaderProps) {
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 shadow-xs">
       <div className="flex items-center gap-3">
-        <AppSwitcher currentApp="pmb" />
+        <AppSwitcher />
         <span className="h-5 w-px bg-slate-200"></span>
         <div className="flex items-center gap-2 text-xs">
           <span className="font-bold text-slate-700">Gelombang Aktif:</span>
