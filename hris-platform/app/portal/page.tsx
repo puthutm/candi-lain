@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface Employee {
   id: string;
@@ -252,6 +253,12 @@ export default function HrisPortalDashboard() {
             >
               {attendanceButtonText}
             </button>
+            <Link
+              href="/portal/profile"
+              className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl transition w-full sm:w-auto text-center shadow-lg shadow-emerald-900/20"
+            >
+              📝 Lengkapi Biodata (Profile)
+            </Link>
             <button 
               onClick={() => setShowLeaveForm(!showLeaveForm)}
               className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl transition w-full sm:w-auto text-center"

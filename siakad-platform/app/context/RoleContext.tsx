@@ -32,11 +32,15 @@ export function RoleProvider({ children }: { children: ReactNode }) {
         setUser(data.user);
       } else {
         setUser(null);
-        redirectToSSO();
+        if (pathname && !pathname.startsWith("/auth/")) {
+          redirectToSSO();
+        }
       }
     } catch (err) {
       setUser(null);
-      redirectToSSO();
+      if (pathname && !pathname.startsWith("/auth/")) {
+        redirectToSSO();
+      }
     } finally {
       setLoading(false);
     }
@@ -47,6 +51,10 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    if (pathname && pathname.startsWith("/auth/")) {
+      setLoading(false);
+      return;
+    }
     refreshSession();
   }, [pathname]);
 

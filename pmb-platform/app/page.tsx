@@ -63,6 +63,33 @@ export default function PmbPublikPage() {
     n === 0 ? "Gratis" : new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n);
 
   useEffect(() => {
+    async function checkAdminSession() {
+      try {
+        const res = await fetch("/api/auth/session");
+        const session = await res.json();
+        const role = session?.user?.role;
+        const adminRoles = [
+          "admin",
+          "superadmin",
+          "super_admin",
+          "admin_pmb",
+          "super_admin_pmb",
+          "verifikator_berkas",
+          "staff_keuangan",
+          "staff_marketing",
+          "dosen",
+          "pegawai",
+        ];
+        if (role && adminRoles.includes(role)) {
+          window.location.href = "/admin";
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    checkAdminSession();
+
     async function loadMetadata() {
       try {
         const res = await fetch("/api/meta");

@@ -1,19 +1,37 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbApplicantDocuments, pmbDocumentTypes, pmbApplicants, pmbApplicantStatusHistory } from "@/db/schema/applicants";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    const applicantId = formData.get("applicantId") as string;
+    const rawApplicantId = formData.get("applicantId") as string;
     const documentCode = formData.get("documentCode") as string;
     const file = formData.get("file") as File | null;
 
-    if (!applicantId || !documentCode || !file) {
+    if (!rawApplicantId || !documentCode || !file) {
       return NextResponse.json({ success: false, error: "applicantId, documentCode, dan file wajib diisi" }, { status: 400 });
+    }
+
+    // Resolve applicantId UUID
+    let applicantId = rawApplicantId;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawApplicantId);
+    if (!isUuid) {
+      const applicantRows = await db
+        .select()
+        .from(pmbApplicants)
+        .where(
+          sql`${pmbApplicants.id}::text = ${rawApplicantId} OR ${pmbApplicants.registrationNumber} = ${rawApplicantId} OR ${pmbApplicants.email} = ${rawApplicantId}`
+        )
+        .limit(1);
+      if (applicantRows.length > 0) {
+        applicantId = applicantRows[0]!.id;
+      } else {
+        return NextResponse.json({ success: false, error: "Kandidat PMB tidak ditemukan di database" }, { status: 404 });
+      }
     }
 
     // Save file to /public/uploads/documents/<applicantId>/
@@ -30,19 +48,22 @@ export async function POST(req: Request) {
     const fileUrl = `/uploads/documents/${applicantId}/${filename}`;
 
     // Upsert document record in DB
-    const docType = await db
+    let docType = await db
       .select()
       .from(pmbDocumentTypes)
       .where(eq(pmbDocumentTypes.code, documentCode))
       .limit(1);
 
     if (docType.length === 0) {
-      // If no docType found, still succeed but just store the file URL
-      return NextResponse.json({
-        success: true,
-        fileUrl,
-        message: `File ${documentCode} berhasil diunggah`,
-      });
+      const [newDocType] = await db
+        .insert(pmbDocumentTypes)
+        .values({
+          name: documentCode.replace(/_/g, " "),
+          code: documentCode,
+          isRequired: true,
+        })
+        .returning();
+      docType = [newDocType!];
     }
 
     const selectedDocType = docType[0]!;
@@ -67,6 +88,26 @@ export async function POST(req: Request) {
       await db
         .insert(pmbApplicantDocuments)
         .values({ applicantId, documentTypeId: selectedDocType.id, fileUrl, status: "menunggu_verifikasi" });
+    }
+
+    if (documentCode === "PAS_FOTO") {
+      try {
+        const { pmbApplicantProfiles } = await import("@/db/schema/applicants");
+        const existingProfile = await db
+          .select()
+          .from(pmbApplicantProfiles)
+          .where(eq(pmbApplicantProfiles.applicantId, applicantId))
+          .limit(1);
+
+        if (existingProfile.length > 0) {
+          await db
+            .update(pmbApplicantProfiles)
+            .set({ photoUrl: fileUrl, updatedAt: new Date() })
+            .where(eq(pmbApplicantProfiles.applicantId, applicantId));
+        }
+      } catch (e) {
+        console.warn("Could not update profile photoUrl:", e);
+      }
     }
 
     // Check if 4 required documents uploaded → advance stage

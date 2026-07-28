@@ -41,13 +41,13 @@ export function RoleProvider({ children }: { children: ReactNode }) {
         setCurrentRole(data.user.role);
       } else {
         setUser(null);
-        if (pathname !== "/login" && pathname !== "/api/setup") {
+        if (pathname && !pathname.startsWith("/auth") && pathname !== "/login" && pathname !== "/api/setup") {
           redirectToSSO();
         }
       }
     } catch (err) {
       setUser(null);
-      if (pathname !== "/login" && pathname !== "/api/setup") {
+      if (pathname && !pathname.startsWith("/auth") && pathname !== "/login" && pathname !== "/api/setup") {
         redirectToSSO();
       }
     } finally {

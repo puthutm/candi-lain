@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   INSTITUTION_NAME,
@@ -84,7 +84,7 @@ export default function ApplicantDashboard() {
 
   // Photo, signature & doc upload states
   const [pasFotoPreview, setPasFotoPreview] = useState<string | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const isDrawingRef = useRef(false);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -114,11 +114,14 @@ export default function ApplicantDashboard() {
             [docCode]: data.fileUrl || "true",
           }));
           triggerToast(`✓ ${docCode} berhasil diunggah!`);
+          if (candidateId) {
+            fetchApplicantDetails(candidateId);
+          }
         } else {
-          triggerToast("Gagal upload: " + data.error);
+          triggerToast("Gagal upload: " + (data.error || "Terjadi kesalahan"));
         }
       })
-      .catch(() => triggerToast("Gagal menghubungi server"));
+      .catch((err) => triggerToast("Gagal menghubungi server: " + (err.message || "Network error")));
   };
 
   const formatIDR = (n: number) =>
@@ -175,7 +178,8 @@ export default function ApplicantDashboard() {
           const files: { [key: string]: string } = {};
           data.documents.forEach((d: any) => {
             if (d.status === "terverifikasi" || d.status === "menunggu_verifikasi") {
-              files[d.documentTypeId] = d.fileUrl;
+              if (d.documentTypeCode) files[d.documentTypeCode] = d.fileUrl;
+              if (d.documentTypeId) files[d.documentTypeId] = d.fileUrl;
             }
           });
           setUploadedFiles(files);
@@ -1548,47 +1552,55 @@ export default function ApplicantDashboard() {
                         className="w-full touch-none cursor-crosshair bg-white"
                         onMouseDown={(e) => {
                           const canvas = e.currentTarget;
-                          const ctx = canvas.getContext("2d")!;
+                          const ctx = canvas.getContext("2d");
+                          if (!ctx) return;
                           const rect = canvas.getBoundingClientRect();
                           const scaleX = canvas.width / rect.width;
                           const scaleY = canvas.height / rect.height;
                           ctx.beginPath();
                           ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
-                          setIsDrawing(true);
-                          canvas.onmousemove = (ev) => {
-                            if (!isDrawing) return;
+                          isDrawingRef.current = true;
+
+                          const onMouseMove = (ev: MouseEvent) => {
+                            if (!isDrawingRef.current) return;
                             ctx.lineTo((ev.clientX - rect.left) * scaleX, (ev.clientY - rect.top) * scaleY);
                             ctx.strokeStyle = "#1e293b";
                             ctx.lineWidth = 2;
                             ctx.lineCap = "round";
                             ctx.stroke();
                           };
-                          canvas.onmouseup = () => {
-                            setIsDrawing(false);
-                            canvas.onmousemove = null;
-                            canvas.onmouseup = null;
+
+                          const onMouseUp = () => {
+                            isDrawingRef.current = false;
+                            window.removeEventListener("mousemove", onMouseMove);
+                            window.removeEventListener("mouseup", onMouseUp);
                           };
+
+                          window.addEventListener("mousemove", onMouseMove);
+                          window.addEventListener("mouseup", onMouseUp);
                         }}
                         onTouchStart={(e) => {
                           e.preventDefault();
                           const touch = e.touches[0];
                           if (!touch) return;
                           const canvas = e.currentTarget;
-                          const ctx = canvas.getContext("2d")!;
+                          const ctx = canvas.getContext("2d");
+                          if (!ctx) return;
                           const rect = canvas.getBoundingClientRect();
                           const scaleX = canvas.width / rect.width;
                           const scaleY = canvas.height / rect.height;
                           ctx.beginPath();
                           ctx.moveTo((touch.clientX - rect.left) * scaleX, (touch.clientY - rect.top) * scaleY);
-                          setIsDrawing(true);
+                          isDrawingRef.current = true;
                         }}
                         onTouchMove={(e) => {
                           e.preventDefault();
-                          if (!isDrawing) return;
+                          if (!isDrawingRef.current) return;
                           const touch = e.touches[0];
                           if (!touch) return;
                           const canvas = e.currentTarget;
-                          const ctx = canvas.getContext("2d")!;
+                          const ctx = canvas.getContext("2d");
+                          if (!ctx) return;
                           const rect = canvas.getBoundingClientRect();
                           const scaleX = canvas.width / rect.width;
                           const scaleY = canvas.height / rect.height;
@@ -1598,7 +1610,9 @@ export default function ApplicantDashboard() {
                           ctx.lineCap = "round";
                           ctx.stroke();
                         }}
-                        onTouchEnd={() => setIsDrawing(false)}
+                        onTouchEnd={() => {
+                          isDrawingRef.current = false;
+                        }}
                       />
                     </div>
                     <div className="flex items-center justify-between mt-2">

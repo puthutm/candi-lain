@@ -126,6 +126,14 @@ export default function OnboardingPage() {
             Portal Onboarding Akademik
           </p>
 
+          <Link
+            href="/biodata"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm text-white/70 hover:bg-white/10 hover:text-white transition-all"
+          >
+            <span>👤</span>
+            <span>Biodata Mahasiswa</span>
+          </Link>
+
           <button
             onClick={() => {
               setActiveTab("dashboard");

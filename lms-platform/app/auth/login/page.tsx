@@ -9,6 +9,7 @@ import { useSearchParams } from "next/navigation";
 function AuthLoginPageContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+  const returnTo = searchParams.get("return_to") || searchParams.get("callbackUrl") || "/";
   const started = useRef(false);
 
   useEffect(() => {
@@ -16,8 +17,8 @@ function AuthLoginPageContent() {
     if (started.current) return;
     started.current = true;
 
-    signIn("unsia-sso");
-  }, [error]);
+    signIn("unsia-sso", { callbackUrl: returnTo });
+  }, [error, returnTo]);
 
   if (error) {
     return (
