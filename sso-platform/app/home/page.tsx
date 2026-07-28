@@ -1,6 +1,6 @@
 import { getSessionUser, isSuperAdmin } from "@/lib/auth-helper";
 import { db } from "@/db";
-import { userApplicationRoles } from "@/db/schema/rbac";
+import { userApplicationRoles, applicationRoles } from "@/db/schema/rbac";
 import { applications } from "@/db/schema/applications";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { logoutAction } from "./actions";
 import Link from "next/link";
 import { PORTAL_NAME } from "@/lib/client-config";
+import RoleSelectorModal from "./RoleSelectorModal";
 
 export default async function HomePage() {
   const user = await getSessionUser();
@@ -249,66 +250,55 @@ export default async function HomePage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {(
-                await Promise.all(
-                  userApps.map(async (app) => {
-                    const defaultUri = app.redirectUris[0] || "";
+            <RoleSelectorModal
+              apps={await Promise.all(
+                userApps.map(async (app) => {
+                  const defaultUri = app.redirectUris[0] || "";
+                  let authUrl = "";
+                  try {
+                    const uriUrl = new URL(defaultUri);
+                    const isLocalOrContainer =
+                      uriUrl.hostname === "localhost" ||
+                      uriUrl.hostname === "127.0.0.1" ||
+                      !uriUrl.hostname.includes(".");
 
-                    let authUrl = "";
-                    try {
-                      const uriUrl = new URL(defaultUri);
-                      const isLocalOrContainer =
-                        uriUrl.hostname === "localhost" ||
-                        uriUrl.hostname === "127.0.0.1" ||
-                        !uriUrl.hostname.includes(".");
-
-                      if (isLocalOrContainer) {
-                        uriUrl.hostname = hostname;
-                      }
-                      uriUrl.pathname = "/admin";
-                      uriUrl.search = "";
-                      authUrl = uriUrl.toString();
-                    } catch {
-                      authUrl = "/admin";
+                    if (isLocalOrContainer) {
+                      uriUrl.hostname = hostname;
                     }
+                    uriUrl.pathname = "/admin";
+                    uriUrl.search = "";
+                    authUrl = uriUrl.toString();
+                  } catch {
+                    authUrl = "/admin";
+                  }
 
-                    return { app, authUrl };
-                  })
-                )
-              ).map(({ app, authUrl }) => (
-                <a
-                  key={app.id}
-                  href={authUrl}
-                  className="group relative flex flex-col justify-between rounded-xl border border-white/10 bg-white/[0.02] p-6 shadow-md transition-all hover:-translate-y-1 hover:border-indigo-500/30 hover:bg-white/[0.04]"
-                >
-                  <div className="flex items-start gap-4">
-                    {app.logoUrl ? (
-                      <img
-                        src={app.logoUrl}
-                        alt={`${app.name} Logo`}
-                        className="h-12 w-12 rounded-lg border border-white/10 p-1 bg-white/5 object-contain"
-                      />
-                    ) : (
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-xl font-bold text-indigo-400">
-                        {app.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="text-lg font-bold group-hover:text-indigo-400 transition-colors">
-                        {app.name}
-                      </h3>
-                      <p className="mt-1 text-xs text-slate-400 line-clamp-2">
-                        {app.description || "No description provided."}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-6 flex items-center justify-end text-xs font-semibold text-indigo-400 group-hover:underline">
-                    Access Application &rarr;
-                  </div>
-                </a>
-              ))}
-            </div>
+                  const appRoles = await db
+                    .select({
+                      id: applicationRoles.id,
+                      roleKey: applicationRoles.roleKey,
+                      roleName: applicationRoles.roleName,
+                    })
+                    .from(userApplicationRoles)
+                    .innerJoin(applicationRoles, eq(userApplicationRoles.roleId, applicationRoles.id))
+                    .where(
+                      and(
+                        eq(userApplicationRoles.userId, user.id),
+                        eq(userApplicationRoles.applicationId, app.id),
+                        eq(userApplicationRoles.status, "active")
+                      )
+                    );
+
+                  return {
+                    id: app.id,
+                    name: app.name,
+                    description: app.description || "",
+                    logoUrl: app.logoUrl,
+                    authUrl,
+                    roles: appRoles,
+                  };
+                })
+              )}
+            />
           )}
         </main>
       </div>

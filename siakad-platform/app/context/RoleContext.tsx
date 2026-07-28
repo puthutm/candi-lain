@@ -8,10 +8,15 @@ interface UserProfile {
   name: string;
   username: string;
   role: string;
+  roles?: string[];
 }
 
 interface RoleContextProps {
   user: UserProfile | null;
+  currentRole: string;
+  roles: string[];
+  switchRole: (newRole: string) => void;
+  toggleRole: () => void;
   logout: () => Promise<void>;
   loading: boolean;
   refreshSession: () => Promise<void>;
@@ -21,6 +26,8 @@ const RoleContext = createContext<RoleContextProps | undefined>(undefined);
 
 export function RoleProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [currentRole, setCurrentRole] = useState<string>("mahasiswa");
+  const [rolesList, setRolesList] = useState<string[]>(["mahasiswa", "dosen", "admin"]);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
 
@@ -30,6 +37,11 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       if (data.success && data.user) {
         setUser(data.user);
+        const userRoles: string[] = data.user.roles && data.user.roles.length > 0 
+          ? data.user.roles 
+          : [data.user.role || "mahasiswa"];
+        setRolesList(userRoles);
+        setCurrentRole(data.user.role || userRoles[0] || "mahasiswa");
       } else {
         setUser(null);
         if (pathname && !pathname.startsWith("/auth/")) {
@@ -43,6 +55,23 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const switchRole = (newRole: string) => {
+    setCurrentRole(newRole);
+    if (user) {
+      setUser({ ...user, role: newRole });
+    }
+  };
+
+  const toggleRole = () => {
+    if (rolesList.length > 1) {
+      const nextIdx = (rolesList.indexOf(currentRole) + 1) % rolesList.length;
+      const nextRole = rolesList[nextIdx];
+      if (nextRole) {
+        switchRole(nextRole);
+      }
     }
   };
 
@@ -69,7 +98,18 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <RoleContext.Provider value={{ user, logout, loading, refreshSession }}>
+    <RoleContext.Provider
+      value={{
+        user,
+        currentRole,
+        roles: rolesList,
+        switchRole,
+        toggleRole,
+        logout,
+        loading,
+        refreshSession,
+      }}
+    >
       {children}
     </RoleContext.Provider>
   );

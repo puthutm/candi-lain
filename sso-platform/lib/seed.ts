@@ -293,20 +293,21 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         await getOrInsertRole(insertedApp.id, "kaprodi", "Kaprodi", "Head of Study Program role in SIAKAD", false);
         const adminRole = await getOrInsertRole(insertedApp.id, "admin", "Admin", "Administrator in SIAKAD", false);
 
-        // Assignments
-        if (adminUser && adminRole) await assignUserRole(adminUser.id, insertedApp.id, adminRole.id);
-        if (superadminUser && adminRole) await assignUserRole(superadminUser.id, insertedApp.id, adminRole.id);
-        if (mahasiswaUser && mhsRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, mhsRole.id);
-        if (dosenUser && dsnRole) await assignUserRole(dosenUser.id, insertedApp.id, dsnRole.id);
+        if (adminUser) await assignUserRole(adminUser.id, insertedApp.id, adminRole.id);
+        if (superadminUser) await assignUserRole(superadminUser.id, insertedApp.id, adminRole.id);
+        if (pegawaiUser) await assignUserRole(pegawaiUser.id, insertedApp.id, adminRole.id);
+        if (mahasiswaUser) await assignUserRole(mahasiswaUser.id, insertedApp.id, mhsRole.id);
+        if (dosenUser) await assignUserRole(dosenUser.id, insertedApp.id, dsnRole.id);
 
       } else if (appData.clientId === "lms-platform") {
         const mhsRole = await getOrInsertRole(insertedApp.id, "mahasiswa", "Mahasiswa", "Student role in LMS", true);
         const dsnRole = await getOrInsertRole(insertedApp.id, "dosen", "Dosen", "Lecturer role in LMS", false);
 
-        if (adminUser && mhsRole) await assignUserRole(adminUser.id, insertedApp.id, mhsRole.id);
-        if (superadminUser && mhsRole) await assignUserRole(superadminUser.id, insertedApp.id, mhsRole.id);
-        if (mahasiswaUser && mhsRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, mhsRole.id);
-        if (dosenUser && dsnRole) await assignUserRole(dosenUser.id, insertedApp.id, dsnRole.id);
+        if (adminUser) await assignUserRole(adminUser.id, insertedApp.id, dsnRole.id);
+        if (superadminUser) await assignUserRole(superadminUser.id, insertedApp.id, dsnRole.id);
+        if (mahasiswaUser) await assignUserRole(mahasiswaUser.id, insertedApp.id, mhsRole.id);
+        if (dosenUser) await assignUserRole(dosenUser.id, insertedApp.id, dsnRole.id);
+        if (pegawaiUser) await assignUserRole(pegawaiUser.id, insertedApp.id, dsnRole.id);
 
       } else if (appData.clientId === "pmb-platform") {
         const adminRole = await getOrInsertRole(insertedApp.id, "admin", "Admin PMB", "Administrator role in PMB", false);
@@ -315,37 +316,60 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         const keuanganRole = await getOrInsertRole(insertedApp.id, "staff_keuangan", "Staf Keuangan PMB", "Finance reconciliator staff in PMB", false);
         const marketingRole = await getOrInsertRole(insertedApp.id, "staff_marketing", "Staf Marketing PMB", "Marketing and campaigns staff in PMB", false);
 
-        if (adminUser && adminRole) await assignUserRole(adminUser.id, insertedApp.id, adminRole.id);
-        if (superadminUser && adminRole) await assignUserRole(superadminUser.id, insertedApp.id, adminRole.id);
-        if (mahasiswaUser && pendaftarRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, pendaftarRole.id);
-        if (dosenUser && verifikatorRole) await assignUserRole(dosenUser.id, insertedApp.id, verifikatorRole.id);
-        if (dosenUser && keuanganRole) await assignUserRole(dosenUser.id, insertedApp.id, keuanganRole.id);
-        if (dosenUser && marketingRole) await assignUserRole(dosenUser.id, insertedApp.id, marketingRole.id);
+        if (adminUser) await assignUserRole(adminUser.id, insertedApp.id, adminRole.id);
+        if (superadminUser) await assignUserRole(superadminUser.id, insertedApp.id, adminRole.id);
+        if (mahasiswaUser) await assignUserRole(mahasiswaUser.id, insertedApp.id, pendaftarRole.id);
+
+        if (dosenUser) {
+          await assignUserRole(dosenUser.id, insertedApp.id, verifikatorRole.id);
+          await assignUserRole(dosenUser.id, insertedApp.id, keuanganRole.id);
+          await assignUserRole(dosenUser.id, insertedApp.id, marketingRole.id);
+        }
+
+        if (pegawaiUser) {
+          await assignUserRole(pegawaiUser.id, insertedApp.id, adminRole.id);
+          await assignUserRole(pegawaiUser.id, insertedApp.id, verifikatorRole.id);
+          await assignUserRole(pegawaiUser.id, insertedApp.id, keuanganRole.id);
+          await assignUserRole(pegawaiUser.id, insertedApp.id, marketingRole.id);
+        }
 
       } else if (appData.clientId === "keuangan-platform") {
         const kepalaBiroRole = await getOrInsertRole(insertedApp.id, "kepala_biro", "Kepala Biro Keuangan", "Chief Financial Officer", false);
         const stafPenerimaanRole = await getOrInsertRole(insertedApp.id, "staf_penerimaan", "Staf Penerimaan", "Receivables staff", false);
-        await getOrInsertRole(insertedApp.id, "staf_pengeluaran", "Staf Pengeluaran", "Payables and PO staff", false);
-        await getOrInsertRole(insertedApp.id, "staf_akuntansi", "Staf Akuntansi", "Ledger and CoA staff", false);
+        const stafPengeluaranRole = await getOrInsertRole(insertedApp.id, "staf_pengeluaran", "Staf Pengeluaran", "Payables and PO staff", false);
+        const stafAkuntansiRole = await getOrInsertRole(insertedApp.id, "staf_akuntansi", "Staf Akuntansi", "Ledger and CoA staff", false);
         const mahasiswaRole = await getOrInsertRole(insertedApp.id, "mahasiswa", "Mahasiswa", "Student finance access", true);
 
-        if (adminUser && kepalaBiroRole) await assignUserRole(adminUser.id, insertedApp.id, kepalaBiroRole.id);
-        if (superadminUser && kepalaBiroRole) await assignUserRole(superadminUser.id, insertedApp.id, kepalaBiroRole.id);
-        if (mahasiswaUser && mahasiswaRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, mahasiswaRole.id);
-        if (dosenUser && stafPenerimaanRole) await assignUserRole(dosenUser.id, insertedApp.id, stafPenerimaanRole.id);
+        if (adminUser) await assignUserRole(adminUser.id, insertedApp.id, kepalaBiroRole.id);
+        if (superadminUser) await assignUserRole(superadminUser.id, insertedApp.id, kepalaBiroRole.id);
+        if (mahasiswaUser) await assignUserRole(mahasiswaUser.id, insertedApp.id, mahasiswaRole.id);
+        if (dosenUser) await assignUserRole(dosenUser.id, insertedApp.id, stafPenerimaanRole.id);
+
+        if (pegawaiUser) {
+          await assignUserRole(pegawaiUser.id, insertedApp.id, kepalaBiroRole.id);
+          await assignUserRole(pegawaiUser.id, insertedApp.id, stafPenerimaanRole.id);
+          await assignUserRole(pegawaiUser.id, insertedApp.id, stafPengeluaranRole.id);
+          await assignUserRole(pegawaiUser.id, insertedApp.id, stafAkuntansiRole.id);
+        }
 
       } else if (appData.clientId === "hris-platform") {
         const superAdminSdmRole = await getOrInsertRole(insertedApp.id, "super_admin_sdm", "Super Admin SDM", "Full configuration control of HRIS", false);
-        await getOrInsertRole(insertedApp.id, "admin_data_sdm", "Admin Data SDM", "Employee directories management", false);
-        await getOrInsertRole(insertedApp.id, "admin_payroll", "Admin Payroll & Pajak", "Payroll calculations and tax filings", false);
-        await getOrInsertRole(insertedApp.id, "approver", "Approver SDM", "Line managers and approvers", false);
+        const adminDataSdmRole = await getOrInsertRole(insertedApp.id, "admin_data_sdm", "Admin Data SDM", "Employee directories management", false);
+        const adminPayrollRole = await getOrInsertRole(insertedApp.id, "admin_payroll", "Admin Payroll & Pajak", "Payroll calculations and tax filings", false);
+        const approverRole = await getOrInsertRole(insertedApp.id, "approver", "Approver SDM", "Line managers and approvers", false);
         const pegawaiRole = await getOrInsertRole(insertedApp.id, "pegawai", "Pegawai", "Standard employee access", true);
 
-        if (adminUser && superAdminSdmRole) await assignUserRole(adminUser.id, insertedApp.id, superAdminSdmRole.id);
-        if (superadminUser && superAdminSdmRole) await assignUserRole(superadminUser.id, insertedApp.id, superAdminSdmRole.id);
-        if (mahasiswaUser && pegawaiRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, pegawaiRole.id);
-        if (dosenUser && pegawaiRole) await assignUserRole(dosenUser.id, insertedApp.id, pegawaiRole.id);
-        if (pegawaiUser && pegawaiRole) await assignUserRole(pegawaiUser.id, insertedApp.id, pegawaiRole.id);
+        if (adminUser) await assignUserRole(adminUser.id, insertedApp.id, superAdminSdmRole.id);
+        if (superadminUser) await assignUserRole(superadminUser.id, insertedApp.id, superAdminSdmRole.id);
+        if (mahasiswaUser) await assignUserRole(mahasiswaUser.id, insertedApp.id, pegawaiRole.id);
+        if (dosenUser) await assignUserRole(dosenUser.id, insertedApp.id, pegawaiRole.id);
+
+        if (pegawaiUser) {
+          await assignUserRole(pegawaiUser.id, insertedApp.id, pegawaiRole.id);
+          await assignUserRole(pegawaiUser.id, insertedApp.id, adminDataSdmRole.id);
+          await assignUserRole(pegawaiUser.id, insertedApp.id, adminPayrollRole.id);
+          await assignUserRole(pegawaiUser.id, insertedApp.id, approverRole.id);
+        }
 
       } else if (appData.clientId === "bank-konten-platform") {
         const dosenRole = await getOrInsertRole(insertedApp.id, "dosen", "Dosen", "Lecturer role in Bank Konten", true);
@@ -353,13 +377,24 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         const verifikatorBpmRole = await getOrInsertRole(insertedApp.id, "verifikator_bpm", "Verifikator BPM", "BPM Quality Assurance Verifier", false);
         const adminBankKontenRole = await getOrInsertRole(insertedApp.id, "admin_bank_konten", "Admin Bank Konten", "Administrator role in Bank Soal & Materi", false);
 
-        if (adminUser && adminBankKontenRole) await assignUserRole(adminUser.id, insertedApp.id, adminBankKontenRole.id);
-        if (superadminUser && adminBankKontenRole) await assignUserRole(superadminUser.id, insertedApp.id, adminBankKontenRole.id);
-        if (adminUser && verifikatorProdiRole) await assignUserRole(adminUser.id, insertedApp.id, verifikatorProdiRole.id);
-        if (superadminUser && verifikatorProdiRole) await assignUserRole(superadminUser.id, insertedApp.id, verifikatorProdiRole.id);
-        if (adminUser && verifikatorBpmRole) await assignUserRole(adminUser.id, insertedApp.id, verifikatorBpmRole.id);
-        if (superadminUser && verifikatorBpmRole) await assignUserRole(superadminUser.id, insertedApp.id, verifikatorBpmRole.id);
-        if (dosenUser && dosenRole) await assignUserRole(dosenUser.id, insertedApp.id, dosenRole.id);
+        if (adminUser) {
+          await assignUserRole(adminUser.id, insertedApp.id, adminBankKontenRole.id);
+          await assignUserRole(adminUser.id, insertedApp.id, verifikatorProdiRole.id);
+          await assignUserRole(adminUser.id, insertedApp.id, verifikatorBpmRole.id);
+        }
+        if (superadminUser) {
+          await assignUserRole(superadminUser.id, insertedApp.id, adminBankKontenRole.id);
+          await assignUserRole(superadminUser.id, insertedApp.id, verifikatorProdiRole.id);
+          await assignUserRole(superadminUser.id, insertedApp.id, verifikatorBpmRole.id);
+        }
+        if (dosenUser) {
+          await assignUserRole(dosenUser.id, insertedApp.id, dosenRole.id);
+          await assignUserRole(dosenUser.id, insertedApp.id, verifikatorProdiRole.id);
+        }
+        if (pegawaiUser) {
+          await assignUserRole(pegawaiUser.id, insertedApp.id, adminBankKontenRole.id);
+          await assignUserRole(pegawaiUser.id, insertedApp.id, verifikatorBpmRole.id);
+        }
       }
     }
 

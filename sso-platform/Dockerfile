@@ -24,8 +24,9 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/db ./db
-COPY --from=builder /app/lib/env.ts ./lib/env.ts
+COPY --from=builder /app/lib ./lib
 
 # Stage 4: Run the application
 FROM node:20-alpine AS runner
@@ -46,10 +47,12 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy drizzle migration files + node_modules (for drizzle-kit)
+# Copy drizzle migration files + seed files + node_modules
 COPY --from=migration-prep --chown=nextjs:nodejs /app/drizzle ./drizzle
 COPY --from=migration-prep --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=migration-prep --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
 COPY --from=migration-prep --chown=nextjs:nodejs /app/db ./db
+COPY --from=migration-prep --chown=nextjs:nodejs /app/lib ./lib
 COPY --from=migration-prep --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Copy startup script

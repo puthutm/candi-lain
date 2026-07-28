@@ -152,38 +152,61 @@ async function seedPegawaiDosen() {
       }
     };
 
-    // Assign Roles for Admin & Superadmin
+    // Assign Roles for Admin & Superadmin (Multi-Role: All Roles Across Apps)
     for (const adminKey of ["admin", "superadmin"]) {
       if (seededUserMap[adminKey]) {
         const uId = seededUserMap[adminKey].id;
-        console.log(`\n🔑 Assigning admin roles to '${adminKey}'...`);
+        console.log(`\n🔑 Assigning multi-roles to '${adminKey}'...`);
         await helperAssignRole(uId, "siakad-platform", "admin");
-        await helperAssignRole(uId, "lms-platform", "admin");
+        await helperAssignRole(uId, "siakad-platform", "kaprodi");
+        await helperAssignRole(uId, "lms-platform", "dosen");
+        await helperAssignRole(uId, "lms-platform", "mahasiswa");
         await helperAssignRole(uId, "hris-platform", "super_admin_sdm");
+        await helperAssignRole(uId, "hris-platform", "admin_data_sdm");
         await helperAssignRole(uId, "keuangan-platform", "kepala_biro");
+        await helperAssignRole(uId, "keuangan-platform", "staf_penerimaan");
         await helperAssignRole(uId, "pmb-platform", "admin");
+        await helperAssignRole(uId, "pmb-platform", "verifikator_berkas");
+        await helperAssignRole(uId, "bank-konten-platform", "admin_bank_konten");
         await helperAssignRole(uId, "bank-konten-platform", "verifikator_prodi");
+        await helperAssignRole(uId, "bank-konten-platform", "verifikator_bpm");
       }
     }
 
-    // Assign Roles for Dosen
+    // Assign Roles for Dosen (Multi-Role: Dosen, Kaprodi, Verifikator)
     if (seededUserMap["dosen"]) {
       const dosenId = seededUserMap["dosen"].id;
-      console.log("\n🔑 Assigning roles to 'dosen'...");
+      console.log("\n🔑 Assigning multi-roles to 'dosen'...");
       await helperAssignRole(dosenId, "siakad-platform", "dosen");
+      await helperAssignRole(dosenId, "siakad-platform", "kaprodi");
       await helperAssignRole(dosenId, "lms-platform", "dosen");
+      await helperAssignRole(dosenId, "lms-platform", "mahasiswa");
       await helperAssignRole(dosenId, "hris-platform", "pegawai");
       await helperAssignRole(dosenId, "bank-konten-platform", "dosen");
+      await helperAssignRole(dosenId, "bank-konten-platform", "verifikator_prodi");
+      await helperAssignRole(dosenId, "pmb-platform", "verifikator_berkas");
+      await helperAssignRole(dosenId, "keuangan-platform", "staf_penerimaan");
     }
 
-    // Assign Roles for Pegawai
+    // Assign Roles for Pegawai (Multi-Role: Pegawai, Admin Data SDM, Admin Payroll, Approver, Staf PMB & Keuangan)
     if (seededUserMap["pegawai"]) {
       const pegawaiId = seededUserMap["pegawai"].id;
-      console.log("\n🔑 Assigning roles to 'pegawai'...");
+      console.log("\n🔑 Assigning multi-roles to 'pegawai'...");
       await helperAssignRole(pegawaiId, "hris-platform", "pegawai");
       await helperAssignRole(pegawaiId, "hris-platform", "admin_data_sdm");
+      await helperAssignRole(pegawaiId, "hris-platform", "admin_payroll");
+      await helperAssignRole(pegawaiId, "hris-platform", "approver");
+      await helperAssignRole(pegawaiId, "keuangan-platform", "kepala_biro");
       await helperAssignRole(pegawaiId, "keuangan-platform", "staf_penerimaan");
+      await helperAssignRole(pegawaiId, "keuangan-platform", "staf_pengeluaran");
+      await helperAssignRole(pegawaiId, "keuangan-platform", "staf_akuntansi");
+      await helperAssignRole(pegawaiId, "pmb-platform", "admin");
       await helperAssignRole(pegawaiId, "pmb-platform", "verifikator_berkas");
+      await helperAssignRole(pegawaiId, "pmb-platform", "staff_keuangan");
+      await helperAssignRole(pegawaiId, "pmb-platform", "staff_marketing");
+      await helperAssignRole(pegawaiId, "siakad-platform", "admin");
+      await helperAssignRole(pegawaiId, "bank-konten-platform", "admin_bank_konten");
+      await helperAssignRole(pegawaiId, "bank-konten-platform", "verifikator_bpm");
     }
 
     // Assign Roles for Mahasiswa
