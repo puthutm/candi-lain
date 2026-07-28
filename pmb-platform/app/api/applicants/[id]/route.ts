@@ -5,7 +5,7 @@ import { pmbWaves, pmbEntryPaths, pmbStudyPrograms } from "@/db/schema/master";
 import { pmbExamResults, pmbExamModules } from "@/db/schema/exam";
 import { eq } from "drizzle-orm";
 import { env } from "@/lib/env";
-import { getStaffId, requireRole, PMB_ROLES } from "@/lib/sso-middleware";
+import { getStaffId, requireRole, VERIFICATION_ROLES } from "@/lib/sso-middleware";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -98,8 +98,8 @@ export async function GET(_req: Request, { params }: RouteParams) {
 // Update applicant info / stage / payment
 export async function PUT(req: Request, { params }: RouteParams) {
   try {
-    // RBAC: Only Super Admin and Verifikator can update applicant stage
-    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN, PMB_ROLES.VERIFIKATOR]);
+    // RBAC: Verifikasi & update applicant stage accessible by verification and admin roles
+    const auth = await requireRole(VERIFICATION_ROLES);
     if (auth instanceof NextResponse) return auth;
 
     const staffId = await getStaffId();

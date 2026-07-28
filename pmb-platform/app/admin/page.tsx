@@ -1196,12 +1196,30 @@ export default function PmbAdminDashboard() {
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-fit">
                 {selectedApplicant ? (
                   <form onSubmit={handleVerifySubmit} className="space-y-6">
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                        Workspace Verifikator
-                      </span>
-                      <h3 className="text-lg font-bold text-slate-800 mt-1">{selectedApplicant.fullName}</h3>
-                      <p className="text-xs text-slate-400 font-mono mt-0.5">{selectedApplicant.registrationNumber}</p>
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          Workspace Verifikator
+                        </span>
+                        <h3 className="text-lg font-bold text-slate-800 mt-0.5">{selectedApplicant.fullName}</h3>
+                        <p className="text-xs text-slate-400 font-mono mt-0.5">{selectedApplicant.registrationNumber}</p>
+                      </div>
+                      {selectedApplicantDocs.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const allApproved: Record<string, DocEvaluation> = {};
+                            selectedApplicantDocs.forEach((doc) => {
+                              allApproved[doc.id] = { status: "terverifikasi", revisionNote: "" };
+                            });
+                            setDocEvaluations(allApproved);
+                            triggerToast("Seluruh berkas disetujui!");
+                          }}
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition-all shadow cursor-pointer"
+                        >
+                          ✅ Setujui Semua
+                        </button>
+                      )}
                     </div>
 
                     <div className="space-y-4">

@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbApplicantDocuments, pmbApplicants, pmbApplicantStatusHistory } from "@/db/schema/applicants";
 import { eq } from "drizzle-orm";
-import { getStaffId, requireRole, PMB_ROLES } from "@/lib/sso-middleware";
+import { getStaffId, requireRole, VERIFICATION_ROLES } from "@/lib/sso-middleware";
 
 export async function POST(req: Request) {
   try {
-    // RBAC: Only Super Admin and Verifikator can verify documents
-    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN, PMB_ROLES.VERIFIKATOR]);
+    // RBAC: Verifikasi berkas accessible by verification and admin roles
+    const auth = await requireRole(VERIFICATION_ROLES);
     if (auth instanceof NextResponse) return auth;
 
     const staffId = await getStaffId();
