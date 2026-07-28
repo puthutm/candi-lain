@@ -118,39 +118,61 @@ export async function GET() {
       const [posDos] = await db.select().from(positions).where(eq(positions.abbreviation, "DOS-IF")).limit(1);
 
       if (unitSDM && posKabir && unitIF && posDos) {
-        await db.insert(employees).values([
+        const empSeeds = [
           {
-            employeeNumber: "SDM-2026-001",
-            fullName: "Budi Santoso, M.Kom",
-            employeeType: "tendik",
-            employmentStatus: "tetap",
+            employeeNumber: "DOS-2026-001",
+            fullName: "Dr. Hendra Setiawan, M.Kom.",
+            employeeType: "dosen" as const,
+            employmentStatus: "tetap" as const,
+            nidn: "0412345678",
+            organizationUnitId: unitIF.id,
+            positionId: posDos.id,
+            rankGroup: "III/c",
+            baseSalary: 6500000,
+            status: "aktif" as const,
+            ptkpStatus: "TK/0",
+            npwp: "98.765.432.1-098.000",
+            bankName: "BCA",
+            bankAccountNumber: "876543210987",
+          },
+          {
+            employeeNumber: "PEG-2026-002",
+            fullName: "Budi Prasetyo, S.Kom.",
+            employeeType: "tendik" as const,
+            employmentStatus: "tetap" as const,
             organizationUnitId: unitSDM.id,
             positionId: posKabir.id,
             rankGroup: "IV/a",
             baseSalary: 7500000,
-            status: "aktif",
+            status: "aktif" as const,
             ptkpStatus: "K/1",
             npwp: "12.345.678.9-012.000",
             bankName: "Mandiri",
             bankAccountNumber: "1234567890123",
           },
           {
-            employeeNumber: "DOS-2026-002",
-            fullName: "Dr. Siti Aminah, M.T",
-            employeeType: "dosen",
-            employmentStatus: "tetap",
-            nidn: "0412345678",
-            organizationUnitId: unitIF.id,
-            positionId: posDos.id,
-            rankGroup: "III/c",
-            baseSalary: 6500000,
-            status: "aktif",
-            ptkpStatus: "TK/0",
-            npwp: "98.765.432.1-098.000",
-            bankName: "BCA",
-            bankAccountNumber: "876543210987",
+            employeeNumber: "SDM-2026-003",
+            fullName: "Budi Santoso, M.Kom",
+            employeeType: "tendik" as const,
+            employmentStatus: "tetap" as const,
+            organizationUnitId: unitSDM.id,
+            positionId: posKabir.id,
+            rankGroup: "IV/a",
+baseSalary: 7500000,
+            status: "aktif" as const,
+            ptkpStatus: "K/1",
+            npwp: "12.345.678.9-012.000",
+            bankName: "Mandiri",
+            bankAccountNumber: "1234567890123",
           },
-        ]);
+        ];
+
+        for (const emp of empSeeds) {
+          const [exist] = await db.select().from(employees).where(eq(employees.employeeNumber, emp.employeeNumber)).limit(1);
+          if (!exist) {
+            await db.insert(employees).values(emp);
+          }
+        }
       }
     }
 
