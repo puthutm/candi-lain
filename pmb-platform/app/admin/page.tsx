@@ -13,6 +13,7 @@ type AdminPanelType =
   | "pembayaran"
   | "komunikasi"
   | "gelombang"
+  | "mahasiswa"
   | "pengaturan";
 
 interface ApplicantRow {
@@ -248,6 +249,7 @@ export default function PmbAdminDashboard() {
   // Applicant detail & graduation decision states
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailApplicant, setDetailApplicant] = useState<any | null>(null);
+  const [detailProfile, setDetailProfile] = useState<any | null>(null);
   const [detailExamResults, setDetailExamResults] = useState<any[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
   const [submittingGraduation, setSubmittingGraduation] = useState(false);
@@ -520,6 +522,7 @@ export default function PmbAdminDashboard() {
   const handleViewDetail = (id: string) => {
     setDetailLoading(true);
     setDetailApplicant(null);
+    setDetailProfile(null);
     setDetailExamResults([]);
     setDetailModalOpen(true);
 
@@ -528,6 +531,7 @@ export default function PmbAdminDashboard() {
       .then((data) => {
         if (data.success) {
           setDetailApplicant(data.applicant);
+          setDetailProfile(data.profile || null);
           setDetailExamResults(data.examResults || []);
         } else {
           triggerToast("Gagal memuat detail: " + data.error);
@@ -798,6 +802,26 @@ export default function PmbAdminDashboard() {
               <span>Seleksi CBT & NIM</span>
               <span className="ml-auto bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-1.5 py-0.5 rounded font-mono">
                 {applicants.filter((a) => ["selesai_ujian", "diterima"].includes(a.currentStage)).length}
+              </span>
+            </button>
+          )}
+
+          {canAccessPanel("seleksi") && (
+            <button
+              onClick={() => {
+                setActivePanel("mahasiswa");
+                setIsSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
+                activePanel === "mahasiswa"
+                  ? "bg-white/15 text-white font-bold border border-white/20"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <span>📜</span>
+              <span>Mahasiswa Diterima</span>
+              <span className="ml-auto bg-emerald-400 text-slate-900 text-[10px] font-black px-1.5 py-0.5 rounded font-mono">
+                {applicants.filter((a) => a.currentStage === "diterima" || a.nim).length}
               </span>
             </button>
           )}
@@ -1984,6 +2008,81 @@ export default function PmbAdminDashboard() {
               </div>
             </div>
           )}
+
+          {/* PANEL 9: MAHASISWA DITERIMA / MAHASISWA BARU */}
+          {activePanel === "mahasiswa" && (
+            <div className="space-y-6 fade-in">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-800">Daftar Mahasiswa Diterima (Mahasiswa Baru)</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Daftar seluruh calon mahasiswa yang telah dinyatakan LULUS seleksi PMB dan memperoleh NIM.
+                  </p>
+                </div>
+                <button
+                  onClick={handleExportCsv}
+                  className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2 cursor-pointer"
+                >
+                  📥 Ekspor Data Mahasiswa Baru (CSV)
+                </button>
+              </div>
+
+              {/* Data Table Mahasiswa Diterima */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                {applicants.filter((a) => a.currentStage === "diterima" || a.nim).length === 0 ? (
+                  <div className="p-12 text-center text-slate-400 text-sm font-semibold">
+                    Belum ada mahasiswa yang dinyatakan LULUS & diterbitkan NIM saat ini.
+                  </div>
+                ) : (
+                  <table className="w-full text-left text-sm text-slate-600">
+                    <thead className="bg-slate-50 text-slate-500 uppercase tracking-widest text-[10px] font-bold border-b border-slate-200">
+                      <tr>
+                        <th className="px-6 py-4">NIM</th>
+                        <th className="px-6 py-4">Mahasiswa</th>
+                        <th className="px-6 py-4">Program Studi</th>
+                        <th className="px-6 py-4">Jalur & Gelombang</th>
+                        <th className="px-6 py-4 text-center">Status Integrasi SIAKAD</th>
+                        <th className="px-6 py-4 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {applicants
+                        .filter((a) => a.currentStage === "diterima" || a.nim)
+                        .map((a) => (
+                          <tr key={a.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-6 py-4 font-mono font-bold text-xs text-[#0f487b]">
+                              {a.nim || <span className="text-amber-600 italic">Menunggu NIM</span>}
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="font-bold text-slate-800">{a.fullName}</div>
+                              <div className="text-xs text-slate-400 font-mono">{a.email} · {a.phone || "-"}</div>
+                            </td>
+                            <td className="px-6 py-4 font-semibold text-slate-700">{a.studyProgram}</td>
+                            <td className="px-6 py-4 text-xs">
+                              <div className="font-semibold text-slate-700">{a.entryPath}</div>
+                              <div className="text-slate-400 font-mono text-[10px]">{a.wave}</div>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                🟢 TERSINKRON SIAKAD
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right space-x-2">
+                              <button
+                                onClick={() => handleViewDetail(a.id)}
+                                className="px-3 py-1.5 bg-[#0f487b] hover:bg-[#00719f] text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                              >
+                                📋 Detail Biodata
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
         </div>
           </main>
 
@@ -2042,6 +2141,45 @@ export default function PmbAdminDashboard() {
                         </span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Detail Biodata Lengkap */}
+                  <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 pb-2">
+                      📋 Detail Biodata Lengkap
+                    </h4>
+                    {detailProfile ? (
+                      <div className="grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <span className="text-slate-400 block font-semibold mb-0.5">NIK (KTP/KK)</span>
+                          <span className="font-mono font-bold text-slate-800">{detailProfile.nik || "-"}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block font-semibold mb-0.5">Jenis Kelamin</span>
+                          <span className="font-semibold text-slate-800">
+                            {detailProfile.gender === "L" ? "Laki-laki (L)" : detailProfile.gender === "P" ? "Perempuan (P)" : "-"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block font-semibold mb-0.5">Tempat, Tanggal Lahir</span>
+                          <span className="font-semibold text-slate-800">
+                            {detailProfile.birthPlace || "-"}, {detailProfile.birthDate ? new Date(detailProfile.birthDate).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "-"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block font-semibold mb-0.5">Nama Orang Tua / Wali</span>
+                          <span className="font-semibold text-slate-800">{detailProfile.parentName || "-"}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-slate-400 block font-semibold mb-0.5">Alamat Tempat Tinggal</span>
+                          <span className="text-slate-800 font-medium">{detailProfile.address || "-"}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-400 italic py-2">
+                        Pendaftar belum menyelesaikan pengisian biodata profil lengkap.
+                      </div>
+                    )}
                   </div>
 
                   {/* Nilai Ujian CBT */}
