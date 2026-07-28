@@ -146,19 +146,36 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     // dosen
     let dosenUser;
     const existingDosen = await db.select().from(users).where(eq(users.username, "dosen")).limit(1);
+    const defaultStaffPasswordHash = await bcrypt.hash("password123", saltRounds);
     if (existingDosen.length === 0) {
-      const dosenpsd = "dosen-password-123";
-      const dosenPasswordHash = await bcrypt.hash(dosenpsd, saltRounds);
       const [inserted] = await db.insert(users).values({
         username: "dosen",
-        email: "dosen@example.com",
-        passwordHash: dosenPasswordHash,
+        email: "dosen@unsia.ac.id",
+        passwordHash: defaultStaffPasswordHash,
         fullName: "Dr. Hendra Setiawan, M.Kom.",
         status: "active",
       }).returning();
       dosenUser = inserted;
     } else {
       dosenUser = existingDosen[0];
+      await db.update(users).set({ passwordHash: defaultStaffPasswordHash }).where(eq(users.id, dosenUser.id));
+    }
+
+    // pegawai
+    let pegawaiUser;
+    const existingPegawai = await db.select().from(users).where(eq(users.username, "pegawai")).limit(1);
+    if (existingPegawai.length === 0) {
+      const [inserted] = await db.insert(users).values({
+        username: "pegawai",
+        email: "pegawai@unsia.ac.id",
+        passwordHash: defaultStaffPasswordHash,
+        fullName: "Budi Prasetyo, S.Kom.",
+        status: "active",
+      }).returning();
+      pegawaiUser = inserted;
+    } else {
+      pegawaiUser = existingPegawai[0];
+      await db.update(users).set({ passwordHash: defaultStaffPasswordHash }).where(eq(users.id, pegawaiUser.id));
     }
 
     // 3. Seed Applications
@@ -317,6 +334,8 @@ export async function ensureDatabaseSeeded(force?: boolean) {
         if (adminUser && superAdminSdmRole) await assignUserRole(adminUser.id, insertedApp.id, superAdminSdmRole.id);
         if (superadminUser && superAdminSdmRole) await assignUserRole(superadminUser.id, insertedApp.id, superAdminSdmRole.id);
         if (mahasiswaUser && pegawaiRole) await assignUserRole(mahasiswaUser.id, insertedApp.id, pegawaiRole.id);
+        if (dosenUser && pegawaiRole) await assignUserRole(dosenUser.id, insertedApp.id, pegawaiRole.id);
+        if (pegawaiUser && pegawaiRole) await assignUserRole(pegawaiUser.id, insertedApp.id, pegawaiRole.id);
 
       } else if (appData.clientId === "bank-konten-platform") {
         const dosenRole = await getOrInsertRole(insertedApp.id, "dosen", "Dosen", "Lecturer role in Bank Konten", true);
