@@ -11,6 +11,31 @@ type StudentTab =
   | "alamat"
   | "pendidikan";
 
+interface FamilyMemberItem {
+  id: string;
+  jenisHubunganKeluarga: string;
+  namaAnggotaKeluarga: string;
+  nikAnggotaKeluarga: string;
+  statusHubunganKeluarga: string;
+  tempatLahirKeluarga: string;
+  tanggalLahirKeluarga: string;
+  noHpKeluarga: string;
+  emailKeluarga: string;
+  alamatKeluarga: string;
+  statusHidupKeluarga: string;
+}
+
+interface EducationItem {
+  id: string;
+  jenjang: string;
+  namaInstitusi: string;
+  npsn: string;
+  jurusan: string;
+  tahunMasuk: string;
+  tahunLulus: string;
+  nilaiAkhir: string;
+}
+
 export default function StudentBiodataPage() {
   const [activeTab, setActiveTab] = useState<StudentTab>("biodata");
   const [isEditing, setIsEditing] = useState(false);
@@ -43,12 +68,53 @@ export default function StudentBiodataPage() {
     statusMahasiswa: "Aktif",
 
     // 3. KELENGKAPAN
-    nik: "3174012903010002",
-    noKk: "3174012903010001",
-    npwp: "",
-    bpjs: "",
+    nik: "1231234564567890",
+    noKk: "",
+    noPassport: "",
+    nisn: "",
+    npsn: "",
+    tahunLulus: "2024",
+    alamatKelengkapan: "",
 
-    // 4. KELUARGA
+    // 4. KELUARGA (Multi-Entry)
+    riwayatKeluarga: [
+      {
+        id: "fam-1",
+        jenisHubunganKeluarga: "Ayah Kandung",
+        namaAnggotaKeluarga: "Budi Santoso",
+        nikAnggotaKeluarga: "1111111111111111",
+        statusHubunganKeluarga: "Kepala Keluarga",
+        tempatLahirKeluarga: "banda aceh",
+        tanggalLahirKeluarga: "1975-05-12",
+        noHpKeluarga: "081234567890",
+        emailKeluarga: "budi.santoso@gmail.com",
+        alamatKeluarga: "Jl. Duren Sawit Indah No. 12, Jakarta Timur",
+        statusHidupKeluarga: "Hidup",
+      },
+      {
+        id: "fam-2",
+        jenisHubunganKeluarga: "Ibu Kandung",
+        namaAnggotaKeluarga: "Siti Rahmah",
+        nikAnggotaKeluarga: "1111111111112222",
+        statusHubunganKeluarga: "Istri",
+        tempatLahirKeluarga: "jakarta",
+        tanggalLahirKeluarga: "1978-08-20",
+        noHpKeluarga: "081298765432",
+        emailKeluarga: "siti.rahmah@gmail.com",
+        alamatKeluarga: "Jl. Duren Sawit Indah No. 12, Jakarta Timur",
+        statusHidupKeluarga: "Hidup",
+      },
+    ] as FamilyMemberItem[],
+    jenisHubunganKeluarga: "",
+    namaAnggotaKeluarga: "keluuarga cemara",
+    nikAnggotaKeluarga: "1111111111111111",
+    statusHubunganKeluarga: "",
+    tempatLahirKeluarga: "banda aceh",
+    tanggalLahirKeluarga: "",
+    noHpKeluarga: "",
+    emailKeluarga: "",
+    alamatKeluarga: "",
+    statusHidupKeluarga: "",
     ayahNama: "Budi Santoso",
     ayahPekerjaan: "Wiraswasta",
     ibuNama: "Siti Rahmah",
@@ -62,7 +128,29 @@ export default function StudentBiodataPage() {
     kodePos: "13440",
     alamatLengkap: "Jl. Duren Sawit Indah No. 12",
 
-    // 6. PENDIDIKAN
+    // 6. PENDIDIKAN (Multi-Entry)
+    riwayatPendidikan: [
+      {
+        id: "edu-1",
+        jenjang: "SMA/SMK",
+        namaInstitusi: "SMKN 1 Jakarta",
+        npsn: "20109283",
+        jurusan: "Teknik Komputer & Jaringan",
+        tahunMasuk: "2017",
+        tahunLulus: "2020",
+        nilaiAkhir: "88.50",
+      },
+      {
+        id: "edu-2",
+        jenjang: "SMP",
+        namaInstitusi: "SMPN 4 Jakarta",
+        npsn: "20101122",
+        jurusan: "Umum",
+        tahunMasuk: "2014",
+        tahunLulus: "2017",
+        nilaiAkhir: "85.00",
+      },
+    ] as EducationItem[],
     asalSekolah: "SMKN 1 Jakarta",
     npsn: "20109283",
     jurusanSekolah: "Teknik Komputer & Jaringan",
@@ -472,105 +560,432 @@ export default function StudentBiodataPage() {
 
             {/* TAB 3: KELENGKAPAN */}
             {activeTab === "kelengkapan" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Nomor Induk Kependudukan (NIK)</label>
-                  <input
-                    type="text"
-                    disabled={!isEditing}
-                    value={form.nik}
-                    onChange={(e) => handleChange("nik", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md font-mono"
-                  />
+              <div className="space-y-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+                    Kelengkapan
+                  </h3>
                 </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Nomor Kartu Keluarga (KK)</label>
-                  <input
-                    type="text"
-                    disabled={!isEditing}
-                    value={form.noKk}
-                    onChange={(e) => handleChange("noKk", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">NPWP - <span className="italic text-slate-400">Optional</span></label>
-                  <input
-                    type="text"
-                    disabled={!isEditing}
-                    placeholder="Masukkan NPWP"
-                    value={form.npwp}
-                    onChange={(e) => handleChange("npwp", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">No BPJS Kesehatan / Ketenagakerjaan - <span className="italic text-slate-400">Optional</span></label>
-                  <input
-                    type="text"
-                    disabled={!isEditing}
-                    placeholder="Masukkan No BPJS"
-                    value={form.bpjs}
-                    onChange={(e) => handleChange("bpjs", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md font-mono"
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-sm">
+                  {/* LEFT COLUMN */}
+                  <div className="space-y-5">
+                    {/* Nik */}
+                    <div>
+                      <label className="block font-bold text-slate-800 mb-1.5">
+                        Nik - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                      </label>
+                      <input
+                        type="text"
+                        disabled={!isEditing}
+                        placeholder="1231234564567890"
+                        value={form.nik}
+                        onChange={(e) => handleChange("nik", e.target.value)}
+                        className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-mono"
+                      />
+                    </div>
+
+                    {/* No kk */}
+                    <div>
+                      <label className="block font-bold text-slate-800 mb-1.5">
+                        No kk - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                      </label>
+                      <input
+                        type="text"
+                        disabled={!isEditing}
+                        placeholder="Masukkan Nomor KK"
+                        value={form.noKk}
+                        onChange={(e) => handleChange("noKk", e.target.value)}
+                        className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-mono"
+                      />
+                    </div>
+
+                    {/* No Passport */}
+                    <div>
+                      <label className="block font-bold text-slate-800 mb-1.5">
+                        No Passport - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                      </label>
+                      <input
+                        type="text"
+                        disabled={!isEditing}
+                        placeholder="Masukkan Nomor Passport"
+                        value={form.noPassport}
+                        onChange={(e) => handleChange("noPassport", e.target.value)}
+                        className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-medium"
+                      />
+                    </div>
+
+                    {/* NISN */}
+                    <div>
+                      <label className="block font-bold text-slate-800 mb-1.5">
+                        NISN - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                      </label>
+                      <input
+                        type="text"
+                        disabled={!isEditing}
+                        placeholder="Masukkan Nisn"
+                        value={form.nisn}
+                        onChange={(e) => handleChange("nisn", e.target.value)}
+                        className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-mono"
+                      />
+                    </div>
+
+                    {/* NPSN */}
+                    <div>
+                      <label className="block font-bold text-slate-800 mb-1.5">
+                        NPSN - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                      </label>
+                      <input
+                        type="text"
+                        disabled={!isEditing}
+                        placeholder="Masukkan npsn"
+                        value={form.npsn}
+                        onChange={(e) => handleChange("npsn", e.target.value)}
+                        className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* RIGHT COLUMN */}
+                  <div className="space-y-5">
+                    {/* Tahun Lulus */}
+                    <div>
+                      <label className="block font-bold text-slate-800 mb-1.5">
+                        Tahun Lulus - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                      </label>
+                      <input
+                        type="text"
+                        disabled={!isEditing}
+                        placeholder="2024"
+                        value={form.tahunLulus}
+                        onChange={(e) => handleChange("tahunLulus", e.target.value)}
+                        className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-medium"
+                      />
+                    </div>
+
+                    {/* Alamat */}
+                    <div>
+                      <label className="block font-bold text-slate-800 mb-1.5">
+                        Alamat - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                      </label>
+                      <textarea
+                        rows={4}
+                        disabled={!isEditing}
+                        placeholder="Alamat"
+                        value={form.alamatKelengkapan}
+                        onChange={(e) => handleChange("alamatKelengkapan", e.target.value)}
+                        className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-medium resize-y"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* TAB 4: KELUARGA */}
+            {/* TAB 4: KELUARGA (Multi-Entry) */}
             {activeTab === "keluarga" && (
-              <div className="space-y-6 text-xs">
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4">
-                  <h4 className="font-bold text-[#0f487b] border-b pb-2 uppercase tracking-wider text-[11px]">Data Ayah Kandung</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Nama Ayah</label>
-                      <input
-                        type="text"
-                        disabled={!isEditing}
-                        value={form.ayahNama}
-                        onChange={(e) => handleChange("ayahNama", e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Pekerjaan Ayah</label>
-                      <input
-                        type="text"
-                        disabled={!isEditing}
-                        value={form.ayahPekerjaan}
-                        onChange={(e) => handleChange("ayahPekerjaan", e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-md"
-                      />
-                    </div>
+              <div className="space-y-8">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+                      Lihat Data Keluarga
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Daftar data seluruh anggota keluarga (Ayah, Ibu, Suami, Istri, Anak, Wali, Kakak, Adik).
+                    </p>
                   </div>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newFam: FamilyMemberItem = {
+                          id: "fam-" + Date.now(),
+                          jenisHubunganKeluarga: "",
+                          namaAnggotaKeluarga: "",
+                          nikAnggotaKeluarga: "",
+                          statusHubunganKeluarga: "",
+                          tempatLahirKeluarga: "",
+                          tanggalLahirKeluarga: "",
+                          noHpKeluarga: "",
+                          emailKeluarga: "",
+                          alamatKeluarga: "",
+                          statusHidupKeluarga: "Hidup",
+                        };
+                        setForm((prev) => ({
+                          ...prev,
+                          riwayatKeluarga: [...prev.riwayatKeluarga, newFam],
+                        }));
+                      }}
+                      className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-lg transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>➕</span>
+                      <span>Tambah Anggota Keluarga</span>
+                    </button>
+                  )}
                 </div>
 
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4">
-                  <h4 className="font-bold text-[#0f487b] border-b pb-2 uppercase tracking-wider text-[11px]">Data Ibu Kandung</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Nama Ibu</label>
-                      <input
-                        type="text"
-                        disabled={!isEditing}
-                        value={form.ibuNama}
-                        onChange={(e) => handleChange("ibuNama", e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-md"
-                      />
+                <div className="space-y-8">
+                  {form.riwayatKeluarga.map((fam, idx) => (
+                    <div
+                      key={fam.id}
+                      className="p-6 rounded-2xl border border-slate-200/80 bg-slate-50/40 space-y-6 relative"
+                    >
+                      <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-7 h-7 rounded-full bg-[#0f487b] text-white text-xs font-bold flex items-center justify-center">
+                            {idx + 1}
+                          </span>
+                          <span className="font-extrabold text-slate-800 text-base">
+                            {fam.jenisHubunganKeluarga || "Anggota Keluarga"} — {fam.namaAnggotaKeluarga || "Nama Belum Diisi"}
+                          </span>
+                        </div>
+                        {isEditing && form.riwayatKeluarga.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForm((prev) => ({
+                                ...prev,
+                                riwayatKeluarga: prev.riwayatKeluarga.filter((item) => item.id !== fam.id),
+                              }));
+                            }}
+                            className="text-xs font-bold text-rose-500 hover:text-rose-700 transition px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-100 cursor-pointer"
+                          >
+                            🗑️ Hapus
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-sm">
+                        {/* LEFT COLUMN */}
+                        <div className="space-y-5">
+                          {/* Jenis Hubungan Anggota Keluarga */}
+                          <div>
+                            <label className="block font-bold text-slate-800 mb-1.5">
+                              Jenis Hubungan Anggota Keluarga - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                            </label>
+                            <input
+                              type="text"
+                              disabled={!isEditing}
+                              placeholder="Jenis Hubungan anggota keluarga (e.g. Ayah, Ibu, Suami, Istri, Anak)"
+                              value={fam.jenisHubunganKeluarga}
+                              onChange={(e) => {
+                                const updated = form.riwayatKeluarga.map((item) =>
+                                  item.id === fam.id ? { ...item, jenisHubunganKeluarga: e.target.value } : item
+                                );
+                                setForm((prev) => ({ ...prev, riwayatKeluarga: updated }));
+                              }}
+                              className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-medium"
+                            />
+                          </div>
+
+                          {/* Nama Anggota Keluarga */}
+                          <div>
+                            <label className="block font-bold text-slate-800 mb-1.5">
+                              Nama Anggota Keluarga
+                            </label>
+                            <input
+                              type="text"
+                              disabled={!isEditing}
+                              placeholder="Nama anggota keluarga"
+                              value={fam.namaAnggotaKeluarga}
+                              onChange={(e) => {
+                                const updated = form.riwayatKeluarga.map((item) =>
+                                  item.id === fam.id ? { ...item, namaAnggotaKeluarga: e.target.value } : item
+                                );
+                                setForm((prev) => ({ ...prev, riwayatKeluarga: updated }));
+                              }}
+                              className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-medium"
+                            />
+                          </div>
+
+                          {/* Nik Anggota Keluarga */}
+                          <div>
+                            <label className="block font-bold text-slate-800 mb-1.5">
+                              Nik Anggota Keluarga
+                            </label>
+                            <input
+                              type="text"
+                              disabled={!isEditing}
+                              placeholder="NIK anggota keluarga"
+                              value={fam.nikAnggotaKeluarga}
+                              onChange={(e) => {
+                                const updated = form.riwayatKeluarga.map((item) =>
+                                  item.id === fam.id ? { ...item, nikAnggotaKeluarga: e.target.value } : item
+                                );
+                                setForm((prev) => ({ ...prev, riwayatKeluarga: updated }));
+                              }}
+                              className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-mono"
+                            />
+                          </div>
+
+                          {/* status Anggota Keluarga */}
+                          <div>
+                            <label className="block font-bold text-slate-800 mb-1.5">
+                              status Anggota Keluarga - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                            </label>
+                            <input
+                              type="text"
+                              disabled={!isEditing}
+                              placeholder="Status Hubungan anggota keluarga"
+                              value={fam.statusHubunganKeluarga}
+                              onChange={(e) => {
+                                const updated = form.riwayatKeluarga.map((item) =>
+                                  item.id === fam.id ? { ...item, statusHubunganKeluarga: e.target.value } : item
+                                );
+                                setForm((prev) => ({ ...prev, riwayatKeluarga: updated }));
+                              }}
+                              className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-medium"
+                            />
+                          </div>
+
+                          {/* Tempat Lahir Anggota Keluarga */}
+                          <div>
+                            <label className="block font-bold text-slate-800 mb-1.5">
+                              Tempat Lahir Anggota Keluarga - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                            </label>
+                            <div className="relative">
+                              <select
+                                disabled={!isEditing}
+                                value={fam.tempatLahirKeluarga}
+                                onChange={(e) => {
+                                  const updated = form.riwayatKeluarga.map((item) =>
+                                    item.id === fam.id ? { ...item, tempatLahirKeluarga: e.target.value } : item
+                                  );
+                                  setForm((prev) => ({ ...prev, riwayatKeluarga: updated }));
+                                }}
+                                className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 text-sm font-medium appearance-none pr-10"
+                              >
+                                <option value="">Tempat Lahir</option>
+                                <option value="banda aceh">banda aceh</option>
+                                <option value="jakarta">jakarta</option>
+                                <option value="surabaya">surabaya</option>
+                                <option value="medan">medan</option>
+                                <option value="bandung">bandung</option>
+                              </select>
+                              <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 font-bold text-xs">
+                                ▼
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Tanggal Lahir Anggota Keluarga */}
+                          <div>
+                            <label className="block font-bold text-slate-800 mb-1.5">
+                              Tanggal Lahir Anggota Keluarga - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                            </label>
+                            <div className="flex items-center rounded-xl bg-[#f0f3f6] border border-slate-200/80 overflow-hidden">
+                              <div className="px-3.5 py-3 border-r border-slate-200 text-slate-500 bg-white/40 flex items-center justify-center">
+                                📅
+                              </div>
+                              <input
+                                type="date"
+                                disabled={!isEditing}
+                                placeholder="Tanggal Lahir Anggota Keluarga"
+                                value={fam.tanggalLahirKeluarga}
+                                onChange={(e) => {
+                                  const updated = form.riwayatKeluarga.map((item) =>
+                                    item.id === fam.id ? { ...item, tanggalLahirKeluarga: e.target.value } : item
+                                  );
+                                  setForm((prev) => ({ ...prev, riwayatKeluarga: updated }));
+                                }}
+                                className="w-full px-4 py-3 bg-transparent focus:outline-none text-slate-800 placeholder-slate-400 text-sm font-medium"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* RIGHT COLUMN */}
+                        <div className="space-y-5">
+                          {/* NoHP Anggota Keluarga */}
+                          <div>
+                            <label className="block font-bold text-slate-800 mb-1.5">
+                              NoHP Anggota Keluarga - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                            </label>
+                            <input
+                              type="text"
+                              disabled={!isEditing}
+                              placeholder="NoHP anggota keluarga"
+                              value={fam.noHpKeluarga}
+                              onChange={(e) => {
+                                const updated = form.riwayatKeluarga.map((item) =>
+                                  item.id === fam.id ? { ...item, noHpKeluarga: e.target.value } : item
+                                );
+                                setForm((prev) => ({ ...prev, riwayatKeluarga: updated }));
+                              }}
+                              className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-medium"
+                            />
+                          </div>
+
+                          {/* Email Anggota Keluarga */}
+                          <div>
+                            <label className="block font-bold text-slate-800 mb-1.5">
+                              Email Anggota Keluarga - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                            </label>
+                            <input
+                              type="email"
+                              disabled={!isEditing}
+                              placeholder="Email anggota keluarga"
+                              value={fam.emailKeluarga}
+                              onChange={(e) => {
+                                const updated = form.riwayatKeluarga.map((item) =>
+                                  item.id === fam.id ? { ...item, emailKeluarga: e.target.value } : item
+                                );
+                                setForm((prev) => ({ ...prev, riwayatKeluarga: updated }));
+                              }}
+                              className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-medium"
+                            />
+                          </div>
+
+                          {/* Alamat Anggota Keluarga */}
+                          <div>
+                            <label className="block font-bold text-slate-800 mb-1.5">
+                              Alamat Anggota Keluarga - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                            </label>
+                            <textarea
+                              rows={4}
+                              disabled={!isEditing}
+                              placeholder="Alamat Anggota Keluarga"
+                              value={fam.alamatKeluarga}
+                              onChange={(e) => {
+                                const updated = form.riwayatKeluarga.map((item) =>
+                                  item.id === fam.id ? { ...item, alamatKeluarga: e.target.value } : item
+                                );
+                                setForm((prev) => ({ ...prev, riwayatKeluarga: updated }));
+                              }}
+                              className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 placeholder-slate-400 text-sm font-medium resize-y"
+                            />
+                          </div>
+
+                          {/* Status Hidup */}
+                          <div>
+                            <label className="block font-bold text-slate-800 mb-1.5">
+                              Status Hidup - <span className="italic text-slate-400 font-medium text-xs">Optional</span>
+                            </label>
+                            <div className="relative">
+                              <select
+                                disabled={!isEditing}
+                                value={fam.statusHidupKeluarga}
+                                onChange={(e) => {
+                                  const updated = form.riwayatKeluarga.map((item) =>
+                                    item.id === fam.id ? { ...item, statusHidupKeluarga: e.target.value } : item
+                                  );
+                                  setForm((prev) => ({ ...prev, riwayatKeluarga: updated }));
+                                }}
+                                className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 text-sm font-medium appearance-none pr-10"
+                              >
+                                <option value="">Status Hidup</option>
+                                <option value="Hidup">Hidup</option>
+                                <option value="Meninggal">Meninggal</option>
+                              </select>
+                              <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 font-bold text-xs">
+                                ▼
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Pekerjaan Ibu</label>
-                      <input
-                        type="text"
-                        disabled={!isEditing}
-                        value={form.ibuPekerjaan}
-                        onChange={(e) => handleChange("ibuPekerjaan", e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-md"
-                      />
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -641,48 +1056,214 @@ export default function StudentBiodataPage() {
               </div>
             )}
 
-            {/* TAB 6: PENDIDIKAN */}
+            {/* TAB 6: PENDIDIKAN (Multi-Entry) */}
             {activeTab === "pendidikan" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Asal Sekolah / PT Asal</label>
-                  <input
-                    type="text"
-                    disabled={!isEditing}
-                    value={form.asalSekolah}
-                    onChange={(e) => handleChange("asalSekolah", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md"
-                  />
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-800 tracking-tight">
+                      Riwayat Pendidikan Mahasiswa
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Daftar riwayat pendidikan formal (SD, SMP, SMA/SMK, Diploma, S1, dll).
+                    </p>
+                  </div>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newEdu: EducationItem = {
+                          id: "edu-" + Date.now(),
+                          jenjang: "SMA/SMK",
+                          namaInstitusi: "",
+                          npsn: "",
+                          jurusan: "",
+                          tahunMasuk: "",
+                          tahunLulus: "",
+                          nilaiAkhir: "",
+                        };
+                        setForm((prev) => ({
+                          ...prev,
+                          riwayatPendidikan: [...prev.riwayatPendidikan, newEdu],
+                        }));
+                      }}
+                      className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-lg transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>➕</span>
+                      <span>Tambah Riwayat Pendidikan</span>
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">NPSN / Kode PT Asal</label>
-                  <input
-                    type="text"
-                    disabled={!isEditing}
-                    value={form.npsn}
-                    onChange={(e) => handleChange("npsn", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Jurusan / Program Studi Asal</label>
-                  <input
-                    type="text"
-                    disabled={!isEditing}
-                    value={form.jurusanSekolah}
-                    onChange={(e) => handleChange("jurusanSekolah", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Tahun Lulus</label>
-                  <input
-                    type="text"
-                    disabled={!isEditing}
-                    value={form.tahunLulus}
-                    onChange={(e) => handleChange("tahunLulus", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md"
-                  />
+
+                <div className="space-y-4">
+                  {form.riwayatPendidikan.map((edu, idx) => (
+                    <div
+                      key={edu.id}
+                      className="p-5 rounded-2xl border border-slate-200/80 bg-slate-50/50 space-y-4 relative"
+                    >
+                      <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-[#0f487b] text-white text-xs font-bold flex items-center justify-center">
+                            {idx + 1}
+                          </span>
+                          <span className="font-bold text-slate-800 text-sm">
+                            {edu.jenjang || "Riwayat Pendidikan"} — {edu.namaInstitusi || "Nama Sekolah/PT"}
+                          </span>
+                        </div>
+                        {isEditing && form.riwayatPendidikan.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForm((prev) => ({
+                                ...prev,
+                                riwayatPendidikan: prev.riwayatPendidikan.filter((e) => e.id !== edu.id),
+                              }));
+                            }}
+                            className="text-xs font-bold text-rose-500 hover:text-rose-700 transition px-2.5 py-1 rounded bg-rose-50 border border-rose-100 cursor-pointer"
+                          >
+                            🗑️ Hapus
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div>
+                          <label className="block font-bold text-slate-700 mb-1">
+                            Jenjang Pendidikan
+                          </label>
+                          <select
+                            disabled={!isEditing}
+                            value={edu.jenjang}
+                            onChange={(e) => {
+                              const updated = form.riwayatPendidikan.map((item) =>
+                                item.id === edu.id ? { ...item, jenjang: e.target.value } : item
+                              );
+                              setForm((prev) => ({ ...prev, riwayatPendidikan: updated }));
+                            }}
+                            className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium"
+                          >
+                            <option value="SD">SD / Sederajat</option>
+                            <option value="SMP">SMP / Sederajat</option>
+                            <option value="SMA/SMK">SMA / SMK / MA</option>
+                            <option value="Diploma">Diploma (D3/D4)</option>
+                            <option value="Sarjana">Sarjana (S1)</option>
+                            <option value="Magister">Magister (S2)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 mb-1">
+                            Nama Sekolah / Perguruan Tinggi
+                          </label>
+                          <input
+                            type="text"
+                            disabled={!isEditing}
+                            placeholder="e.g. SMKN 1 Jakarta"
+                            value={edu.namaInstitusi}
+                            onChange={(e) => {
+                              const updated = form.riwayatPendidikan.map((item) =>
+                                item.id === edu.id ? { ...item, namaInstitusi: e.target.value } : item
+                              );
+                              setForm((prev) => ({ ...prev, riwayatPendidikan: updated }));
+                            }}
+                            className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 mb-1">
+                            NPSN / Kode PT Asal
+                          </label>
+                          <input
+                            type="text"
+                            disabled={!isEditing}
+                            placeholder="e.g. 20109283"
+                            value={edu.npsn}
+                            onChange={(e) => {
+                              const updated = form.riwayatPendidikan.map((item) =>
+                                item.id === edu.id ? { ...item, npsn: e.target.value } : item
+                              );
+                              setForm((prev) => ({ ...prev, riwayatPendidikan: updated }));
+                            }}
+                            className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg font-mono text-slate-800"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 mb-1">
+                            Jurusan / Program Studi
+                          </label>
+                          <input
+                            type="text"
+                            disabled={!isEditing}
+                            placeholder="e.g. Teknik Komputer & Jaringan"
+                            value={edu.jurusan}
+                            onChange={(e) => {
+                              const updated = form.riwayatPendidikan.map((item) =>
+                                item.id === edu.id ? { ...item, jurusan: e.target.value } : item
+                              );
+                              setForm((prev) => ({ ...prev, riwayatPendidikan: updated }));
+                            }}
+                            className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 mb-1">
+                            Tahun Masuk — Tahun Lulus
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              disabled={!isEditing}
+                              placeholder="2017"
+                              value={edu.tahunMasuk}
+                              onChange={(e) => {
+                                const updated = form.riwayatPendidikan.map((item) =>
+                                  item.id === edu.id ? { ...item, tahunMasuk: e.target.value } : item
+                                );
+                                setForm((prev) => ({ ...prev, riwayatPendidikan: updated }));
+                              }}
+                              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium text-center"
+                            />
+                            <span>—</span>
+                            <input
+                              type="text"
+                              disabled={!isEditing}
+                              placeholder="2020"
+                              value={edu.tahunLulus}
+                              onChange={(e) => {
+                                const updated = form.riwayatPendidikan.map((item) =>
+                                  item.id === edu.id ? { ...item, tahunLulus: e.target.value } : item
+                                );
+                                setForm((prev) => ({ ...prev, riwayatPendidikan: updated }));
+                              }}
+                              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium text-center"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-slate-700 mb-1">
+                            Nilai Ujian / IPK Akhir
+                          </label>
+                          <input
+                            type="text"
+                            disabled={!isEditing}
+                            placeholder="e.g. 88.50"
+                            value={edu.nilaiAkhir}
+                            onChange={(e) => {
+                              const updated = form.riwayatPendidikan.map((item) =>
+                                item.id === edu.id ? { ...item, nilaiAkhir: e.target.value } : item
+                              );
+                              setForm((prev) => ({ ...prev, riwayatPendidikan: updated }));
+                            }}
+                            className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
