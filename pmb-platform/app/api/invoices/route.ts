@@ -38,9 +38,9 @@ export async function GET(req: Request) {
 
     const applicant = applicants[0]!;
 
-    // Try to get fee from keuangan pmb_fee_rates by wave's academic period label
-    let finalFee = parseFloat(applicant.formFee || "0");
-    let feeSource = "entry_path"; // default
+    // Query fee from Modul Keuangan (pmb_fee_rates table) as primary single source of truth
+    let finalFee = 0;
+    let feeSource = "keuangan";
 
     if (applicant.academicPeriodLabel) {
       try {
@@ -52,12 +52,19 @@ export async function GET(req: Request) {
 
         if (keuanganRates.length > 0) {
           finalFee = parseFloat(keuanganRates[0]!.registrationFee);
-          feeSource = "keuangan"; // overridden by keuangan config
+          feeSource = "keuangan"; // configured in Modul Keuangan
+        } else {
+          // Fallback to entry path formFee if wave rate has not been configured in Keuangan yet
+          finalFee = parseFloat(applicant.formFee || "0");
+          feeSource = "entry_path_fallback";
         }
       } catch (e) {
-        // Fallback to entry path fee if keuangan table doesn't exist yet
-        console.warn("pmb_fee_rates table not found, using entry path fee:", e);
+        console.warn("pmb_fee_rates table lookup error, fallback to entry path:", e);
+        finalFee = parseFloat(applicant.formFee || "0");
+        feeSource = "entry_path_fallback";
       }
+    } else {
+      finalFee = parseFloat(applicant.formFee || "0");
     }
 
     // Override if isFree
