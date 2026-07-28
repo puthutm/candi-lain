@@ -413,71 +413,41 @@ export default function HrisAdminDashboard() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5">
-          <button
-            onClick={() => setActiveTab("dashboard")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition ${
-              activeTab === "dashboard" ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" : "text-slate-400 hover:bg-slate-800 hover:text-white"
-            }`}
-          >
-            📊 Beranda
-          </button>
-          <button
-            onClick={() => setActiveTab("karyawan")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition ${
-              activeTab === "karyawan" ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" : "text-slate-400 hover:bg-slate-800 hover:text-white"
-            }`}
-          >
-            📋 Data Karyawan
-          </button>
-          <button
-            onClick={() => setActiveTab("presensi")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition ${
-              activeTab === "presensi" ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" : "text-slate-400 hover:bg-slate-800 hover:text-white"
-            }`}
-          >
-            🕒 Presensi Kerja
-          </button>
-          <button
-            onClick={() => setActiveTab("cuti")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition relative ${
-              activeTab === "cuti" ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" : "text-slate-400 hover:bg-slate-800 hover:text-white"
-            }`}
-          >
-            🌴 Cuti & Lembur
-            {leaveRequestsList.filter(l => l.status === "menunggu").length > 0 && (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">
-                {leaveRequestsList.filter(l => l.status === "menunggu").length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("struktur")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition ${
-              activeTab === "struktur" ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" : "text-slate-400 hover:bg-slate-800 hover:text-white"
-            }`}
-          >
-            🏢 Jabatan & Struktur
-          </button>
-          <button
-            onClick={() => setActiveTab("payroll")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition relative ${
-              activeTab === "payroll" ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" : "text-slate-400 hover:bg-slate-800 hover:text-white"
-            }`}
-          >
-            💰 Run Penggajian
-            {activePayroll && (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("pengaturan")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition ${
-              activeTab === "pengaturan" ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" : "text-slate-400 hover:bg-slate-800 hover:text-white"
-            }`}
-          >
-            ⚙️ Pengaturan
-          </button>
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          {[
+            { id: "dashboard", label: "Beranda", icon: "📊" },
+            { id: "karyawan", label: "Data Karyawan", icon: "📋" },
+            { id: "presensi", label: "Presensi Kerja", icon: "🕒" },
+            { id: "cuti", label: "Cuti & Lembur", icon: "🌴", badge: leaveRequestsList.filter(l => l.status === "menunggu").length },
+            { id: "struktur", label: "Jabatan & Struktur", icon: "🏢" },
+            { id: "payroll", label: "Run Penggajian", icon: "💰", pulse: activePayroll },
+            { id: "pengaturan", label: "Pengaturan", icon: "⚙️" },
+          ].map((nav) => {
+            const isActive = activeTab === nav.id;
+            return (
+              <button
+                key={nav.id}
+                onClick={() => setActiveTab(nav.id as any)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all duration-200 ${
+                  isActive
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20 translate-x-1"
+                    : "text-slate-400 hover:bg-slate-800/60 hover:text-white hover:translate-x-0.5"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-base">{nav.icon}</span>
+                  <span>{nav.label}</span>
+                </div>
+                {nav.badge ? (
+                  <span className="bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                    {nav.badge}
+                  </span>
+                ) : nav.pulse ? (
+                  <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-sm shadow-emerald-400/50"></span>
+                ) : null}
+              </button>
+            );
+          })}
         </nav>
 
         <div className="p-4 border-t border-slate-800">

@@ -438,7 +438,7 @@ export default function SkeuDashboard() {
         </div>
 
         {/* Sidebar Nav */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           {[
             { id: "beranda", label: "Beranda & Kas", icon: "📊" },
             { id: "penerimaan", label: "Penerimaan SPP", icon: "🧾" },
@@ -446,20 +446,23 @@ export default function SkeuDashboard() {
             { id: "pengeluaran", label: "Pengeluaran", icon: "📤" },
             { id: "akuntansi", label: "Akuntansi", icon: "📖" },
             { id: "pengaturan", label: "Pengaturan", icon: "⚙️" },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id as any)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition ${
-                activeTab === item.id
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/10"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-              }`}
-            >
-              <span>{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
+          ].map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id as any)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
+                  isActive
+                    ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-lg shadow-blue-500/20 translate-x-1"
+                    : "text-slate-400 hover:bg-slate-900/70 hover:text-slate-200 hover:translate-x-0.5"
+                }`}
+              >
+                <span className="text-base">{item.icon}</span>
+                {item.label}
+              </button>
+            );
+          })}
 
           {/* Quick Links */}
           <div className="pt-4 mt-4 border-t border-slate-800 space-y-1.5">

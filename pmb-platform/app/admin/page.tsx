@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import AppSwitcher from "@/app/components/AppSwitcher";
 import { INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
 type AdminPanelType =
@@ -69,6 +70,84 @@ export default function AdminPage() {
   const [editingQuotaValue, setEditingQuotaValue] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Wave Creation States & Handlers
+  const [showWaveModal, setShowWaveModal] = useState(false);
+  const [waveForm, setWaveForm] = useState({
+    name: "",
+    code: "",
+    startDate: "",
+    endDate: "",
+    status: "belum_dibuka",
+  });
+  const [isCreatingWave, setIsCreatingWave] = useState(false);
+
+  const handleCreateWave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waveForm.name || !waveForm.code || !waveForm.startDate || !waveForm.endDate) {
+      triggerToast("Mohon lengkapi seluruh field gelombang!");
+      return;
+    }
+    setIsCreatingWave(true);
+    try {
+      const res = await fetch("/api/admin/gelombang", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(waveForm),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast("Gelombang baru berhasil ditambahkan!");
+        setShowWaveModal(false);
+        setWaveForm({ name: "", code: "", startDate: "", endDate: "", status: "belum_dibuka" });
+        fetchData();
+      } else {
+        triggerToast("Gagal menambah gelombang: " + data.error);
+      }
+    } catch (err: any) {
+      triggerToast("Galat: " + err.message);
+    } finally {
+      setIsCreatingWave(false);
+    }
+  };
+
+  // Filters for Applicants Table
+  const [filterWave, setFilterWave] = useState("all");
+  const [filterEntryPath, setFilterEntryPath] = useState("all");
+
+  const handleExportCsv = () => {
+    if (applicants.length === 0) {
+      triggerToast("Tidak ada data pendaftar untuk diekspor.");
+      return;
+    }
+    const filtered = applicants.filter((a) => {
+      const matchesWave = filterWave === "all" || a.wave === filterWave;
+      const matchesEntryPath = filterEntryPath === "all" || a.entryPath === filterEntryPath;
+      return matchesWave && matchesEntryPath;
+    });
+    const headers = ["Nomor Registrasi", "Nama Lengkap", "Email", "Telepon", "Program Studi", "Gelombang", "Jalur Masuk", "Tahapan", "Status Pembayaran", "NIM"];
+    const rows = filtered.map((a) => [
+      `"${a.registrationNumber || ""}"`,
+      `"${a.fullName || ""}"`,
+      `"${a.email || ""}"`,
+      `"${a.phone || ""}"`,
+      `"${a.studyProgram || ""}"`,
+      `"${a.wave || ""}"`,
+      `"${a.entryPath || ""}"`,
+      `"${getStageLabel(a.currentStage)}"`,
+      `"${a.paymentStatus === "lunas" ? "Lunas" : "Belum Lunas"}"`,
+      `"${a.nim || ""}"`,
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Data_Pendaftar_PMB_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    triggerToast(`Sukses mengekspor ${filtered.length} data pendaftar ke CSV!`);
+  };
 
   // Communication & Campaign states
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -833,6 +912,7 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <AppSwitcher />
             <div className="text-right hidden sm:block">
               <p className="text-xs font-bold text-slate-800">{adminUser?.name || "Admin"}</p>
               <p className="text-[10px] text-slate-500">{adminUser?.roleDisplayName || getRoleDisplayName(adminUser?.role || "")}</p>
@@ -934,60 +1014,108 @@ export default function AdminPage() {
 
           {/* PANEL 3: DATA PENDAFTAR */}
           {activePanel === "pendaftar" && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm fade-in">
-              {applicants.length === 0 ? (
-                <div className="p-10 text-center text-slate-400">
-                  <p className="font-semibold text-sm">Belum ada data pendaftar.</p>
-                  <p className="text-xs mt-1">Silakan seed mock data terlebih dahulu di bagian bawah menu sidebar.</p>
+            <div className="space-y-4 fade-in">
+              {/* Filter & Export Action Bar */}
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-3 flex-wrap text-xs">
+                  <div>
+                    <label className="text-slate-400 font-bold block mb-1">Gelombang</label>
+                    <select
+                      value={filterWave}
+                      onChange={(e) => setFilterWave(e.target.value)}
+                      className="p-2 border border-slate-200 rounded-xl outline-none font-semibold text-slate-700 bg-slate-50 focus:border-[#0f487b]"
+                    >
+                      <option value="all">Semua Gelombang</option>
+                      <option value="Gelombang 1">Gelombang 1</option>
+                      <option value="Gelombang 2">Gelombang 2</option>
+                      <option value="Gelombang 3">Gelombang 3</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-slate-400 font-bold block mb-1">Jalur Masuk</label>
+                    <select
+                      value={filterEntryPath}
+                      onChange={(e) => setFilterEntryPath(e.target.value)}
+                      className="p-2 border border-slate-200 rounded-xl outline-none font-semibold text-slate-700 bg-slate-50 focus:border-[#0f487b]"
+                    >
+                      <option value="all">Semua Jalur Masuk</option>
+                      <option value="Reguler">Reguler</option>
+                      <option value="Prestasi">Prestasi</option>
+                      <option value="Transfer">Transfer / Alumnus</option>
+                    </select>
+                  </div>
                 </div>
-              ) : (
-                <table className="w-full text-left text-sm text-slate-600">
-                  <thead className="bg-slate-50 text-slate-500 uppercase tracking-widest text-[10px] font-bold border-b border-slate-200">
-                    <tr>
-                      <th className="px-6 py-4">Kandidat</th>
-                      <th className="px-6 py-4">Nomor Ref</th>
-                      <th className="px-6 py-4">Program Studi</th>
-                      <th className="px-6 py-4">Tahapan</th>
-                      <th className="px-6 py-4">Biaya</th>
-                      <th className="px-6 py-4 text-center">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {applicants.map((a) => (
-                      <tr key={a.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-slate-800">{a.fullName}</div>
-                          <div className="text-xs text-slate-400">{a.email}</div>
-                        </td>
-                        <td className="px-6 py-4 font-mono font-bold text-xs text-[#0f487b]">{a.registrationNumber}</td>
-                        <td className="px-6 py-4 font-semibold">{a.studyProgram}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-0.5 text-xs font-bold rounded-md ${getStageColor(a.currentStage)}`}>
-                            {getStageLabel(a.currentStage)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`px-2 py-0.5 rounded text-xs font-bold ${
-                              a.paymentStatus === "lunas" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
-                            }`}
-                          >
-                            {a.paymentStatus === "lunas" ? "Lunas" : "Belum Lunas"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <button
-                            onClick={() => handleViewDetail(a.id)}
-                            className="px-3 py-1.5 bg-[#0f487b] hover:bg-[#00719f] text-white rounded-lg text-xs font-bold transition-all"
-                          >
-                            Detail & Keputusan
-                          </button>
-                        </td>
+
+                <button
+                  onClick={handleExportCsv}
+                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2"
+                >
+                  📥 Ekspor Data (CSV)
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                {applicants.length === 0 ? (
+                  <div className="p-10 text-center text-slate-400">
+                    <p className="font-semibold text-sm">Belum ada data pendaftar.</p>
+                    <p className="text-xs mt-1">Silakan seed mock data terlebih dahulu di bagian bawah menu sidebar.</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-left text-sm text-slate-600">
+                    <thead className="bg-slate-50 text-slate-500 uppercase tracking-widest text-[10px] font-bold border-b border-slate-200">
+                      <tr>
+                        <th className="px-6 py-4">Kandidat</th>
+                        <th className="px-6 py-4">Nomor Ref</th>
+                        <th className="px-6 py-4">Program Studi</th>
+                        <th className="px-6 py-4">Tahapan</th>
+                        <th className="px-6 py-4">Biaya</th>
+                        <th className="px-6 py-4 text-center">Aksi</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {applicants
+                        .filter((a) => {
+                          const matchesWave = filterWave === "all" || a.wave === filterWave;
+                          const matchesEntryPath = filterEntryPath === "all" || a.entryPath === filterEntryPath;
+                          return matchesWave && matchesEntryPath;
+                        })
+                        .map((a) => (
+                          <tr key={a.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="font-bold text-slate-800">{a.fullName}</div>
+                              <div className="text-xs text-slate-400">{a.email}</div>
+                            </td>
+                            <td className="px-6 py-4 font-mono font-bold text-xs text-[#0f487b]">{a.registrationNumber}</td>
+                            <td className="px-6 py-4 font-semibold">{a.studyProgram}</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-0.5 text-xs font-bold rounded-md ${getStageColor(a.currentStage)}`}>
+                                {getStageLabel(a.currentStage)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span
+                                className={`px-2 py-0.5 rounded text-xs font-bold ${
+                                  a.paymentStatus === "lunas" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                                }`}
+                              >
+                                {a.paymentStatus === "lunas" ? "Lunas" : "Belum Lunas"}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <button
+                                onClick={() => handleViewDetail(a.id)}
+                                className="px-3 py-1.5 bg-[#0f487b] hover:bg-[#00719f] text-white rounded-lg text-xs font-bold transition-all"
+                              >
+                                Detail & Keputusan
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
           )}
 
@@ -1647,8 +1775,25 @@ export default function AdminPage() {
               {/* Save Button */}
               <div className="flex justify-end">
                 <button
-                  onClick={() => triggerToast("Pengaturan berhasil disimpan!")}
-                  className="px-8 py-3 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold rounded-xl text-xs transition-all shadow-md"
+                  onClick={async () => {
+                    try {
+                      triggerToast("Menyimpan konfigurasi sistem PMB...");
+                      const res = await fetch("/api/admin/settings", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ updatedAt: new Date().toISOString() }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        triggerToast(data.message || "Pengaturan berhasil disimpan!");
+                      } else {
+                        triggerToast("Gagal menyimpan: " + data.error);
+                      }
+                    } catch (err: any) {
+                      triggerToast("Galat: " + err.message);
+                    }
+                  }}
+                  className="px-8 py-3 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold rounded-xl text-xs transition-all shadow-md cursor-pointer"
                 >
                   Simpan Pengaturan
                 </button>
@@ -1659,8 +1804,28 @@ export default function AdminPage() {
           {/* PANEL 6: GELOMBANG & KUOTA */}
           {activePanel === "gelombang" && (
             <div className="space-y-6 fade-in">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-800">Manajemen Gelombang & Kuota Seleksi</h2>
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-800">Manajemen Gelombang & Kuota Seleksi</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Atur periode pendaftaran dan alokasi kuota per program studi.</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const nextNum = waves.length + 1;
+                    const year = new Date().getFullYear();
+                    setWaveForm({
+                      name: `Gelombang ${nextNum}`,
+                      code: `GEL-${nextNum}-${year}`,
+                      startDate: new Date().toISOString().slice(0, 10),
+                      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+                      status: "belum_dibuka",
+                    });
+                    setShowWaveModal(true);
+                  }}
+                  className="px-4 py-2.5 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2 cursor-pointer"
+                >
+                  ➕ Tambah Gelombang Baru
+                </button>
               </div>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 {waves.map((w) => {
@@ -1868,14 +2033,136 @@ export default function AdminPage() {
                   </div>
                 </div>
               ) : (
-                <button
-                  onClick={() => setDetailModalOpen(false)}
-                  className="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition"
-                >
-                  Tutup Rincian
-                </button>
+                <div className="space-y-3">
+                  {detailApplicant?.currentStage === "diterima" && (
+                    <button
+                      onClick={async () => {
+                        triggerToast(`Mengirim ulang Surat Kelulusan ke ${detailApplicant.email}...`);
+                        try {
+                          await fetch("/api/admin/blast", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              name: `Resend Letter - ${detailApplicant.fullName}`,
+                              segment: "Pendaftar Diterima",
+                              channel: "email",
+                              message: `Selamat ${detailApplicant.fullName}, Surat Kelulusan PMB Anda telah diterbitkan dengan NIM ${detailApplicant.nim || "-"}.`,
+                            }),
+                          });
+                          triggerToast(`Surat Kelulusan berhasil dikirim ke ${detailApplicant.email}!`);
+                        } catch (err: any) {
+                          triggerToast("Gagal mengirim surat: " + err.message);
+                        }
+                      }}
+                      className="w-full py-2.5 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold rounded-xl text-xs transition shadow flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      ✉️ Kirim Ulang Surat Kelulusan (Acceptance Letter)
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setDetailModalOpen(false)}
+                    className="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
+                  >
+                    Tutup Rincian
+                  </button>
+                </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL TAMBAH GELOMBANG */}
+      {showWaveModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4 fade-in">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <h3 className="font-bold text-slate-800 text-base">Tambah Gelombang PMB Baru</h3>
+              <button
+                onClick={() => setShowWaveModal(false)}
+                className="w-8 h-8 rounded-full hover:bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-xs transition-all cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleCreateWave} className="p-6 space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-slate-600 block mb-1">Nama Gelombang</label>
+                <input
+                  type="text"
+                  required
+                  value={waveForm.name}
+                  onChange={(e) => setWaveForm({ ...waveForm, name: e.target.value })}
+                  placeholder="Mis. Gelombang 3 (Jalur Mandiri)"
+                  className="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#0f487b]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-600 block mb-1">Kode Gelombang</label>
+                <input
+                  type="text"
+                  required
+                  value={waveForm.code}
+                  onChange={(e) => setWaveForm({ ...waveForm, code: e.target.value })}
+                  placeholder="Mis. GEL3-2026"
+                  className="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#0f487b] font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-600 block mb-1">Tanggal Mulai</label>
+                  <input
+                    type="date"
+                    required
+                    value={waveForm.startDate}
+                    onChange={(e) => setWaveForm({ ...waveForm, startDate: e.target.value })}
+                    className="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#0f487b]"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-600 block mb-1">Tanggal Berakhir</label>
+                  <input
+                    type="date"
+                    required
+                    value={waveForm.endDate}
+                    onChange={(e) => setWaveForm({ ...waveForm, endDate: e.target.value })}
+                    className="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#0f487b]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-600 block mb-1">Status Gelombang</label>
+                <select
+                  value={waveForm.status}
+                  onChange={(e) => setWaveForm({ ...waveForm, status: e.target.value })}
+                  className="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#0f487b]"
+                >
+                  <option value="belum_dibuka">Belum Dibuka</option>
+                  <option value="aktif">Aktif (Buka Pendaftaran)</option>
+                  <option value="tutup">Tutup</option>
+                </select>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowWaveModal(false)}
+                  className="px-4 py-2.5 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingWave}
+                  className="px-5 py-2.5 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold rounded-xl shadow transition disabled:opacity-50 cursor-pointer"
+                >
+                  {isCreatingWave ? "Menyimpan..." : "Simpan Gelombang"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
