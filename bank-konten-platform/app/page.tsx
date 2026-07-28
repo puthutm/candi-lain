@@ -12,6 +12,8 @@ export default function HomePage() {
     if (!loading) {
       if (user) {
         router.push("/dashboard");
+      } else {
+        window.location.href = "/auth/login";
       }
     }
   }, [user, loading, router]);

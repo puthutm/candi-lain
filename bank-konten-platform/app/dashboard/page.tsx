@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function DashboardPage() {
-  const { user, currentRole, toggleRole, logout } = useRole();
+  const { user, loading, currentRole, toggleRole, logout } = useRole();
   const [stats, setStats] = useState({
     materials: 0,
     questions: 0,
@@ -14,6 +14,11 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
+    if (!loading && !user) {
+      window.location.href = "/auth/login";
+      return;
+    }
+
     async function loadStats() {
       try {
         const matRes = await fetch("/api/materi?status=all");
