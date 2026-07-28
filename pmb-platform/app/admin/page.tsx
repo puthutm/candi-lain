@@ -41,6 +41,7 @@ interface WaveRow {
   name: string;
   code: string;
   academicPeriodLabel?: string;
+  defaultPassword?: string;
   startDate: string;
   endDate: string;
   status: "belum_dibuka" | "aktif" | "tertutup";
@@ -79,6 +80,7 @@ export default function PmbAdminDashboard() {
     name: "",
     code: "",
     academicPeriodLabel: "2026/2027 Ganjil",
+    defaultPassword: "Pmb2026!",
     startDate: "",
     endDate: "",
     status: "belum_dibuka",
@@ -102,7 +104,7 @@ export default function PmbAdminDashboard() {
       if (data.success) {
         triggerToast("Gelombang baru berhasil ditambahkan!");
         setShowWaveModal(false);
-        setWaveForm({ name: "", code: "", academicPeriodLabel: "2026/2027 Ganjil", startDate: "", endDate: "", status: "belum_dibuka" });
+        setWaveForm({ name: "", code: "", academicPeriodLabel: "2026/2027 Ganjil", defaultPassword: "Pmb2026!", startDate: "", endDate: "", status: "belum_dibuka" });
         fetchData();
       } else {
         triggerToast("Gagal menambah gelombang: " + data.error);
@@ -1897,6 +1899,7 @@ export default function PmbAdminDashboard() {
                       name: `Gelombang ${nextNum}`,
                       code: `GEL-${nextNum}-${year}`,
                       academicPeriodLabel: "2026/2027 Ganjil",
+                      defaultPassword: `Gelombang${nextNum}${year}!`,
                       startDate: new Date().toISOString().slice(0, 10),
                       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
                       status: "belum_dibuka",
@@ -1922,7 +1925,9 @@ export default function PmbAdminDashboard() {
                               {w.academicPeriodLabel || "2026/2027 Ganjil"}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-400 font-mono mt-0.5">{w.code}</p>
+                          <p className="text-xs text-slate-400 font-mono mt-0.5">
+                            {w.code} · Password Default: <span className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{w.defaultPassword || "Pmb2026!"}</span>
+                          </p>
                         </div>
                         <select
                           value={w.status}
@@ -2140,6 +2145,48 @@ export default function PmbAdminDashboard() {
                           {detailApplicant.paymentStatus === "lunas" ? "Lunas" : "Belum Lunas"}
                         </span>
                       </div>
+                      <div>
+                        <span className="text-slate-400 block font-semibold mb-0.5">Password Default Gelombang</span>
+                        <span className="font-mono font-bold text-slate-800 bg-slate-200/60 px-1.5 py-0.5 rounded text-[11px]">
+                          {detailApplicant.waveDefaultPassword || "Pmb2026!"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block font-semibold mb-0.5">Status Password Account</span>
+                        <span className={`font-bold ${detailApplicant.mustChangePassword ? "text-amber-600" : "text-emerald-600"}`}>
+                          {detailApplicant.mustChangePassword ? "⚠️ Default (Belum Diubah)" : "✅ Custom (Sudah Diubah)"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between">
+                      <span className="text-xs text-slate-500 font-medium">Atur ulang kata sandi kandidat:</span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!confirm(`Reset password ${detailApplicant.fullName} ke default gelombang (${detailApplicant.waveDefaultPassword || "Pmb2026!"})?`)) return;
+                          try {
+                            triggerToast("Memproses reset password...");
+                            const res = await fetch("/api/admin/applicants/reset-password", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ applicantId: detailApplicant.id }),
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              triggerToast(data.message);
+                              handleViewDetail(detailApplicant.id);
+                            } else {
+                              triggerToast("Gagal reset: " + data.error);
+                            }
+                          } catch (err: any) {
+                            triggerToast("Galat: " + err.message);
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow transition cursor-pointer"
+                      >
+                        🔄 Reset Password
+                      </button>
                     </div>
                   </div>
 
@@ -2361,6 +2408,21 @@ export default function PmbAdminDashboard() {
                     className="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#0f487b]"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-600 block mb-1">Password Default Pendaftar</label>
+                <input
+                  type="text"
+                  required
+                  value={waveForm.defaultPassword}
+                  onChange={(e) => setWaveForm({ ...waveForm, defaultPassword: e.target.value })}
+                  placeholder="Misal: Gelombang12026!"
+                  className="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#0f487b] font-mono text-xs"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Password bawaan yang akan diberikan kepada pendaftar di gelombang ini saat pertama kali daftar.
+                </p>
               </div>
 
               <div>

@@ -152,7 +152,6 @@ export default function PmbPublikPage() {
           waveId: selGelombang?.id,
           entryPathId: selJalur?.id,
           studyProgramId: selProdi?.id,
-          password: DEFAULT_APPLICANT_PASSWORD,
         }),
       })
         .then((res) => res.json())

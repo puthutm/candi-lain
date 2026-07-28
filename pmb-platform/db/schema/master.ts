@@ -5,6 +5,7 @@ export const pmbWaves = pgTable("pmb_waves", {
   name: text("name").notNull(),
   code: text("code").unique().notNull(),
   academicPeriodLabel: text("academic_period_label").default("2026/2027 Ganjil"),
+  defaultPassword: text("default_password").default("Pmb2026!").notNull(),
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
   status: text("status", { enum: ["belum_dibuka", "aktif", "tertutup"] }).default("belum_dibuka").notNull(),

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     if (auth instanceof NextResponse) return auth;
 
     const body = await req.json();
-    const { name, code, academicPeriodLabel, startDate, endDate, status } = body;
+    const { name, code, academicPeriodLabel, defaultPassword, startDate, endDate, status } = body;
 
     if (!name || !code || !startDate || !endDate) {
       return NextResponse.json({ success: false, error: "Name, code, startDate, endDate are required" }, { status: 400 });
@@ -38,6 +38,7 @@ export async function POST(req: Request) {
         name,
         code,
         academicPeriodLabel: academicPeriodLabel || "2026/2027 Ganjil",
+        defaultPassword: defaultPassword || "Pmb2026!",
         startDate,
         endDate,
         status: status || "belum_dibuka",
@@ -55,16 +56,20 @@ export async function PATCH(req: Request) {
     if (auth instanceof NextResponse) return auth;
 
     const body = await req.json();
-    const { id, status } = body;
+    const { id, status, defaultPassword } = body;
 
-    if (!id || !status) {
-      return NextResponse.json({ success: false, error: "ID and status are required" }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ success: false, error: "ID is required" }, { status: 400 });
     }
+
+    const updateData: any = {};
+    if (status) updateData.status = status;
+    if (defaultPassword) updateData.defaultPassword = defaultPassword;
 
     const { eq } = await import("drizzle-orm");
     const [updated] = await db
       .update(pmbWaves)
-      .set({ status })
+      .set(updateData)
       .where(eq(pmbWaves.id, id))
       .returning();
 

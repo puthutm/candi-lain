@@ -30,6 +30,8 @@ export async function GET(_req: Request, { params }: RouteParams) {
         entryPathId: pmbApplicants.entryPathId,
         studyProgramId: pmbApplicants.studyProgramId,
         waveName: pmbWaves.name,
+        waveDefaultPassword: pmbWaves.defaultPassword,
+        mustChangePassword: pmbApplicants.mustChangePassword,
         entryPathName: pmbEntryPaths.name,
         entryPathFee: pmbEntryPaths.formFee,
         studyProgramName: pmbStudyPrograms.name,
