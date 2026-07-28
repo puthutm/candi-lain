@@ -345,19 +345,40 @@ export default function ApplicantDashboard() {
       try {
         const res = await fetch("/api/auth/session");
         const data = await res.json();
-        if (data.success && data.authenticated && data.user && data.user.role === "applicant") {
-          setCandidateId(data.user.userId);
-          if (data.user.mustChangePassword) {
-            setMustChangePassword(true);
-            setShowPasswordModal(true);
+        const localAppId = typeof window !== "undefined" ? localStorage.getItem("pmb_applicant_id") : null;
+
+        if (data.success && data.authenticated && data.user) {
+          const targetUserId = data.user.userId || localAppId;
+          if (targetUserId) {
+            setCandidateId(targetUserId);
+            if (data.user.mustChangePassword) {
+              setMustChangePassword(true);
+              setShowPasswordModal(true);
+            }
+            fetchApplicantDetails(targetUserId);
+            fetchMeta();
+            return;
           }
-          fetchApplicantDetails(data.user.userId);
+        }
+
+        // Client-side fallback if applicant cookie is pending or local session active
+        if (localAppId) {
+          setCandidateId(localAppId);
+          fetchApplicantDetails(localAppId);
+          fetchMeta();
+          return;
+        }
+
+        window.location.href = "/";
+      } catch (err) {
+        const localAppId = typeof window !== "undefined" ? localStorage.getItem("pmb_applicant_id") : null;
+        if (localAppId) {
+          setCandidateId(localAppId);
+          fetchApplicantDetails(localAppId);
           fetchMeta();
         } else {
           window.location.href = "/";
         }
-      } catch (err) {
-        window.location.href = "/";
       }
     };
     checkSession();
