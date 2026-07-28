@@ -595,7 +595,7 @@ export default function PmbPublikPage() {
                           <span className="text-[11px] text-slate-400">Untuk kredensial SSO</span>
                         </div>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">✉️</span>2 -translate-y-1/2 text-slate-400">âœ‰ï¸</span>
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">✉️</span>
                           <input
                             type="email"
                             placeholder="nama@email.com"
