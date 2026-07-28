@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbApplicants } from "@/db/schema/applicants";
-import { eq } from "drizzle-orm";
+import { eq, or, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import bcrypt from "bcrypt";
 
@@ -15,16 +15,23 @@ export async function POST(req: Request) {
     );
 
     const { email, password } = await req.json();
+    const identifier = (email || "").trim().toLowerCase();
 
-    if (!email || !password) {
-      return NextResponse.json({ success: false, error: "Email dan kata sandi wajib diisi" }, { status: 400 });
+    if (!identifier || !password) {
+      return NextResponse.json({ success: false, error: "Email / No. Pendaftaran dan kata sandi wajib diisi" }, { status: 400 });
     }
 
-    // Find applicant by email
+    // Find applicant by email, registration number, or phone
     const applicants = await db
       .select()
       .from(pmbApplicants)
-      .where(eq(pmbApplicants.email, email.toLowerCase()))
+      .where(
+        or(
+          eq(sql`LOWER(${pmbApplicants.email})`, identifier),
+          eq(sql`LOWER(${pmbApplicants.registrationNumber})`, identifier),
+          eq(pmbApplicants.phone, identifier)
+        )
+      )
       .limit(1);
 
     if (applicants.length === 0) {
@@ -59,6 +66,7 @@ export async function POST(req: Request) {
       registrationNumber: applicant.registrationNumber,
       mustChangePassword: applicant.mustChangePassword ?? false,
     }), {
+      path: "/",
       httpOnly: true,
       secure: isSecure,
       sameSite: "lax",

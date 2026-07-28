@@ -9,7 +9,30 @@ import { ALL_PMB_ROLES, getRoleDisplayName } from "@/lib/sso-middleware";
 export async function GET() {
   try {
     const session = await auth();
+    const cookieStore = await cookies();
+    const pmbUserCookie = cookieStore.get("pmb_user")?.value;
+
     if (!session || !session.user) {
+      if (pmbUserCookie) {
+        try {
+          const cookieUser = JSON.parse(pmbUserCookie);
+          if (cookieUser && cookieUser.userId) {
+            return NextResponse.json({
+              success: true,
+              authenticated: true,
+              user: {
+                userId: cookieUser.userId,
+                name: cookieUser.name,
+                role: cookieUser.role || "applicant",
+                registrationNumber: cookieUser.registrationNumber,
+                mustChangePassword: cookieUser.mustChangePassword ?? false,
+              },
+            });
+          }
+        } catch (e) {
+          console.error("Error parsing pmb_user cookie:", e);
+        }
+      }
       return NextResponse.json({ success: true, authenticated: false, user: null });
     }
 
