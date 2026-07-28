@@ -94,11 +94,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(
-      password || env.DEFAULT_APPLICANT_PASSWORD,
-      env.BCRYPT_ROUNDS
-    );
-
     const result = await db.transaction(async (tx) => {
       // 1. Lock and get Wave & Entry Path info
       const wave = await tx
