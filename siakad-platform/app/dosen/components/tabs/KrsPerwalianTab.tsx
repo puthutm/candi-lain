@@ -1,6 +1,24 @@
 "use client";
 
-import { KrsSubmissionDetail } from "../page";
+export interface KrsItemDetail {
+  itemId: string;
+  itemStatus: string;
+  classId: string;
+  className: string;
+  courseCode: string;
+  courseName: string;
+  sks: number;
+  courseType: string;
+}
+
+export interface KrsSubmissionDetail {
+  krsId: string;
+  studentId: string;
+  studentName: string;
+  nim: string;
+  totalSks: number;
+  items: KrsItemDetail[];
+}
 
 interface KrsPerwalianTabProps {
   submissions: KrsSubmissionDetail[];

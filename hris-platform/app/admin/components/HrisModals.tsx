@@ -1,6 +1,32 @@
 "use client";
 
-import { Employee, OrgUnit, Position } from "../page";
+export interface OrgUnit {
+  id: string;
+  code: string;
+  name: string;
+  type: string;
+}
+
+export interface Position {
+  id: string;
+  name: string;
+  abbreviation: string;
+  functionalAllowance: number;
+}
+
+export interface Employee {
+  id: string;
+  employeeNumber: string;
+  fullName: string;
+  employeeType: "dosen" | "tendik";
+  organizationUnitId: string;
+  positionId: string;
+  rankGroup: string;
+  baseSalary: number;
+  status: "aktif" | "non_aktif" | "pensiun" | "cuti_panjang";
+  bankName: string;
+  bankAccountNumber: string;
+}
 
 interface HrisModalsProps {
   showEmployeeModal: boolean;

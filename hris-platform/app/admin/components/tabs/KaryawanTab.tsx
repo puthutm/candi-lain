@@ -1,6 +1,32 @@
 "use client";
 
-import { Employee, OrgUnit, Position } from "../../page";
+export interface OrgUnit {
+  id: string;
+  code: string;
+  name: string;
+  type: string;
+}
+
+export interface Position {
+  id: string;
+  name: string;
+  abbreviation: string;
+  functionalAllowance: number;
+}
+
+export interface Employee {
+  id: string;
+  employeeNumber: string;
+  fullName: string;
+  employeeType: "dosen" | "tendik";
+  organizationUnitId: string;
+  positionId: string;
+  rankGroup: string;
+  baseSalary: number;
+  status: "aktif" | "non_aktif" | "pensiun" | "cuti_panjang";
+  bankName: string;
+  bankAccountNumber: string;
+}
 
 interface KaryawanTabProps {
   employeesList: Employee[];
@@ -59,6 +85,12 @@ export default function KaryawanTab({
           </p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => triggerNotice("Memperbarui data pegawai...")}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+          >
+            🔄 Refresh
+          </button>
           <button
             onClick={handleExportEmployeesCsv}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"

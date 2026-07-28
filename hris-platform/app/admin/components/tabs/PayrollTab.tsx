@@ -1,6 +1,37 @@
 "use client";
 
-import { PayrollRun, Payslip } from "../../page";
+export interface PayrollRun {
+  id: string;
+  period: string;
+  cutoffDate: string;
+  disburseTargetDate: string;
+  status: "berjalan" | "selesai";
+  eligibleEmployeeCount: number;
+  totalGross: number;
+  totalNet: number;
+  steps: {
+    stepName: string;
+    status: string;
+    anomalyNote?: string | null;
+  }[];
+}
+
+export interface Payslip {
+  id: string;
+  employeeName: string;
+  employeeNumber: string;
+  period: string;
+  baseSalary: number;
+  pdfUrl: string;
+  status: "draft" | "published" | "paid";
+  bankName?: string;
+  bankAccountNumber?: string;
+  items: {
+    componentName: string;
+    category: string;
+    amount: number;
+  }[];
+}
 
 interface PayrollTabProps {
   payrollRunsList: PayrollRun[];

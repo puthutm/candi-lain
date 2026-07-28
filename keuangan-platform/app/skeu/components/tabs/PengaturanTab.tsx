@@ -1,6 +1,15 @@
 "use client";
 
-import { TuitionRate } from "../../page";
+export interface TuitionRate {
+  id: string;
+  studyProgramRef: string;
+  studyProgramNameSnapshot: string;
+  academicPeriodLabel: string;
+  sppAmount: string;
+  bopAmount: string;
+  totalAmount: string;
+  requiresYayasanApproval: boolean;
+}
 
 interface PengaturanTabProps {
   rates: TuitionRate[];

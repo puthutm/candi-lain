@@ -1,6 +1,14 @@
 "use client";
 
-import { LMSClass } from "../page";
+export interface LMSClass {
+  id: string;
+  courseCode: string;
+  courseName: string;
+  sks: number;
+  academicPeriodLabel: string;
+  scheduleText: string;
+  dosenUserId: string;
+}
 
 interface ClassesTabProps {
   classes: LMSClass[];

@@ -1,6 +1,17 @@
 "use client";
 
-import { StudentInvoice } from "../../page";
+export interface StudentInvoice {
+  id: string;
+  studentUserId: string;
+  invoiceNumber: string;
+  invoiceType: string;
+  academicPeriodLabel: string;
+  totalAmount: string;
+  paidAmount: string;
+  outstandingAmount: string;
+  status: string;
+  dueDate: string;
+}
 
 interface PenerimaanTabProps {
   invoices: StudentInvoice[];

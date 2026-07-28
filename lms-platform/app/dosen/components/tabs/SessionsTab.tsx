@@ -1,6 +1,21 @@
 "use client";
 
-import { LMSClass, LMSSession } from "../page";
+export interface LMSClass {
+  id: string;
+  courseCode: string;
+  courseName: string;
+  sks: number;
+  academicPeriodLabel: string;
+  scheduleText: string;
+  dosenUserId: string;
+}
+
+export interface LMSSession {
+  id: string;
+  sessionNumber: number;
+  topic: string;
+  description: string;
+}
 
 interface SessionsTabProps {
   selectedClass: LMSClass | null;

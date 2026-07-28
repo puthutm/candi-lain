@@ -1,6 +1,16 @@
 "use client";
 
-import { LeaveRequest } from "../../page";
+export interface LeaveRequest {
+  id: string;
+  employeeName: string;
+  employeeNumber: string;
+  leaveTypeName: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  status: "menunggu" | "disetujui" | "ditolak";
+  requestedAt: string;
+}
 
 interface CutiTabProps {
   leaveRequestsList: LeaveRequest[];
@@ -26,6 +36,12 @@ export default function CutiTab({
             Daftar permohonan izin cuti tahunan, sakit, & cuti melahirkan SDM.
           </p>
         </div>
+        <button
+          onClick={() => triggerNotice("Memperbarui daftar pengajuan cuti...")}
+          className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+        >
+          🔄 Refresh
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden text-xs">

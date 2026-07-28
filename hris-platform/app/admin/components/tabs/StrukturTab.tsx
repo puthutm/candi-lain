@@ -1,6 +1,18 @@
 "use client";
 
-import { OrgUnit, Position } from "../../page";
+export interface OrgUnit {
+  id: string;
+  code: string;
+  name: string;
+  type: string;
+}
+
+export interface Position {
+  id: string;
+  name: string;
+  abbreviation: string;
+  functionalAllowance: number;
+}
 
 interface StrukturTabProps {
   units: OrgUnit[];
@@ -24,6 +36,12 @@ export default function StrukturTab({
             Daftar Fakultas, Program Studi, BAAK, Biro, & Tunjangan Jabatan Dosen.
           </p>
         </div>
+        <button
+          onClick={() => triggerNotice("Memperbarui struktur organisasi...")}
+          className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+        >
+          🔄 Refresh
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-semibold text-slate-700">

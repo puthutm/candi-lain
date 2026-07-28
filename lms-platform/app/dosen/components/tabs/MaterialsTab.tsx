@@ -1,6 +1,20 @@
 "use client";
 
-import { LMSMaterial, LMSSession } from "../page";
+export interface LMSSession {
+  id: string;
+  sessionNumber: number;
+  topic: string;
+  description: string;
+}
+
+export interface LMSMaterial {
+  id: string;
+  title: string;
+  materialType: string;
+  fileUrl: string;
+  verificationStatus: string;
+  revisionNote: string | null;
+}
 
 interface MaterialsTabProps {
   selectedSession: LMSSession | null;

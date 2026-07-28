@@ -1,6 +1,13 @@
 "use client";
 
-import { PmbFeeRate } from "../../page";
+export interface PmbFeeRate {
+  id: string;
+  waveLabel: string;
+  registrationFee: string;
+  examFee: string;
+  reregistrationFee: string;
+  matriculationFee: string;
+}
 
 interface PmbFeesTabProps {
   pmbFeeRates: PmbFeeRate[];

@@ -1,6 +1,11 @@
 "use client";
 
-import { CoaAccount } from "../../page";
+export interface CoaAccount {
+  id: string;
+  accountCode: string;
+  accountName: string;
+  accountType: string;
+}
 
 interface AkuntansiTabProps {
   coa: CoaAccount[];

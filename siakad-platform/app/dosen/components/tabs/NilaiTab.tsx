@@ -1,6 +1,28 @@
 "use client";
 
-import { ClassData, StudentGrade } from "../page";
+export interface ClassData {
+  classId: string;
+  className: string;
+  courseCode: string;
+  courseName: string;
+  sks: number;
+  capacity: number;
+  enrolledCount: number;
+  mode: string;
+}
+
+export interface StudentGrade {
+  gradeId: string | null;
+  studentId: string;
+  nim: string | null;
+  fullName: string;
+  tugasScore: string;
+  utsScore: string;
+  uasScore: string;
+  finalScore: string;
+  letterGrade: string | null;
+  locked: boolean;
+}
 
 interface NilaiTabProps {
   classes: ClassData[];

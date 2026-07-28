@@ -1,6 +1,11 @@
 "use client";
 
-import { LMSSession } from "../page";
+export interface LMSSession {
+  id: string;
+  sessionNumber: number;
+  topic: string;
+  description: string;
+}
 
 interface ViconTabProps {
   selectedSession: LMSSession | null;

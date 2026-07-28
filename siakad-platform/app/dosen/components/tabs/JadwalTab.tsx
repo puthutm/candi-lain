@@ -1,6 +1,15 @@
 "use client";
 
-import { ClassData } from "../page";
+export interface ClassData {
+  classId: string;
+  className: string;
+  courseCode: string;
+  courseName: string;
+  sks: number;
+  capacity: number;
+  enrolledCount: number;
+  mode: string;
+}
 
 interface JadwalTabProps {
   classes: ClassData[];

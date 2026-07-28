@@ -1,6 +1,23 @@
 "use client";
 
-import { ClassData, LecturerProfile } from "../page";
+export interface ClassData {
+  classId: string;
+  className: string;
+  courseCode: string;
+  courseName: string;
+  sks: number;
+  capacity: number;
+  enrolledCount: number;
+  mode: string;
+}
+
+export interface LecturerProfile {
+  id: string;
+  nidn: string;
+  fullName: string;
+  studyProgramName: string;
+  bkdLoad: string;
+}
 
 interface BerandaTabProps {
   lecturer: LecturerProfile | null;
