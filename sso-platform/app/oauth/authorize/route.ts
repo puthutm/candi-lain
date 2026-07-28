@@ -6,14 +6,10 @@ import { ConsentService } from "@/lib/services/consent";
 import { OAuth2Service } from "@/lib/services/oauth2";
 import { parseScopes, isRedirectUriAllowed } from "@/lib/utils";
 import { env } from "@/lib/env";
-import { ensureDatabaseSeeded } from "@/lib/seed";
 import { rateLimit } from "@/lib/redis";
 
 export async function GET(request: NextRequest) {
   try {
-    // Ensure database is seeded with applications, users, and roles
-    await ensureDatabaseSeeded();
-
     const { searchParams } = new URL(request.url);
     const responseType = searchParams.get("response_type");
     const clientId = searchParams.get("client_id");
@@ -91,10 +87,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build client URL for redirects using the public app URL as base
-    // instead of request.url which may contain Docker container hostname.
+    // Build client URL for redirects using request origin as base,
+    // but tolerate configs where NEXT_PUBLIC_APP_URL still points to localhost.
     const publicBase = env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
-    const clientUrl = `${publicBase}${request.nextUrl.pathname}${request.nextUrl.search}`;
+    const requestOrigin = request.nextUrl.origin;
+    const resolvedBase =
+      publicBase && !publicBase.includes("localhost") && !publicBase.includes("127.0.0.1")
+        ? publicBase
+        : requestOrigin;
+    const clientUrl = `${resolvedBase}${request.nextUrl.pathname}${request.nextUrl.search}`;
 
     if (!sessionUser) {
       // Redirect to login page, preserving request URL for post-login return

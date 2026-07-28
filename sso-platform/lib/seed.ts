@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { users } from "@/db/schema/users";
-import { applications, scopes } from "@/db/schema/applications";
+import { applications, scopes, applicationScopes } from "@/db/schema/applications";
 import { applicationRoles, userApplicationRoles } from "@/db/schema/rbac";
 import { refCategories, refItems, organizations, userOrganizations } from "@/db/schema/reference";
 import { auditLogs } from "@/db/schema/audit";
@@ -334,6 +334,40 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       }
     }
 
+    // 4b. Seed Application Scopes (link apps to standard OIDC scopes)
+    console.log("Seeding Application Scopes...");
+    const allScopes = await db.select().from(scopes);
+    const scopeMap = new Map(allScopes.map((s) => [s.code, s.id]));
+    const defaultScopeCodes = ["openid", "profile", "email"];
+    const validScopeIds = defaultScopeCodes
+      .map((code) => scopeMap.get(code))
+      .filter((id): id is string => Boolean(id));
+
+    if (validScopeIds.length > 0) {
+      const allApps = await db.select().from(applications);
+      for (const app of allApps) {
+        for (const scopeId of validScopeIds) {
+          const existingAppScope = await db
+            .select()
+            .from(applicationScopes)
+            .where(
+              and(
+                eq(applicationScopes.applicationId, app.id),
+                eq(applicationScopes.scopeId, scopeId)
+              )
+            )
+            .limit(1);
+
+          if (existingAppScope.length === 0) {
+            await db.insert(applicationScopes).values({
+              applicationId: app.id,
+              scopeId,
+            });
+          }
+        }
+      }
+    }
+
     // 5. Seed Reference Data Categories & Items
     console.log("Seeding Reference Data (JABATAN)...");
     
@@ -577,5 +611,6 @@ export async function ensureDatabaseSeeded(force?: boolean) {
     console.log("SSO Platform Database seeded successfully!");
   } catch (error) {
     console.error("Error seeding SSO Database:", error);
+    throw error;
   }
 }

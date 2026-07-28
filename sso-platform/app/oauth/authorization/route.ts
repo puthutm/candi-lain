@@ -5,15 +5,10 @@ import { AuthenticationService } from "@/lib/services/auth";
 import { ConsentService } from "@/lib/services/consent";
 import { OAuth2Service } from "@/lib/services/oauth2";
 import { parseScopes, isRedirectUriAllowed } from "@/lib/utils";
-import { ensureDatabaseSeeded } from "@/lib/seed";
+import { env } from "@/lib/env";
 
 export async function GET(request: NextRequest) {
   try {
-    // Ensure database is seeded with applications, users, and roles
-    // (optionally force to keep redirectUris in sync with production/public hosts)
-    const { env } = await import("@/lib/env");
-    await ensureDatabaseSeeded(env.SSO_SEED_FORCE);
-
     const { searchParams } = new URL(request.url);
     const responseType = searchParams.get("response_type");
     const clientId = searchParams.get("client_id");
