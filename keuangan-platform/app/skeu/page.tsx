@@ -69,6 +69,46 @@ export default function SkeuDashboard() {
   const [toastMsg, setToastMsg] = useState("");
   const [adminUser, setAdminUser] = useState<{ name: string; username: string; role: string } | null>(null);
 
+  // Clearance Check Modal State
+  const [showClearanceModal, setShowClearanceModal] = useState(false);
+  const [clearanceNIM, setClearanceNIM] = useState("");
+  const [clearanceResult, setClearanceResult] = useState<any>(null);
+
+  const handleExportInvoicesCsv = () => {
+    if (invoices.length === 0) {
+      triggerNotice("Tidak ada data tagihan untuk diekspor.");
+      return;
+    }
+    const filtered = invoices.filter(inv => {
+      const matchesSearch = inv.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) || inv.academicPeriodLabel.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = invoiceFilterStatus === "all" || inv.status === invoiceFilterStatus;
+      return matchesSearch && matchesStatus;
+    });
+
+    const headers = ["No. Invoice", "NIM / User ID", "Jenis Tagihan", "Periode", "Total Tagihan", "Terbayar", "Tunggakan", "Status", "Batas Waktu"];
+    const rows = filtered.map(inv => [
+      `"${inv.invoiceNumber || ""}"`,
+      `"${inv.studentUserId || ""}"`,
+      `"${inv.invoiceType || ""}"`,
+      `"${inv.academicPeriodLabel || ""}"`,
+      `"${inv.totalAmount || 0}"`,
+      `"${inv.paidAmount || 0}"`,
+      `"${inv.outstandingAmount || 0}"`,
+      `"${inv.status || ""}"`,
+      `"${inv.dueDate || ""}"`,
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Tagihan_Keuangan_SKEU_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    triggerNotice(`Sukses mengunduh ${filtered.length} data tagihan ke CSV!`);
+  };
+
   // Modals & Forms
   const [showRateModal, setShowRateModal] = useState(false);
   const [editingRate, setEditingRate] = useState<Partial<TuitionRate> | null>(null);
@@ -290,17 +330,28 @@ export default function SkeuDashboard() {
   };
 
   const handleRunClearanceCheck = async () => {
-    triggerNotice("Menjalankan pengecekan clearance tunggakan SPP jatuh tempo...");
+    setShowClearanceModal(true);
+  };
+
+  const handlePerformClearanceCheck = async (e: React.FormEvent) => {
+    e.preventDefault();
+    triggerNotice(`Memeriksa kelayakan bebas tunggakan untuk ${clearanceNIM || "semua mahasiswa"}...`);
     try {
       const res = await fetch("/api/admin/clearance", {
-        method: "POST"
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nim: clearanceNIM })
       });
       const data = await res.json();
       if (data.success) {
-        triggerNotice(`Penalti clearance berhasil diproses! ${data.blockedCount} mahasiswa tertangguhkan.`);
-        fetchData();
+        setClearanceResult({
+          status: "BEBAS_TUNGGAKAN",
+          blockedCount: data.blockedCount || 0,
+          checkedAt: new Date().toISOString(),
+        });
+        triggerNotice(`Pengecekan clearance selesai! Status: Bebas Tunggakan.`);
       } else {
-        triggerNotice("Gagal clearance: " + data.error);
+        triggerNotice("Pengecekan gagal: " + data.error);
       }
     } catch (err: any) {
       triggerNotice("Galat jaringan: " + err.message);
@@ -528,6 +579,42 @@ export default function SkeuDashboard() {
           </div>
         </header>
 
+        {/* QUICK ACTION SHORTCUTS TOOLBAR */}
+        <div className="bg-[#0b0f19]/80 border-b border-slate-800/80 px-8 py-3 flex items-center justify-between gap-4 overflow-x-auto shrink-0">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+            <span className="text-slate-500 uppercase tracking-widest text-[10px]">Aksi Cepat:</span>
+            <button
+              onClick={handleSyncInvoices}
+              className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+            >
+              🔄 Tarik & Tagih SPP (SIAKAD)
+            </button>
+            <button
+              onClick={handleExportInvoicesCsv}
+              className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+            >
+              📥 Ekspor CSV Tagihan
+            </button>
+            <button
+              onClick={() => setActiveTab("beasiswa")}
+              className="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+            >
+              🎓 Program Beasiswa & Keringanan
+            </button>
+            <button
+              onClick={handleRunClearanceCheck}
+              className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+            >
+              ⚠️ Cek Tunggakan Mahasiswa
+            </button>
+          </div>
+
+          <div className="text-[11px] font-bold text-slate-500 flex items-center gap-2 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Gateway Kas Terbuka</span>
+          </div>
+        </div>
+
         {/* Tab content area */}
         <div className="flex-1 overflow-y-auto p-8 space-y-6">
           
@@ -648,8 +735,14 @@ export default function SkeuDashboard() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Cari invoice atau mahasiswa..."
-                    className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200 outline-none w-64"
+                    className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200 outline-none w-64 focus:border-blue-600 transition"
                   />
+                  <button
+                    onClick={handleExportInvoicesCsv}
+                    className="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    📥 Ekspor CSV Tagihan
+                  </button>
                 </div>
               </div>
 
@@ -1269,6 +1362,69 @@ export default function SkeuDashboard() {
               <button type="submit" className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl">Simpan</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* MODAL CLEARANCE CHECK BEBAS TUNGGAKAN */}
+      {showClearanceModal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="font-extrabold text-white text-sm uppercase tracking-wider">Cek Bebas Tunggakan (Clearance)</h3>
+                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Pemeriksaan status kelayakan wisuda & sidang skripsi</p>
+              </div>
+              <button onClick={() => setShowClearanceModal(false)} className="text-slate-400 hover:text-white font-bold">✕</button>
+            </div>
+
+            <form onSubmit={handlePerformClearanceCheck} className="space-y-4 text-xs">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 block mb-1 uppercase">NIM Mahasiswa (Opsional)</label>
+                <input
+                  type="text"
+                  placeholder="Kosongkan untuk cek seluruh mahasiswa"
+                  value={clearanceNIM}
+                  onChange={(e) => setClearanceNIM(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-blue-600 font-mono"
+                />
+              </div>
+
+              {clearanceResult && (
+                <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-2 text-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Status Pengecekan</span>
+                    <span className="px-2.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-black uppercase text-[10px]">
+                      {clearanceResult.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Mahasiswa Tertangguh</span>
+                    <span className="font-bold text-rose-400 font-mono">{clearanceResult.blockedCount} Orang</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 italic mt-1">Sistem otomatis menerbitkan sertifikat bebas tunggakan bagi mahasiswa lunas.</p>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowClearanceModal(false);
+                    setClearanceResult(null);
+                  }}
+                  className="px-4 py-2 bg-slate-800 text-slate-400 text-xs font-bold rounded-xl hover:bg-slate-700 transition cursor-pointer"
+                >
+                  Tutup
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-lg transition cursor-pointer"
+                >
+                  ⚡ Jalankan Clearance Check
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

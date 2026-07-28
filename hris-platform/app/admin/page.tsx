@@ -94,10 +94,58 @@ export default function HrisAdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [karyawanFilterType, setKaryawanFilterType] = useState<"all" | "dosen" | "tendik">("all");
   const [karyawanFilterStatus, setKaryawanFilterStatus] = useState<"all" | "aktif" | "non_aktif">("all");
+  const [filterUnitId, setFilterUnitId] = useState("all");
 
   // UI Control
   const [loading, setLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState("");
+
+  // Drawer Profile Detail State
+  const [selectedEmployeeDetail, setSelectedEmployeeDetail] = useState<Employee | null>(null);
+
+  const handleExportEmployeesCsv = () => {
+    if (employeesList.length === 0) {
+      triggerNotice("Tidak ada data pegawai untuk diekspor.");
+      return;
+    }
+    const filtered = employeesList.filter((emp) => {
+      const matchesSearch =
+        emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.employeeNumber.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = karyawanFilterType === "all" || emp.employeeType === karyawanFilterType;
+      const matchesStatus = karyawanFilterStatus === "all" || emp.status === karyawanFilterStatus;
+      const matchesUnit = filterUnitId === "all" || emp.organizationUnitId === filterUnitId;
+      return matchesSearch && matchesType && matchesStatus && matchesUnit;
+    });
+
+    const headers = ["NIP/NIDN", "Nama Lengkap", "Tipe", "Unit Kerja", "Jabatan", "Golongan", "Gaji Pokok", "Status", "Bank", "No. Rekening"];
+    const rows = filtered.map((emp) => {
+      const unitObj = units.find((u) => u.id === emp.organizationUnitId);
+      const posObj = positionsList.find((p) => p.id === emp.positionId);
+      return [
+        `"${emp.employeeNumber || ""}"`,
+        `"${emp.fullName || ""}"`,
+        `"${emp.employeeType || ""}"`,
+        `"${unitObj?.name || ""}"`,
+        `"${posObj?.name || ""}"`,
+        `"${emp.rankGroup || ""}"`,
+        `"${emp.baseSalary || 0}"`,
+        `"${emp.status || ""}"`,
+        `"${emp.bankName || ""}"`,
+        `"${emp.bankAccountNumber || ""}"`,
+      ];
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Data_Pegawai_HRIS_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    triggerNotice(`Sukses mengunduh ${filtered.length} data pegawai ke CSV!`);
+  };
 
   // Modals & Drawers
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
@@ -494,6 +542,56 @@ export default function HrisAdminDashboard() {
           </div>
         </header>
 
+        {/* QUICK ACTION SHORTCUTS TOOLBAR */}
+        <div className="bg-[#0b0f19]/80 border-b border-slate-800/80 px-8 py-3 flex items-center justify-between gap-4 overflow-x-auto shrink-0">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+            <span className="text-slate-500 uppercase tracking-widest text-[10px]">Aksi Cepat:</span>
+            <button
+              onClick={() => {
+                setEditingEmployee({
+                  fullName: "",
+                  employeeNumber: "",
+                  employeeType: "dosen",
+                  organizationUnitId: units[0]?.id || "",
+                  positionId: positionsList[0]?.id || "",
+                  rankGroup: "III/a",
+                  baseSalary: 4500000,
+                  status: "aktif",
+                  bankName: "Mandiri",
+                  bankAccountNumber: "",
+                });
+                setShowEmployeeModal(true);
+              }}
+              className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+            >
+              ➕ Tambah Pegawai
+            </button>
+            <button
+              onClick={() => setActiveTab("payroll")}
+              className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+            >
+              💰 Run Payroll Periode Ini
+            </button>
+            <button
+              onClick={() => setActiveTab("cuti")}
+              className="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+            >
+              🌴 Kelola Cuti ({leaveRequestsList.filter(l => l.status === "menunggu").length} Pending)
+            </button>
+            <button
+              onClick={handleExportEmployeesCsv}
+              className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+            >
+              📥 Ekspor CSV Pegawai
+            </button>
+          </div>
+
+          <div className="text-[11px] font-bold text-slate-500 flex items-center gap-2 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Database Terhubung (PostgreSQL)</span>
+          </div>
+        </div>
+
         {/* PANELS WRAPPER */}
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
           
@@ -746,13 +844,19 @@ export default function HrisAdminDashboard() {
                                 {emp.status}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-right">
+                            <td className="px-6 py-4 text-right space-x-2">
+                              <button
+                                onClick={() => setSelectedEmployeeDetail(emp)}
+                                className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 font-bold rounded-lg transition cursor-pointer"
+                              >
+                                Rincian
+                              </button>
                               <button
                                 onClick={() => {
                                   setEditingEmployee(emp);
                                   setShowEmployeeModal(true);
                                 }}
-                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-750 text-slate-300 font-bold rounded-lg transition"
+                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-750 text-slate-300 font-bold rounded-lg transition cursor-pointer"
                               >
                                 Edit
                               </button>
@@ -1552,6 +1656,87 @@ export default function HrisAdminDashboard() {
                 className="px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-400 text-xs font-bold rounded-xl transition"
               >
                 Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DRAWER RINCIAN PROFIL PEGAWAI */}
+      {selectedEmployeeDetail && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex justify-end transition-all">
+          <div className="bg-[#0b0f19] w-full max-w-md h-full border-l border-slate-800 p-6 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
+            <div>
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                <div>
+                  <span className="text-[10px] font-black text-[#FED524] uppercase tracking-widest">Detail Profil Pegawai</span>
+                  <h3 className="text-lg font-bold text-white mt-0.5">{selectedEmployeeDetail.fullName}</h3>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">{selectedEmployeeDetail.employeeNumber}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedEmployeeDetail(null)}
+                  className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white flex items-center justify-center font-bold text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-6 text-xs">
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Tipe Pegawai</span>
+                    <span className="px-2.5 py-0.5 rounded bg-violet-500/15 text-violet-400 font-bold uppercase text-[10px]">
+                      {selectedEmployeeDetail.employeeType}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Unit Kerja</span>
+                    <span className="font-bold text-slate-200">
+                      {units.find(u => u.id === selectedEmployeeDetail.organizationUnitId)?.name || "—"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Jabatan Fungsional</span>
+                    <span className="font-bold text-slate-200">
+                      {positionsList.find(p => p.id === selectedEmployeeDetail.positionId)?.name || "—"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Golongan / Pangkat</span>
+                    <span className="font-bold text-slate-200">{selectedEmployeeDetail.rankGroup || "III/a"}</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Informasi Penggajian & Rekening</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Gaji Pokok</span>
+                    <span className="font-bold text-emerald-400 font-mono text-sm">
+                      Rp {selectedEmployeeDetail.baseSalary?.toLocaleString("id-ID")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Bank Pembayaran</span>
+                    <span className="font-bold text-slate-200">{selectedEmployeeDetail.bankName || "Mandiri"}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">No. Rekening</span>
+                    <span className="font-mono font-bold text-slate-200">{selectedEmployeeDetail.bankAccountNumber || "—"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-800 pt-4 mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setEditingEmployee(selectedEmployeeDetail);
+                  setSelectedEmployeeDetail(null);
+                  setShowEmployeeModal(true);
+                }}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-lg transition"
+              >
+                ✏️ Edit Data Pegawai
               </button>
             </div>
           </div>
