@@ -88,5 +88,9 @@ export function redirectToNextAuthCallback(args: {
   const { searchParams } = new URL(req.url);
   const nextAuthCallbackUrl = buildNextAuthCallbackUrl(searchParams);
 
-  return NextResponse.redirect(nextAuthCallbackUrl.toString());
+      return NextResponse.redirect(nextAuthCallbackUrl.toString());
 }
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)\"],
+};
