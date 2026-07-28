@@ -107,7 +107,9 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       adminUser = inserted;
     } else {
       adminUser = existingAdmin[0];
-      await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, adminUser.id));
+      if (adminUser) {
+        await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, adminUser.id));
+      }
     }
 
     // superadmin
@@ -124,7 +126,9 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       superadminUser = inserted;
     } else {
       superadminUser = existingSuperadmin[0];
-      await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, superadminUser.id));
+      if (superadminUser) {
+        await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, superadminUser.id));
+      }
     }
 
     // mahasiswa
@@ -141,7 +145,9 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       mahasiswaUser = inserted;
     } else {
       mahasiswaUser = existingMahasiswa[0];
-      await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, mahasiswaUser.id));
+      if (mahasiswaUser) {
+        await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, mahasiswaUser.id));
+      }
     }
 
     // dosen
@@ -158,7 +164,9 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       dosenUser = inserted;
     } else {
       dosenUser = existingDosen[0];
-      await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, dosenUser.id));
+      if (dosenUser) {
+        await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, dosenUser.id));
+      }
     }
 
     // pegawai
@@ -175,7 +183,9 @@ export async function ensureDatabaseSeeded(force?: boolean) {
       pegawaiUser = inserted;
     } else {
       pegawaiUser = existingPegawai[0];
-      await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, pegawaiUser.id));
+      if (pegawaiUser) {
+        await db.update(users).set({ passwordHash: unifiedPasswordHash }).where(eq(users.id, pegawaiUser.id));
+      }
     }
 
     // 3. Seed Applications
