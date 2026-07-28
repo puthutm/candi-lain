@@ -157,10 +157,174 @@ export default function StudentBiodataPage() {
     tahunLulus: "2020",
   });
 
+  const [refData, setRefData] = useState<{
+    gender: Array<{ code: string; name: string }>;
+    agama: Array<{ code: string; name: string }>;
+    suku: Array<{ code: string; name: string }>;
+    pekerjaan: Array<{ code: string; name: string }>;
+    jalurMasuk: Array<{ code: string; name: string }>;
+    ukuranJas: Array<{ code: string; name: string }>;
+    hubunganKeluarga: Array<{ code: string; name: string }>;
+    statusHubunganKeluarga: Array<{ code: string; name: string }>;
+    statusHidup: Array<{ code: string; name: string }>;
+    tempatLahir: Array<{ code: string; name: string }>;
+    jenjangPendidikan: Array<{ code: string; name: string }>;
+  }>({
+    gender: [
+      { code: "Male", name: "Male" },
+      { code: "Female", name: "Female" },
+    ],
+    agama: [
+      { code: "Islam", name: "Islam" },
+      { code: "Kristen", name: "Kristen" },
+      { code: "Katolik", name: "Katolik" },
+      { code: "Hindu", name: "Hindu" },
+      { code: "Buddha", name: "Buddha" },
+      { code: "Khonghucu", name: "Khonghucu" },
+    ],
+    suku: [
+      { code: "Jawa", name: "Jawa" },
+      { code: "Sunda", name: "Sunda" },
+      { code: "Betawi", name: "Betawi" },
+      { code: "Batak", name: "Batak" },
+      { code: "Minangkabau", name: "Minangkabau" },
+      { code: "Bugis", name: "Bugis" },
+      { code: "Aceh", name: "Aceh" },
+      { code: "Papua", name: "Papua" },
+    ],
+    pekerjaan: [
+      { code: "Mahasiswa", name: "Mahasiswa" },
+      { code: "Karyawan Swasta", name: "Karyawan Swasta" },
+      { code: "Wiraswasta", name: "Wiraswasta" },
+      { code: "Pegawai Negeri Sipil (PNS)", name: "Pegawai Negeri Sipil (PNS)" },
+      { code: "TNI / Polri", name: "TNI / Polri" },
+      { code: "Ibu Rumah Tangga", name: "Ibu Rumah Tangga" },
+      { code: "Tidak Bekerja", name: "Tidak Bekerja" },
+    ],
+    jalurMasuk: [
+      { code: "Reguler", name: "Reguler" },
+      { code: "Beasiswa", name: "Beasiswa" },
+      { code: "RPL / Transfer", name: "RPL / Transfer" },
+    ],
+    ukuranJas: [
+      { code: "S", name: "S" },
+      { code: "M", name: "M" },
+      { code: "L", name: "L" },
+      { code: "XL", name: "XL" },
+      { code: "XXL", name: "XXL" },
+    ],
+    hubunganKeluarga: [
+      { code: "Ayah Kandung", name: "Ayah Kandung" },
+      { code: "Ibu Kandung", name: "Ibu Kandung" },
+      { code: "Suami", name: "Suami" },
+      { code: "Istri", name: "Istri" },
+      { code: "Anak", name: "Anak" },
+      { code: "Wali", name: "Wali" },
+      { code: "Kakak", name: "Kakak" },
+      { code: "Adik", name: "Adik" },
+    ],
+    statusHubunganKeluarga: [
+      { code: "Kepala Keluarga", name: "Kepala Keluarga" },
+      { code: "Suami", name: "Suami" },
+      { code: "Istri", name: "Istri" },
+      { code: "Anak", name: "Anak" },
+      { code: "Tanggungan", name: "Tanggungan" },
+    ],
+    statusHidup: [
+      { code: "Hidup", name: "Hidup" },
+      { code: "Meninggal", name: "Meninggal" },
+    ],
+    tempatLahir: [
+      { code: "banda aceh", name: "banda aceh" },
+      { code: "jakarta", name: "jakarta" },
+      { code: "surabaya", name: "surabaya" },
+      { code: "medan", name: "medan" },
+      { code: "bandung", name: "bandung" },
+      { code: "semarang", name: "semarang" },
+    ],
+    prodi: [
+      { code: "S1_INF", name: "S1 Informatika" },
+      { code: "S1_SI", name: "S1 Sistem Informasi" },
+      { code: "S1_MNJ", name: "S1 Manajemen" },
+      { code: "S1_AKT", name: "S1 Akuntansi" },
+      { code: "S1_KOM", name: "S1 Komunikasi" },
+    ],
+    semester: [
+      { code: "SEM_1", name: "Semester 1" },
+      { code: "SEM_2", name: "Semester 2" },
+      { code: "SEM_3", name: "Semester 3" },
+      { code: "SEM_4", name: "Semester 4" },
+      { code: "SEM_5", name: "Semester 5" },
+      { code: "SEM_6", name: "Semester 6" },
+      { code: "SEM_7", name: "Semester 7" },
+      { code: "SEM_8", name: "Semester 8" },
+    ],
+  });
+
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
   };
+
+  useEffect(() => {
+    const fetchRef = async (category: string) => {
+      try {
+        const res = await fetch(`/api/reference/${category}`);
+        const data = await res.json();
+        return data.items || [];
+      } catch {
+        return [];
+      }
+    };
+
+    Promise.all([
+      fetchRef("GENDER"),
+      fetchRef("AGAMA"),
+      fetchRef("SUKU"),
+      fetchRef("PEKERJAAN"),
+      fetchRef("JALUR_MASUK"),
+      fetchRef("UKURAN_JAS"),
+      fetchRef("JENIS_HUBUNGAN_KELUARGA"),
+      fetchRef("STATUS_HUBUNGAN_KELUARGA"),
+      fetchRef("STATUS_HIDUP"),
+      fetchRef("TEMPAT_LAHIR"),
+      fetchRef("JENJANG_PENDIDIKAN"),
+      fetchRef("PRODI"),
+      fetchRef("SEMESTER"),
+    ]).then(
+      ([
+        gender,
+        agama,
+        suku,
+        pekerjaan,
+        jalurMasuk,
+        ukuranJas,
+        hubunganKeluarga,
+        statusHubunganKeluarga,
+        statusHidup,
+        tempatLahir,
+        jenjangPendidikan,
+        prodi,
+        semester,
+      ]) => {
+        setRefData({
+          gender: gender.length ? gender : refData.gender,
+          agama: agama.length ? agama : refData.agama,
+          suku: suku.length ? suku : refData.suku,
+          pekerjaan: pekerjaan.length ? pekerjaan : refData.pekerjaan,
+          jalurMasuk: jalurMasuk.length ? jalurMasuk : refData.jalurMasuk,
+          ukuranJas: ukuranJas.length ? ukuranJas : refData.ukuranJas,
+          hubunganKeluarga: hubunganKeluarga.length ? hubunganKeluarga : refData.hubunganKeluarga,
+          statusHubunganKeluarga: statusHubunganKeluarga.length ? statusHubunganKeluarga : refData.statusHubunganKeluarga,
+          statusHidup: statusHidup.length ? statusHidup : refData.statusHidup,
+          tempatLahir: tempatLahir.length ? tempatLahir : refData.tempatLahir,
+          jenjangPendidikan: jenjangPendidikan.length ? jenjangPendidikan : refData.jenjangPendidikan,
+          prodi: prodi.length ? prodi : refData.prodi,
+          semester: semester.length ? semester : refData.semester,
+        });
+      }
+    );
+  }, []);
 
   useEffect(() => {
     fetch("/api/student/biodata")
@@ -327,10 +491,13 @@ export default function StudentBiodataPage() {
                       disabled={!isEditing}
                       value={form.jenisKelamin}
                       onChange={(e) => handleChange("jenisKelamin", e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b] focus:bg-white disabled:text-slate-700"
+                      className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b] focus:bg-white disabled:text-slate-700 font-medium"
                     >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
+                      {refData.gender.map((item) => (
+                        <option key={item.code} value={item.code}>
+                          {item.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -342,14 +509,14 @@ export default function StudentBiodataPage() {
                       disabled={!isEditing}
                       value={form.agama}
                       onChange={(e) => handleChange("agama", e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b] focus:bg-white disabled:text-slate-700"
+                      className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b] focus:bg-white disabled:text-slate-700 font-medium"
                     >
                       <option value="">Pilih Agama</option>
-                      <option value="Islam">Islam</option>
-                      <option value="Kristen">Kristen</option>
-                      <option value="Katolik">Katolik</option>
-                      <option value="Hindu">Hindu</option>
-                      <option value="Buddha">Buddha</option>
+                      {refData.agama.map((item) => (
+                        <option key={item.code} value={item.name}>
+                          {item.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -361,13 +528,14 @@ export default function StudentBiodataPage() {
                       disabled={!isEditing}
                       value={form.suku}
                       onChange={(e) => handleChange("suku", e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b] focus:bg-white disabled:text-slate-700"
+                      className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b] focus:bg-white disabled:text-slate-700 font-medium"
                     >
                       <option value="">Pilih Suku</option>
-                      <option value="Jawa">Jawa</option>
-                      <option value="Sunda">Sunda</option>
-                      <option value="Betawi">Betawi</option>
-                      <option value="Batak">Batak</option>
+                      {refData.suku.map((item) => (
+                        <option key={item.code} value={item.name}>
+                          {item.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -382,12 +550,14 @@ export default function StudentBiodataPage() {
                       disabled={!isEditing}
                       value={form.pekerjaan}
                       onChange={(e) => handleChange("pekerjaan", e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b] focus:bg-white disabled:text-slate-700"
+                      className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b] focus:bg-white disabled:text-slate-700 font-medium"
                     >
                       <option value="">Pilih Pekerjaan</option>
-                      <option value="Mahasiswa">Mahasiswa</option>
-                      <option value="Karyawan Swasta">Karyawan Swasta</option>
-                      <option value="Wiraswasta">Wiraswasta</option>
+                      {refData.pekerjaan.map((item) => (
+                        <option key={item.code} value={item.name}>
+                          {item.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -475,13 +645,13 @@ export default function StudentBiodataPage() {
                     disabled={!isEditing}
                     value={form.prodi}
                     onChange={(e) => handleChange("prodi", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b]"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b] font-medium"
                   >
-                    <option value="S1 Informatika">S1 Informatika</option>
-                    <option value="S1 Sistem Informasi">S1 Sistem Informasi</option>
-                    <option value="S1 Manajemen">S1 Manajemen</option>
-                    <option value="S1 Akuntansi">S1 Akuntansi</option>
-                    <option value="S1 Komunikasi">S1 Komunikasi</option>
+                    {refData.prodi.map((item) => (
+                      <option key={item.code} value={item.name}>
+                        {item.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -499,16 +669,13 @@ export default function StudentBiodataPage() {
                     disabled={!isEditing}
                     value={form.semester}
                     onChange={(e) => handleChange("semester", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b]"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md focus:outline-none focus:border-[#0f487b] font-medium"
                   >
-                    <option value="Semester 1">Semester 1</option>
-                    <option value="Semester 2">Semester 2</option>
-                    <option value="Semester 3">Semester 3</option>
-                    <option value="Semester 4">Semester 4</option>
-                    <option value="Semester 5">Semester 5</option>
-                    <option value="Semester 6">Semester 6</option>
-                    <option value="Semester 7">Semester 7</option>
-                    <option value="Semester 8">Semester 8</option>
+                    {refData.semester.map((item) => (
+                      <option key={item.code} value={item.name}>
+                        {item.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -527,11 +694,13 @@ export default function StudentBiodataPage() {
                     disabled={!isEditing}
                     value={form.jalurMasuk}
                     onChange={(e) => handleChange("jalurMasuk", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md font-medium"
                   >
-                    <option value="Reguler">Reguler</option>
-                    <option value="Beasiswa">Beasiswa</option>
-                    <option value="RPL / Transfer">RPL / Transfer</option>
+                    {refData.jalurMasuk.map((item) => (
+                      <option key={item.code} value={item.name}>
+                        {item.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -540,13 +709,13 @@ export default function StudentBiodataPage() {
                     disabled={!isEditing}
                     value={form.ukuranJas}
                     onChange={(e) => handleChange("ukuranJas", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-md font-medium"
                   >
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
+                    {refData.ukuranJas.map((item) => (
+                      <option key={item.code} value={item.name}>
+                        {item.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -856,11 +1025,11 @@ export default function StudentBiodataPage() {
                                 className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 text-sm font-medium appearance-none pr-10"
                               >
                                 <option value="">Tempat Lahir</option>
-                                <option value="banda aceh">banda aceh</option>
-                                <option value="jakarta">jakarta</option>
-                                <option value="surabaya">surabaya</option>
-                                <option value="medan">medan</option>
-                                <option value="bandung">bandung</option>
+                                {refData.tempatLahir.map((item) => (
+                                  <option key={item.code} value={item.name}>
+                                    {item.name}
+                                  </option>
+                                ))}
                               </select>
                               <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 font-bold text-xs">
                                 ▼
@@ -974,8 +1143,11 @@ export default function StudentBiodataPage() {
                                 className="w-full px-4 py-3 bg-[#f0f3f6] border border-slate-200/80 rounded-xl focus:outline-none focus:border-[#0f487b] focus:bg-white text-slate-800 text-sm font-medium appearance-none pr-10"
                               >
                                 <option value="">Status Hidup</option>
-                                <option value="Hidup">Hidup</option>
-                                <option value="Meninggal">Meninggal</option>
+                                {refData.statusHidup.map((item) => (
+                                  <option key={item.code} value={item.name}>
+                                    {item.name}
+                                  </option>
+                                ))}
                               </select>
                               <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 font-bold text-xs">
                                 ▼
@@ -1142,12 +1314,11 @@ export default function StudentBiodataPage() {
                             }}
                             className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium"
                           >
-                            <option value="SD">SD / Sederajat</option>
-                            <option value="SMP">SMP / Sederajat</option>
-                            <option value="SMA/SMK">SMA / SMK / MA</option>
-                            <option value="Diploma">Diploma (D3/D4)</option>
-                            <option value="Sarjana">Sarjana (S1)</option>
-                            <option value="Magister">Magister (S2)</option>
+                            {refData.jenjangPendidikan.map((item) => (
+                              <option key={item.code} value={item.name}>
+                                {item.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
 

@@ -10,6 +10,15 @@ async function seed() {
     { code: "FAKULTAS", name: "Fakultas", description: "Daftar fakultas di lingkungan universitas" },
     { code: "JENJANG_PENDIDIKAN", name: "Jenjang Pendidikan", description: "Tingkat pendidikan / jenjang studi" },
     { code: "GENDER", name: "Jenis Kelamin", description: "Standar gender pendaftar" },
+    { code: "AGAMA", name: "Agama", description: "Daftar agama resmi" },
+    { code: "SUKU", name: "Suku", description: "Daftar suku di Indonesia" },
+    { code: "PEKERJAAN", name: "Pekerjaan", description: "Daftar profesi / pekerjaan" },
+    { code: "JALUR_MASUK", name: "Jalur Masuk", description: "Jalur pendaftaran mahasiswa" },
+    { code: "UKURAN_JAS", name: "Ukuran Jas", description: "Ukuran jas almamater" },
+    { code: "JENIS_HUBUNGAN_KELUARGA", name: "Jenis Hubungan Keluarga", description: "Hubungan kekeluargaan" },
+    { code: "STATUS_HUBUNGAN_KELUARGA", name: "Status Hubungan Keluarga", description: "Status posisi dalam keluarga" },
+    { code: "STATUS_HIDUP", name: "Status Hidup", description: "Status kondisi hidup" },
+    { code: "TEMPAT_LAHIR", name: "Tempat Lahir", description: "Daftar kota tempat lahir" },
     { code: "METODE_PEMBAYARAN", name: "Metode Pembayaran", description: "Channel pembayaran transaksi keuangan" },
     { code: "DOKUMEN_PERSYARATAN", name: "Dokumen Persyaratan", description: "Jenis dokumen kelengkapan berkas PMB" },
     { code: "PROVINSI", name: "Provinsi", description: "Daftar Provinsi di Indonesia" },
@@ -44,13 +53,84 @@ async function seed() {
     { catCode: "FAKULTAS", code: "FIB", name: "Fakultas Ilmu Budaya", sortOrder: 4 },
 
     // Jenjang
-    { catCode: "JENJANG_PENDIDIKAN", code: "S1", name: "Sarjana (S1)", sortOrder: 1 },
-    { catCode: "JENJANG_PENDIDIKAN", code: "S2", name: "Magister (S2)", sortOrder: 2 },
-    { catCode: "JENJANG_PENDIDIKAN", code: "D3", name: "Diploma (D3)", sortOrder: 3 },
+    { catCode: "JENJANG_PENDIDIKAN", code: "SD", name: "SD / Sederajat", sortOrder: 1 },
+    { catCode: "JENJANG_PENDIDIKAN", code: "SMP", name: "SMP / Sederajat", sortOrder: 2 },
+    { catCode: "JENJANG_PENDIDIKAN", code: "SMA/SMK", name: "SMA / SMK / MA", sortOrder: 3 },
+    { catCode: "JENJANG_PENDIDIKAN", code: "D3", name: "Diploma (D3/D4)", sortOrder: 4 },
+    { catCode: "JENJANG_PENDIDIKAN", code: "S1", name: "Sarjana (S1)", sortOrder: 5 },
+    { catCode: "JENJANG_PENDIDIKAN", code: "S2", name: "Magister (S2)", sortOrder: 6 },
 
     // Gender
-    { catCode: "GENDER", code: "L", name: "Laki-laki", sortOrder: 1 },
-    { catCode: "GENDER", code: "P", name: "Perempuan", sortOrder: 2 },
+    { catCode: "GENDER", code: "Male", name: "Male", sortOrder: 1 },
+    { catCode: "GENDER", code: "Female", name: "Female", sortOrder: 2 },
+
+    // Agama
+    { catCode: "AGAMA", code: "ISLAM", name: "Islam", sortOrder: 1 },
+    { catCode: "AGAMA", code: "KRISTEN", name: "Kristen", sortOrder: 2 },
+    { catCode: "AGAMA", code: "KATOLIK", name: "Katolik", sortOrder: 3 },
+    { catCode: "AGAMA", code: "HINDU", name: "Hindu", sortOrder: 4 },
+    { catCode: "AGAMA", code: "BUDDHA", name: "Buddha", sortOrder: 5 },
+    { catCode: "AGAMA", code: "KHONGHUCU", name: "Khonghucu", sortOrder: 6 },
+
+    // Suku
+    { catCode: "SUKU", code: "JAWA", name: "Jawa", sortOrder: 1 },
+    { catCode: "SUKU", code: "SUNDA", name: "Sunda", sortOrder: 2 },
+    { catCode: "SUKU", code: "BETAWI", name: "Betawi", sortOrder: 3 },
+    { catCode: "SUKU", code: "BATAK", name: "Batak", sortOrder: 4 },
+    { catCode: "SUKU", code: "MINANGKABAU", name: "Minangkabau", sortOrder: 5 },
+    { catCode: "SUKU", code: "BUGIS", name: "Bugis", sortOrder: 6 },
+    { catCode: "SUKU", code: "ACEH", name: "Aceh", sortOrder: 7 },
+    { catCode: "SUKU", code: "PAPUA", name: "Papua", sortOrder: 8 },
+
+    // Pekerjaan
+    { catCode: "PEKERJAAN", code: "MAHASISWA", name: "Mahasiswa", sortOrder: 1 },
+    { catCode: "PEKERJAAN", code: "KARYAWAN_SWASTA", name: "Karyawan Swasta", sortOrder: 2 },
+    { catCode: "PEKERJAAN", code: "WIRASWASTA", name: "Wiraswasta", sortOrder: 3 },
+    { catCode: "PEKERJAAN", code: "PNS", name: "Pegawai Negeri Sipil (PNS)", sortOrder: 4 },
+    { catCode: "PEKERJAAN", code: "TNI_POLRI", name: "TNI / Polri", sortOrder: 5 },
+    { catCode: "PEKERJAAN", code: "IRT", name: "Ibu Rumah Tangga", sortOrder: 6 },
+    { catCode: "PEKERJAAN", code: "TIDAK_BEKERJA", name: "Tidak Bekerja", sortOrder: 7 },
+
+    // Jalur Masuk
+    { catCode: "JALUR_MASUK", code: "REGULER", name: "Reguler", sortOrder: 1 },
+    { catCode: "JALUR_MASUK", code: "BEASISWA", name: "Beasiswa", sortOrder: 2 },
+    { catCode: "JALUR_MASUK", code: "RPL", name: "RPL / Transfer", sortOrder: 3 },
+
+    // Ukuran Jas
+    { catCode: "UKURAN_JAS", code: "S", name: "S", sortOrder: 1 },
+    { catCode: "UKURAN_JAS", code: "M", name: "M", sortOrder: 2 },
+    { catCode: "UKURAN_JAS", code: "L", name: "L", sortOrder: 3 },
+    { catCode: "UKURAN_JAS", code: "XL", name: "XL", sortOrder: 4 },
+    { catCode: "UKURAN_JAS", code: "XXL", name: "XXL", sortOrder: 5 },
+
+    // Hubungan Keluarga
+    { catCode: "JENIS_HUBUNGAN_KELUARGA", code: "AYAH", name: "Ayah Kandung", sortOrder: 1 },
+    { catCode: "JENIS_HUBUNGAN_KELUARGA", code: "IBU", name: "Ibu Kandung", sortOrder: 2 },
+    { catCode: "JENIS_HUBUNGAN_KELUARGA", code: "SUAMI", name: "Suami", sortOrder: 3 },
+    { catCode: "JENIS_HUBUNGAN_KELUARGA", code: "ISTRI", name: "Istri", sortOrder: 4 },
+    { catCode: "JENIS_HUBUNGAN_KELUARGA", code: "ANAK", name: "Anak", sortOrder: 5 },
+    { catCode: "JENIS_HUBUNGAN_KELUARGA", code: "WALI", name: "Wali", sortOrder: 6 },
+    { catCode: "JENIS_HUBUNGAN_KELUARGA", code: "KAKAK", name: "Kakak", sortOrder: 7 },
+    { catCode: "JENIS_HUBUNGAN_KELUARGA", code: "ADIK", name: "Adik", sortOrder: 8 },
+
+    // Status Hubungan Keluarga
+    { catCode: "STATUS_HUBUNGAN_KELUARGA", code: "KEPALA_KELUARGA", name: "Kepala Keluarga", sortOrder: 1 },
+    { catCode: "STATUS_HUBUNGAN_KELUARGA", code: "SUAMI", name: "Suami", sortOrder: 2 },
+    { catCode: "STATUS_HUBUNGAN_KELUARGA", code: "ISTRI", name: "Istri", sortOrder: 3 },
+    { catCode: "STATUS_HUBUNGAN_KELUARGA", code: "ANAK", name: "Anak", sortOrder: 4 },
+    { catCode: "STATUS_HUBUNGAN_KELUARGA", code: "TANGGUNGAN", name: "Tanggungan", sortOrder: 5 },
+
+    // Status Hidup
+    { catCode: "STATUS_HIDUP", code: "HIDUP", name: "Hidup", sortOrder: 1 },
+    { catCode: "STATUS_HIDUP", code: "MENINGGAL", name: "Meninggal", sortOrder: 2 },
+
+    // Tempat Lahir
+    { catCode: "TEMPAT_LAHIR", code: "BANDA_ACEH", name: "banda aceh", sortOrder: 1 },
+    { catCode: "TEMPAT_LAHIR", code: "JAKARTA", name: "jakarta", sortOrder: 2 },
+    { catCode: "TEMPAT_LAHIR", code: "SURABAYA", name: "surabaya", sortOrder: 3 },
+    { catCode: "TEMPAT_LAHIR", code: "MEDAN", name: "medan", sortOrder: 4 },
+    { catCode: "TEMPAT_LAHIR", code: "BANDUNG", name: "bandung", sortOrder: 5 },
+    { catCode: "TEMPAT_LAHIR", code: "SEMARANG", name: "semarang", sortOrder: 6 },
 
     // Metode Pembayaran
     { catCode: "METODE_PEMBAYARAN", code: "VA_BCA", name: "Virtual Account BCA", sortOrder: 1 },
