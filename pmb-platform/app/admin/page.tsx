@@ -39,6 +39,7 @@ interface WaveRow {
   id: string;
   name: string;
   code: string;
+  academicPeriodLabel?: string;
   startDate: string;
   endDate: string;
   status: "belum_dibuka" | "aktif" | "tertutup";
@@ -61,7 +62,7 @@ interface DocEvaluation {
   revisionNote: string;
 }
 
-export default function AdminPage() {
+export default function PmbAdminDashboard() {
   const [activePanel, setActivePanel] = useState<AdminPanelType>("dashboard");
   const [applicants, setApplicants] = useState<ApplicantRow[]>([]);
   const [waves, setWaves] = useState<WaveRow[]>([]);
@@ -76,6 +77,7 @@ export default function AdminPage() {
   const [waveForm, setWaveForm] = useState({
     name: "",
     code: "",
+    academicPeriodLabel: "2026/2027 Ganjil",
     startDate: "",
     endDate: "",
     status: "belum_dibuka",
@@ -108,6 +110,25 @@ export default function AdminPage() {
       triggerToast("Galat: " + err.message);
     } finally {
       setIsCreatingWave(false);
+    }
+  };
+
+  const handleToggleWaveStatus = async (id: string, newStatus: string) => {
+    try {
+      const res = await fetch("/api/admin/gelombang", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast(`Status gelombang diubah ke ${newStatus.replace("_", " ")}!`);
+        fetchData();
+      } else {
+        triggerToast("Gagal mengubah status: " + data.error);
+      }
+    } catch (err: any) {
+      triggerToast("Galat: " + err.message);
     }
   };
 
@@ -239,6 +260,9 @@ export default function AdminPage() {
     window.location.href = "/api/auth/signin/unsia-sso";
   };
 
+  // Academic Periods from SIAKAD State
+  const [academicPeriods, setAcademicPeriods] = useState<{ id: string; name: string; status: string }[]>([]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -253,6 +277,9 @@ export default function AdminPage() {
       const blastRes = await fetch("/api/admin/blast");
       const blastData = await blastRes.json();
 
+      const periodsRes = await fetch("/api/admin/academic-periods");
+      const periodsData = await periodsRes.json();
+
       if (applicantsData.success) {
         setApplicants(applicantsData.applicants || []);
       } else {
@@ -264,6 +291,17 @@ export default function AdminPage() {
         setQuotas(metaData.quotas || []);
       } else {
         throw new Error(metaData.error || "Gagal mengambil metadata");
+      }
+
+      if (blastData.success) {
+        setCampaigns(blastData.campaigns || []);
+      }
+
+      if (periodsData.success && Array.isArray(periodsData.periods)) {
+        setAcademicPeriods(periodsData.periods);
+        if (periodsData.periods.length > 0 && !waveForm.academicPeriodLabel) {
+          setWaveForm((prev) => ({ ...prev, academicPeriodLabel: periodsData.periods[0].name }));
+        }
       }
 
       if (blastData.success) {
@@ -1816,6 +1854,7 @@ export default function AdminPage() {
                     setWaveForm({
                       name: `Gelombang ${nextNum}`,
                       code: `GEL-${nextNum}-${year}`,
+                      academicPeriodLabel: "2026/2027 Ganjil",
                       startDate: new Date().toISOString().slice(0, 10),
                       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
                       status: "belum_dibuka",
@@ -1835,15 +1874,26 @@ export default function AdminPage() {
                       {/* Wave Header */}
                       <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                         <div>
-                          <h3 className="font-bold text-slate-800 text-base">{w.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-slate-800 text-base">{w.name}</h3>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-[#0f487b] border border-blue-200">
+                              {w.academicPeriodLabel || "2026/2027 Ganjil"}
+                            </span>
+                          </div>
                           <p className="text-xs text-slate-400 font-mono mt-0.5">{w.code}</p>
                         </div>
-                        <span className={`px-2.5 py-0.5 text-xs font-bold rounded ${
-                          w.status === "aktif" ? "bg-emerald-100 text-emerald-700 border border-emerald-200" :
-                          w.status === "belum_dibuka" ? "bg-amber-100 text-amber-700 border border-amber-200" : "bg-slate-100 text-slate-500 border border-slate-200"
-                        }`}>
-                          {w.status === "aktif" ? "Aktif" : w.status === "belum_dibuka" ? "Belum Dibuka" : "Tutup"}
-                        </span>
+                        <select
+                          value={w.status}
+                          onChange={(e) => handleToggleWaveStatus(w.id, e.target.value)}
+                          className={`px-2.5 py-1 text-xs font-bold rounded outline-none border cursor-pointer ${
+                            w.status === "aktif" ? "bg-emerald-100 text-emerald-700 border-emerald-300" :
+                            w.status === "belum_dibuka" ? "bg-amber-100 text-amber-700 border-amber-300" : "bg-slate-100 text-slate-600 border-slate-300"
+                          }`}
+                        >
+                          <option value="belum_dibuka">Belum Dibuka</option>
+                          <option value="aktif">Aktif (Buka)</option>
+                          <option value="tertutup">Tertutup (Tutup)</option>
+                        </select>
                       </div>
 
                       {/* Wave Body / Quotas list */}
@@ -2108,6 +2158,30 @@ export default function AdminPage() {
                   placeholder="Mis. GEL3-2026"
                   className="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#0f487b] font-mono"
                 />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-600 block mb-1">Periode Akademik (SIAKAD)</label>
+                <select
+                  value={waveForm.academicPeriodLabel}
+                  onChange={(e) => setWaveForm({ ...waveForm, academicPeriodLabel: e.target.value })}
+                  className="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#0f487b] font-semibold text-slate-700 cursor-pointer bg-white"
+                >
+                  {academicPeriods.length > 0 ? (
+                    academicPeriods.map((p) => (
+                      <option key={p.id} value={p.name}>
+                        {p.name} {p.status === "berjalan" ? "(Aktif SIAKAD)" : ""}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="2026/2027 Ganjil">2026/2027 Ganjil</option>
+                      <option value="2026/2027 Genap">2026/2027 Genap</option>
+                      <option value="2027/2028 Ganjil">2027/2028 Ganjil</option>
+                      <option value="2027/2028 Genap">2027/2028 Genap</option>
+                    </>
+                  )}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     if (auth instanceof NextResponse) return auth;
 
     const body = await req.json();
-    const { name, code, startDate, endDate, status } = body;
+    const { name, code, academicPeriodLabel, startDate, endDate, status } = body;
 
     if (!name || !code || !startDate || !endDate) {
       return NextResponse.json({ success: false, error: "Name, code, startDate, endDate are required" }, { status: 400 });
@@ -37,6 +37,7 @@ export async function POST(req: Request) {
       .values({
         name,
         code,
+        academicPeriodLabel: academicPeriodLabel || "2026/2027 Ganjil",
         startDate,
         endDate,
         status: status || "belum_dibuka",
@@ -48,4 +49,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+export async function PATCH(req: Request) {
+  try {
+    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN]);
+    if (auth instanceof NextResponse) return auth;
+
+    const body = await req.json();
+    const { id, status } = body;
+
+    if (!id || !status) {
+      return NextResponse.json({ success: false, error: "ID and status are required" }, { status: 400 });
+    }
+
+    const { eq } = await import("drizzle-orm");
+    const [updated] = await db
+      .update(pmbWaves)
+      .set({ status })
+      .where(eq(pmbWaves.id, id))
+      .returning();
+
+    return NextResponse.json({ success: true, wave: updated });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
 export const dynamic = "force-dynamic";

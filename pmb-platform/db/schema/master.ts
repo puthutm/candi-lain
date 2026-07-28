@@ -4,6 +4,7 @@ export const pmbWaves = pgTable("pmb_waves", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   code: text("code").unique().notNull(),
+  academicPeriodLabel: text("academic_period_label").default("2026/2027 Ganjil"),
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
   status: text("status", { enum: ["belum_dibuka", "aktif", "tertutup"] }).default("belum_dibuka").notNull(),
