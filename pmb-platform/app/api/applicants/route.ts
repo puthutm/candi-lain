@@ -116,7 +116,7 @@ export async function POST(req: Request) {
       }
 
       const rawPassword = password || activeWave.defaultPassword || env.DEFAULT_APPLICANT_PASSWORD || "Pmb2026!";
-      const hashedPassword = await bcrypt.hash(rawPassword, env.BCRYPT_ROUNDS);
+      const hashedPassword = await bcrypt.hash(rawPassword, env.BCRYPT_ROUNDS || 10);
 
       // 2. Lock & Check Quota (SELECT ... FOR UPDATE equivalent)
       const quotas = await tx
