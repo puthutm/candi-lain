@@ -4,3 +4,4 @@ export * from "./payment";
 export * from "./exam";
 export * from "./communication";
 export * from "./sso";
+export * from "./keuangan";

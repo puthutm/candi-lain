@@ -44,9 +44,18 @@ interface PaymentLog {
   paidAt: string;
 }
 
+interface PmbFeeRate {
+  id: string;
+  waveLabel: string;
+  registrationFee: string;
+  examFee: string;
+  reregistrationFee: string;
+  matriculationFee: string;
+}
+
 export default function SkeuDashboard() {
   const [activeTab, setActiveTab] = useState<
-    "beranda" | "penerimaan" | "beasiswa" | "pengeluaran" | "akuntansi" | "pengaturan"
+    "beranda" | "penerimaan" | "beasiswa" | "pengeluaran" | "akuntansi" | "pengaturan" | "pmb"
   >("beranda");
 
   // Core Data
@@ -107,6 +116,38 @@ export default function SkeuDashboard() {
     link.click();
     document.body.removeChild(link);
     triggerNotice(`Sukses mengunduh ${filtered.length} data tagihan ke CSV!`);
+  };
+
+  // PMB Fee Rates State
+  const [pmbFeeRates, setPmbFeeRates] = useState<PmbFeeRate[]>([]);
+  const [showPmbFeeModal, setShowPmbFeeModal] = useState(false);
+  const [editingPmbFee, setEditingPmbFee] = useState<PmbFeeRate | null>(null);
+  const [pmbFeeForm, setPmbFeeForm] = useState({ waveLabel: "", registrationFee: "", examFee: "", reregistrationFee: "", matriculationFee: "" });
+  const [savingPmbFee, setSavingPmbFee] = useState(false);
+
+  const fetchPmbFeeRates = async () => {
+    try {
+      const res = await fetch("/api/admin/pmb-fees");
+      const data = await res.json();
+      if (data.success) setPmbFeeRates(data.rates || []);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleSavePmbFee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingPmbFee(true);
+    try {
+      const payload = editingPmbFee ? { id: editingPmbFee.id, ...pmbFeeForm } : pmbFeeForm;
+      const method = editingPmbFee ? "PATCH" : "POST";
+      const res = await fetch("/api/admin/pmb-fees", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (data.success) {
+        triggerNotice(editingPmbFee ? "Tarif PMB berhasil diperbarui!" : "Tarif PMB baru disimpan!");
+        setShowPmbFeeModal(false);
+        fetchPmbFeeRates();
+      } else { triggerNotice("Gagal: " + data.error); }
+    } catch (err: any) { triggerNotice(err.message); }
+    finally { setSavingPmbFee(false); }
   };
 
   // Modals & Forms
@@ -493,7 +534,8 @@ export default function SkeuDashboard() {
           {[
             { id: "beranda", label: "Beranda & Kas", icon: "📊" },
             { id: "penerimaan", label: "Penerimaan SPP", icon: "🧾" },
-            { id: "beasiswa", label: "Beasiswa", icon: "🎓" },
+            { id: "pmb", label: "Biaya PMB", icon: "🎓" },
+            { id: "beasiswa", label: "Beasiswa", icon: "💳" },
             { id: "pengeluaran", label: "Pengeluaran", icon: "📤" },
             { id: "akuntansi", label: "Akuntansi", icon: "📖" },
             { id: "pengaturan", label: "Pengaturan", icon: "⚙️" },
@@ -552,6 +594,7 @@ export default function SkeuDashboard() {
               <h2 className="font-extrabold text-sm text-white uppercase tracking-wider">
                 {activeTab === "beranda" ? "Treasury & Manajemen Kas" :
                  activeTab === "penerimaan" ? "Administrasi Penerimaan SPP/UKT" :
+                 activeTab === "pmb" ? "Biaya & Tarif Penerimaan Mahasiswa Baru" :
                  activeTab === "beasiswa" ? "Netting Beasiswa & Keringanan" :
                  activeTab === "pengeluaran" ? "Pengeluaran Belanja & PO" :
                  activeTab === "akuntansi" ? "Jurnal & CoA Akuntansi" :
@@ -1425,6 +1468,129 @@ export default function SkeuDashboard() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* TAB PMB: BIAYA & TARIF PMB */}
+      {activeTab === "pmb" && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Header section */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-white">💰 Tarif Biaya Penerimaan Mahasiswa Baru</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Atur biaya formulir pendaftaran, ujian, daftar ulang, dan matrikulasi per gelombang/periode akademik. Tarif ini digunakan otomatis oleh SI-PMB saat membuat invoice pendaftar.</p>
+            </div>
+            <button
+              onClick={() => { setEditingPmbFee(null); setPmbFeeForm({ waveLabel: "", registrationFee: "", examFee: "", reregistrationFee: "", matriculationFee: "" }); fetchPmbFeeRates(); setShowPmbFeeModal(true); }}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition shadow-lg cursor-pointer shrink-0"
+            >
+              + Tambah Tarif Gelombang
+            </button>
+          </div>
+
+          {/* Info alert */}
+          <div className="bg-blue-950/30 border border-blue-800/40 rounded-2xl p-4 text-[10px] text-blue-300 space-y-1">
+            <p className="font-bold text-blue-200">ℹ️ Cara Kerja Integrasi Tarif:</p>
+            <p>• <strong>Label Gelombang</strong> harus sama persis dengan <em>Periode Akademik</em> yang diset di SI-PMB (contoh: <code className="bg-blue-900/40 px-1 rounded">2026/2027 Ganjil</code>).</p>
+            <p>• Saat pendaftar membuka tab Tagihan di portal PMB, sistem membaca tarif di sini berdasarkan label gelombang → membuat invoice otomatis.</p>
+            <p>• Jika tidak ada tarif yang cocok, sistem fallback ke biaya per <strong>Jalur Masuk</strong> yang diset di SI-PMB.</p>
+          </div>
+
+          {/* Fee Rates Table */}
+          {pmbFeeRates.length === 0 ? (
+            <div className="text-center py-12 bg-slate-900 border border-slate-800 rounded-2xl text-slate-500 text-xs space-y-2">
+              <div className="text-3xl">💸</div>
+              <p className="font-bold">Belum ada tarif PMB.</p>
+              <p>Klik "+ Tambah Tarif Gelombang" untuk mulai mengatur biaya.</p>
+            </div>
+          ) : (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-800/70 text-slate-400 uppercase tracking-wider font-bold">
+                  <tr>
+                    <th className="px-5 py-3.5">Gelombang / Periode Akademik</th>
+                    <th className="px-5 py-3.5">Formulir Pendaftaran</th>
+                    <th className="px-5 py-3.5">Ujian Seleksi</th>
+                    <th className="px-5 py-3.5">Daftar Ulang</th>
+                    <th className="px-5 py-3.5">Matrikulasi</th>
+                    <th className="px-5 py-3.5">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50">
+                  {pmbFeeRates.map((rate) => (
+                    <tr key={rate.id} className="hover:bg-slate-800/30 transition">
+                      <td className="px-5 py-3.5 font-bold text-white">{rate.waveLabel}</td>
+                      <td className="px-5 py-3.5 font-mono text-emerald-400 font-bold">Rp {Number(rate.registrationFee).toLocaleString("id-ID")}</td>
+                      <td className="px-5 py-3.5 font-mono text-slate-300">Rp {Number(rate.examFee).toLocaleString("id-ID")}</td>
+                      <td className="px-5 py-3.5 font-mono text-slate-300">Rp {Number(rate.reregistrationFee).toLocaleString("id-ID")}</td>
+                      <td className="px-5 py-3.5 font-mono text-slate-300">Rp {Number(rate.matriculationFee).toLocaleString("id-ID")}</td>
+                      <td className="px-5 py-3.5">
+                        <button
+                          onClick={() => { setEditingPmbFee(rate); setPmbFeeForm({ waveLabel: rate.waveLabel, registrationFee: rate.registrationFee, examFee: rate.examFee, reregistrationFee: rate.reregistrationFee, matriculationFee: rate.matriculationFee }); fetchPmbFeeRates(); setShowPmbFeeModal(true); }}
+                          className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-lg text-[10px] font-bold transition cursor-pointer"
+                        >
+                          ✏️ Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* PMB Fee Modal */}
+      {showPmbFeeModal && (
+        <div className="fixed inset-0 z-50 bg-[#0b0f19]/85 backdrop-blur-md flex items-center justify-center p-4">
+          <form onSubmit={handleSavePmbFee} className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-3xl p-6 space-y-4 shadow-2xl">
+            <h3 className="font-bold text-white text-sm">
+              {editingPmbFee ? "✏️ Edit Tarif Gelombang PMB" : "➕ Tambah Tarif Gelombang PMB"}
+            </h3>
+
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Label Gelombang / Periode Akademik <span className="text-rose-400">*</span></label>
+              <input
+                required
+                type="text"
+                placeholder="Contoh: 2026/2027 Ganjil"
+                value={pmbFeeForm.waveLabel}
+                onChange={(e) => setPmbFeeForm((p) => ({ ...p, waveLabel: e.target.value }))}
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-blue-500 transition"
+              />
+              <p className="text-[9px] text-slate-500 mt-1">Harus sama persis dengan Periode Akademik di Gelombang SI-PMB.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { key: "registrationFee", label: "Biaya Formulir Pendaftaran" },
+                { key: "examFee", label: "Biaya Ujian Seleksi" },
+                { key: "reregistrationFee", label: "Biaya Daftar Ulang" },
+                { key: "matriculationFee", label: "Biaya Matrikulasi" },
+              ].map((f) => (
+                <div key={f.key}>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">{f.label}</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] font-bold">Rp</span>
+                    <input
+                      type="number" min="0" placeholder="0"
+                      value={(pmbFeeForm as any)[f.key]}
+                      onChange={(e) => setPmbFeeForm((p) => ({ ...p, [f.key]: e.target.value }))}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white outline-none focus:border-blue-500 transition"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" onClick={() => setShowPmbFeeModal(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs font-bold rounded-xl transition cursor-pointer">Batal</button>
+              <button type="submit" disabled={savingPmbFee} className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition disabled:opacity-50 cursor-pointer">
+                {savingPmbFee ? "Menyimpan..." : (editingPmbFee ? "Perbarui Tarif" : "Simpan Tarif")}
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

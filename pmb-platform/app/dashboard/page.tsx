@@ -82,9 +82,43 @@ export default function ApplicantDashboard() {
   const [bankAccountName, setBankAccountName] = useState("");
   const [bankAccountNumber, setBankAccountNumber] = useState("");
 
+  // Photo, signature & doc upload states
+  const [pasFotoPreview, setPasFotoPreview] = useState<string | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(""), 3000);
+  };
+
+  const handleDocFileUpload = (docCode: string, file: File) => {
+    if (!candidateId) {
+      triggerToast("Sesi tidak ditemukan, silakan login ulang.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("applicantId", candidateId);
+    formData.append("documentCode", docCode);
+    formData.append("file", file);
+
+    triggerToast(`Mengunggah ${docCode}...`);
+    fetch("/api/applicants/documents/upload", {
+      method: "POST",
+      body: formData,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setUploadedFiles((prev) => ({
+            ...prev,
+            [docCode]: data.fileUrl || `${docCode.toLowerCase()}_terunggah.pdf`,
+          }));
+          triggerToast(`✓ ${docCode} berhasil diunggah!`);
+        } else {
+          triggerToast("Gagal upload: " + data.error);
+        }
+      })
+      .catch(() => triggerToast("Gagal menghubungi server"));
   };
 
   const formatIDR = (n: number) =>
@@ -1498,73 +1532,217 @@ export default function ApplicantDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Dokumen diambil dari data applicant (server), bukan hard-code */}
-                {(() => {
-                  const docKeys = Object.keys(uploadedFiles);
-                  if (docKeys.length === 0) {
-                    return (
-                      <div className="col-span-full bg-white p-5 rounded-2xl border border-slate-200 text-xs text-slate-400">
-                        Dokumen belum tersedia.
-                      </div>
-                    );
-                  }
-
-                  return docKeys.map((docCode) => (
-                    <div
-                      key={docCode}
-                      className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col justify-between gap-4 shadow-sm"
-                    >
-                      <div>
-                        <h4 className="font-bold text-slate-800 text-sm">{docCode.toUpperCase()}</h4>
-                        <p className="text-xs text-slate-400 mt-1">Wajib Diunggah</p>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        {uploadedFiles[docCode] ? (
-                          <a
-                            href={`/api/applicants/documents/${encodeURIComponent(uploadedFiles[docCode])}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1.5 text-emerald-600 text-xs font-bold hover:underline"
-                          >
-                            <span>✓</span>
-                            <span>{uploadedFiles[docCode]}</span>
-                          </a>
+              {/* 7. Foto & Tanda Tangan Digital */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+                <h4 className="font-bold text-[#0f487b] text-xs uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-3">
+                  🖼 Foto &amp; Tanda Tangan Digital
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Pas Foto */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      PAS FOTO RESMI <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="flex items-start gap-4">
+                      <div className="w-24 h-32 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 overflow-hidden shrink-0">
+                        {pasFotoPreview ? (
+                          <img src={pasFotoPreview} alt="Pas Foto" className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-xs text-slate-400">Belum diunggah</span>
+                          <div className="text-center">
+                            <div className="text-2xl">📷</div>
+                            <div className="text-[9px] font-bold mt-1">3X4 CM</div>
+                          </div>
                         )}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <p className="text-[10px] text-slate-400">Format .jpg/.png. Maks 2MB.</p>
+                        <label className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer">
+                          <span>⬆</span> Pilih Pas Foto
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              if (file.size > 2 * 1024 * 1024) { triggerToast("Ukuran foto maksimal 2MB!"); return; }
+                              const reader = new FileReader();
+                              reader.onload = (ev) => setPasFotoPreview(ev.target?.result as string);
+                              reader.readAsDataURL(file);
+                              handleDocFileUpload("PAS_FOTO", file);
+                            }}
+                          />
+                        </label>
+                        {uploadedFiles["PAS_FOTO"] && <p className="text-[10px] text-emerald-600 font-bold">✓ Foto berhasil diunggah</p>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tanda Tangan Digital */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      TANDA TANGAN PENDAFTAR <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
+                      <canvas
+                        id="signature-canvas"
+                        width={400}
+                        height={120}
+                        className="w-full touch-none cursor-crosshair bg-white"
+                        onMouseDown={(e) => {
+                          const canvas = e.currentTarget;
+                          const ctx = canvas.getContext("2d")!;
+                          const rect = canvas.getBoundingClientRect();
+                          const scaleX = canvas.width / rect.width;
+                          const scaleY = canvas.height / rect.height;
+                          ctx.beginPath();
+                          ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
+                          setIsDrawing(true);
+                          canvas.onmousemove = (ev) => {
+                            if (!isDrawing) return;
+                            ctx.lineTo((ev.clientX - rect.left) * scaleX, (ev.clientY - rect.top) * scaleY);
+                            ctx.strokeStyle = "#1e293b";
+                            ctx.lineWidth = 2;
+                            ctx.lineCap = "round";
+                            ctx.stroke();
+                          };
+                          canvas.onmouseup = () => {
+                            setIsDrawing(false);
+                            canvas.onmousemove = null;
+                            canvas.onmouseup = null;
+                          };
+                        }}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          const canvas = e.currentTarget;
+                          const ctx = canvas.getContext("2d")!;
+                          const rect = canvas.getBoundingClientRect();
+                          const scaleX = canvas.width / rect.width;
+                          const scaleY = canvas.height / rect.height;
+                          const touch = e.touches[0];
+                          ctx.beginPath();
+                          ctx.moveTo((touch.clientX - rect.left) * scaleX, (touch.clientY - rect.top) * scaleY);
+                          setIsDrawing(true);
+                        }}
+                        onTouchMove={(e) => {
+                          e.preventDefault();
+                          if (!isDrawing) return;
+                          const canvas = e.currentTarget;
+                          const ctx = canvas.getContext("2d")!;
+                          const rect = canvas.getBoundingClientRect();
+                          const scaleX = canvas.width / rect.width;
+                          const scaleY = canvas.height / rect.height;
+                          const touch = e.touches[0];
+                          ctx.lineTo((touch.clientX - rect.left) * scaleX, (touch.clientY - rect.top) * scaleY);
+                          ctx.strokeStyle = "#1e293b";
+                          ctx.lineWidth = 2;
+                          ctx.lineCap = "round";
+                          ctx.stroke();
+                        }}
+                        onTouchEnd={() => setIsDrawing(false)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-[10px] text-slate-400">Bisa menggunakan mouse atau usapan jari (pada layar sentuh).</p>
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => handleFileUpload(docCode)}
-                          className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                            uploadedFiles[docCode]
-                              ? "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                              : "bg-[#0f487b] text-white hover:bg-[#00719f]"
-                          }`}
+                          type="button"
+                          onClick={() => {
+                            const canvas = document.getElementById("signature-canvas") as HTMLCanvasElement;
+                            const ctx = canvas?.getContext("2d");
+                            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                          }}
+                          className="px-2 py-1 text-[10px] font-bold text-rose-500 hover:text-rose-700 border border-rose-200 rounded-lg transition cursor-pointer"
                         >
-                          {uploadedFiles[docCode] ? "Ganti File" : "Unggah Berkas"}
+                          🗑 Bersihkan
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const canvas = document.getElementById("signature-canvas") as HTMLCanvasElement;
+                            if (!canvas) return;
+                            canvas.toBlob((blob) => {
+                              if (!blob) return;
+                              const file = new File([blob], "tanda_tangan.png", { type: "image/png" });
+                              handleDocFileUpload("TANDA_TANGAN", file);
+                            }, "image/png");
+                          }}
+                          className="px-3 py-1 text-[10px] font-bold bg-[#0f487b] text-white rounded-lg hover:bg-[#00719f] transition cursor-pointer"
+                        >
+                          💾 Simpan TTD
                         </button>
                       </div>
                     </div>
-                  ));
-                })()}
+                    {uploadedFiles["TANDA_TANGAN"] && <p className="text-[10px] text-emerald-600 font-bold mt-1">✓ Tanda tangan berhasil disimpan</p>}
+                  </div>
+                </div>
               </div>
 
-
-              {Object.keys(uploadedFiles).length === 4 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="text-sm text-blue-900 font-semibold text-center sm:text-left">
-                    💡 Semua berkas selesai diunggah. Silakan klik lanjutkan untuk mengaktifkan tes seleksi CBT.
-                  </div>
-                  <button
-                    onClick={() => setActiveTab("ujian")}
-                    className="px-6 py-2.5 bg-[#0f487b] text-white text-xs font-bold rounded-xl hover:bg-[#00719f] transition-all shrink-0 shadow"
-                  >
-                    Lanjutkan ke Ujian CBT →
-                  </button>
+              {/* 8. Unggah Dokumen Wajib */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h4 className="font-bold text-[#0f487b] text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    📁 Unggah Dokumen Wajib
+                  </h4>
+                  <span className="text-[10px] font-bold bg-blue-50 text-[#0f487b] border border-blue-200 px-2 py-1 rounded-lg">
+                    {Object.keys(uploadedFiles).filter(k => ["KTP","KK","IJAZAH","TRANSKRIP"].includes(k)).length}/4 Diunggah
+                  </span>
                 </div>
-              )}
+
+                {[
+                  { code: "KTP", label: "KTP Asli", icon: "🪪", desc: "Kartu Tanda Penduduk asli (jpg/png/pdf)" },
+                  { code: "KK", label: "Kartu Keluarga", icon: "👨‍👩‍👧", desc: "Kartu Keluarga yang masih berlaku" },
+                  { code: "IJAZAH", label: "Ijazah / SKL", icon: "🎓", desc: "Ijazah atau Surat Keterangan Lulus" },
+                  { code: "TRANSKRIP", label: "Transkrip Nilai", icon: "📄", desc: "Transkrip nilai pendidikan terakhir" },
+                ].map((doc) => (
+                  <div key={doc.code} className="flex items-center justify-between p-3 border border-slate-100 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-lg shadow-sm shrink-0">
+                        {doc.icon}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-700">{doc.label} <span className="text-rose-500">*</span></p>
+                        <p className="text-[10px] text-slate-400">{doc.desc}</p>
+                        {uploadedFiles[doc.code] && (
+                          <p className="text-[10px] text-emerald-600 font-bold mt-0.5">✓ Berhasil diunggah</p>
+                        )}
+                      </div>
+                    </div>
+                    <label className={`px-3 py-1.5 text-[11px] font-bold rounded-lg cursor-pointer transition ${uploadedFiles[doc.code] ? "bg-slate-200 text-slate-600 hover:bg-slate-300" : "bg-[#0f487b] text-white hover:bg-[#00719f]"}`}>
+                      {uploadedFiles[doc.code] ? "Ganti File" : "Pilih File"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 5 * 1024 * 1024) { triggerToast("Ukuran file maksimal 5MB!"); return; }
+                          handleDocFileUpload(doc.code, file);
+                        }}
+                      />
+                    </label>
+                  </div>
+                ))}
+
+                {!["KTP","KK","IJAZAH","TRANSKRIP"].every(k => uploadedFiles[k]) && (
+                  <p className="text-xs text-rose-600 font-semibold text-center pt-1">
+                    Harap unggah seluruh dokumen wajib (termasuk foto &amp; tanda tangan) terlebih dahulu!
+                  </p>
+                )}
+
+                {["KTP","KK","IJAZAH","TRANSKRIP"].every(k => uploadedFiles[k]) && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <p className="text-sm text-blue-900 font-semibold">💡 Semua berkas selesai diunggah. Silakan lanjutkan ke tahap ujian.</p>
+                    <button onClick={() => setActiveTab("ujian")} className="px-5 py-2 bg-[#0f487b] text-white text-xs font-bold rounded-xl hover:bg-[#00719f] transition shrink-0 shadow cursor-pointer">
+                      Lanjutkan ke Ujian CBT →
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
+
 
           {/* TAB 4: UJIAN */}
           {activeTab === "ujian" && (
