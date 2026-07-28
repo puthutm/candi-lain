@@ -2,7 +2,7 @@ import { db } from "@/db";
 import {
   bankMutations,
   bankAccounts,
-  studentPayments,
+  studentInvoices,
   journalEntries,
   journalEntryLines,
   chartOfAccounts,
@@ -36,10 +36,10 @@ export async function runBankReconciliation(
       )
     );
 
-  const payments = await db
+  const invoices = await db
     .select()
-    .from(studentPayments)
-    .where(eq(studentPayments.status, "lunas"));
+    .from(studentInvoices)
+    .where(eq(studentInvoices.status, "lunas"));
 
   let matchedCount = 0;
   let totalReconciledAmount = 0;
@@ -48,12 +48,12 @@ export async function runBankReconciliation(
   for (const mutation of mutations) {
     const mutAmount = parseFloat(mutation.amount);
     
-    // Find matching payment with same amount
-    const matchedPayment = payments.find(
-      (p) => Math.abs(parseFloat(p.amount) - mutAmount) < 0.01
+    // Find matching invoice with same amount
+    const matchedInvoice = invoices.find(
+      (p) => Math.abs(parseFloat(p.totalAmount) - mutAmount) < 0.01
     );
 
-    if (matchedPayment) {
+    if (matchedInvoice) {
       matchedCount++;
       totalReconciledAmount += mutAmount;
 
@@ -67,7 +67,7 @@ export async function runBankReconciliation(
         mutationId: mutation.id,
         amount: mutAmount,
         description: mutation.description || "Setoran Pembayaran Mahasiswa",
-        matchedPaymentId: matchedPayment.id,
+        matchedPaymentId: matchedInvoice.id,
         status: "matched",
       });
     } else {

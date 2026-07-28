@@ -65,6 +65,9 @@ export async function POST(req: NextRequest) {
         })
         .returning();
 
+      if (!newKrs) {
+        return NextResponse.json({ success: false, error: "Gagal membuat data KRS baru" }, { status: 500 });
+      }
       krsId = newKrs.id;
     }
 

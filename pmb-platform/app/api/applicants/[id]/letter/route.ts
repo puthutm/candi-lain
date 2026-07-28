@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { applicants } from "@/db/schema/applicants";
-import { studyPrograms, entryPaths, waves } from "@/db/schema/master";
+import { pmbApplicants as applicants } from "@/db/schema/applicants";
+import { pmbStudyPrograms as studyPrograms, pmbEntryPaths as entryPaths, pmbWaves as waves } from "@/db/schema/master";
 import { eq } from "drizzle-orm";
 
 // GET: Generate E-Acceptance Letter / Surat Keputusan Kelulusan PMB

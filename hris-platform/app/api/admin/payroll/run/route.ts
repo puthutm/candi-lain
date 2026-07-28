@@ -8,7 +8,7 @@ import { cookies } from "next/headers";
 import { pgTable, uuid, text, numeric } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { calculateEmployeePayroll } from "@/lib/payroll-engine";
+import { calculateEmployeePayroll } from "@/lib/payroll-calculator";
 import { sendPayrollDisbursementWebhook } from "@/lib/disbursement";
 
 const siakadLecturers = pgTable("siakad_lecturers", {
@@ -217,10 +217,10 @@ export async function POST(req: Request) {
 
           const itemsToInsert = [
             { payrollRunId: runId, employeeId: employee.id, payrollComponentId: compGajiPokok.id, amount: employee.baseSalary, reviewStatus: "ok" as const },
-            { payrollRunId: runId, employeeId: employee.id, payrollComponentId: compTunjangan.id, amount: result.allowanceTotal, reviewStatus: "ok" as const },
-            { payrollRunId: runId, employeeId: employee.id, payrollComponentId: compBpjsKesehatan.id, amount: result.bpjsKesehatan, reviewStatus: "ok" as const },
-            { payrollRunId: runId, employeeId: employee.id, payrollComponentId: compBpjsTk.id, amount: result.bpjsKetenagakerjaan, reviewStatus: "ok" as const },
-            { payrollRunId: runId, employeeId: employee.id, payrollComponentId: compPph.id, amount: result.pph21Amount, reviewStatus: "ok" as const }
+            { payrollRunId: runId, employeeId: employee.id, payrollComponentId: compTunjangan.id, amount: result.totalAllowances, reviewStatus: "ok" as const },
+            { payrollRunId: runId, employeeId: employee.id, payrollComponentId: compBpjsKesehatan.id, amount: result.bpjs.bpjsKesehatan, reviewStatus: "ok" as const },
+            { payrollRunId: runId, employeeId: employee.id, payrollComponentId: compBpjsTk.id, amount: result.bpjs.bpjsKetenagakerjaan, reviewStatus: "ok" as const },
+            { payrollRunId: runId, employeeId: employee.id, payrollComponentId: compPph.id, amount: result.pph21.pph21Amount, reviewStatus: "ok" as const }
           ];
 
           await db.insert(employeePayrollItems).values(itemsToInsert);
@@ -279,9 +279,6 @@ export async function POST(req: Request) {
 
         const payslipInserts = activeEmployees.map(({ employee, position }) => {
           const res = calculateEmployeePayroll({
-            employeeId: employee.id,
-            fullName: employee.fullName,
-            employeeType: employee.employeeType as any,
             baseSalary: employee.baseSalary,
             ptkpStatus: employee.ptkpStatus || "TK/0",
             functionalAllowance: position?.functionalAllowance || 0,
@@ -292,10 +289,10 @@ export async function POST(req: Request) {
             payrollRunId: runId,
             employeeId: employee.id,
             grossSalary: res.grossSalary,
-            pph21Amount: res.pph21Amount,
-            bpjsKesehatanAmount: res.bpjsKesehatan,
-            bpjsKetenagakerjaanAmount: res.bpjsKetenagakerjaan,
-            totalDeductions: res.deductionTotal,
+            pph21Amount: res.pph21.pph21Amount,
+            bpjsKesehatanAmount: res.bpjs.bpjsKesehatan,
+            bpjsKetenagakerjaanAmount: res.bpjs.bpjsKetenagakerjaan,
+            totalDeductions: res.totalDeductions,
             netSalary: res.netSalary,
             status: "published" as const,
             pdfUrl: `/api/portal/payslip/${runId}?employeeId=${employee.id}`
