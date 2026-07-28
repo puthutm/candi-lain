@@ -772,6 +772,19 @@ export default function HrisAdminDashboard() {
                   >
                     Aktif
                   </button>
+                  <div className="w-px h-6 bg-slate-800 mx-2"></div>
+                  <select
+                    value={filterUnitId}
+                    onChange={(e) => setFilterUnitId(e.target.value)}
+                    className="px-3 py-2 bg-slate-900 border border-slate-800 focus:border-blue-600 rounded-xl text-xs font-semibold text-slate-300 outline-none transition cursor-pointer"
+                  >
+                    <option value="all">Semua Unit Kerja</option>
+                    {units.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Import/Create Actions */}
