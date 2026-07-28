@@ -444,50 +444,7 @@ export default function ApplicantDashboard() {
   ];
 
 
-  const handleFileUpload = (docCode: string) => {
-    if (!candidateId) {
-      setUploadedFiles((prev) => ({
-        ...prev,
-        [docCode]: "terunggah.pdf",
-      }));
-      if (Object.keys(uploadedFiles).length === 3) {
-        setShowUjianReady(true);
-      }
-      return;
-    }
 
-    fetch("/api/applicants/documents", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        applicantId: candidateId,
-        documentCode: docCode,
-        fileUrl: `${docCode.toLowerCase()}_terunggah.pdf`,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setUploadedFiles((prev) => ({
-            ...prev,
-            [data.document.documentTypeId]: data.document.fileUrl,
-          }));
-          triggerToast(`Berkas ${docCode} berhasil diunggah!`);
-          
-          // Re-fetch progress
-          fetch(`/api/applicants/${candidateId}`)
-            .then(res => res.json())
-            .then(resData => {
-              if (resData.success && resData.applicant.currentStage === "unggah_berkas") {
-                triggerToast("Semua berkas selesai terunggah.");
-              }
-            });
-        } else {
-          triggerToast("Gagal: " + data.error);
-        }
-      })
-      .catch(() => triggerToast("Gagal menghubungi server"));
-  };
 
   const currentYear = new Date().getFullYear();
 
