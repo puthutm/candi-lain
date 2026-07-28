@@ -1,11 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { db } from "@/db";
+import { db, bootstrapDatabase } from "@/db";
 import { questionBankItems, questionBankOptions, auditLogs } from "@/db/schema/content";
 import { getSessionUser } from "@/lib/auth-helper";
 import { eq, and, desc } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
+    await bootstrapDatabase();
     const { searchParams } = new URL(req.url);
     const courseCode = searchParams.get("courseCode");
     const status = searchParams.get("status") || "terbit";

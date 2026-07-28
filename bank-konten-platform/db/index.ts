@@ -223,17 +223,42 @@ export async function bootstrapDatabase() {
     }
 
     // 4. Seed Course references
-    const dummyCourses = [
+    const initialCourses = [
       { code: "INF-101", name: "Dasar Pemrograman" },
       { code: "INF-201", name: "Struktur Data & Algoritma" },
       { code: "INF-302", name: "Rekayasa Perangkat Lunak" },
       { code: "INF-401", name: "Kecerdasan Buatan" },
     ];
-    for (const c of dummyCourses) {
+    for (const c of initialCourses) {
       await client`
         INSERT INTO bank_courses (code, name, faculty, degree_level)
         VALUES (${c.code}, ${c.name}, 'Teknologi Informasi', 'S1')
         ON CONFLICT (code) DO NOTHING
+      `;
+    }
+
+    // 5. Seed initial Material Bank Items if empty
+    const existingMaterials = await client`SELECT COUNT(*)::int as cnt FROM material_bank_items`;
+    if (existingMaterials[0]?.cnt === 0) {
+      const systemAuthorUserId = "00000000-0000-0000-0000-000000000001";
+      await client`
+        INSERT INTO material_bank_items (title, description, course_code, topic, material_type, contributor_user_id, verification_status)
+        VALUES 
+        ('Slide Pertemuan 1 - Konsep Pemrograman', 'Pengenalan variabel, tipe data, dan alur kontrol', 'INF-101', 'Logika Dasar', 'slide', ${systemAuthorUserId}, 'terbit'),
+        ('Modul Ajar Pertemuan 2 - Pointer & Memory', 'Pembahasan alokasi memori dinamis di C/C++', 'INF-101', 'Manajemen Memori', 'dokumen', ${systemAuthorUserId}, 'menunggu_prodi'),
+        ('Video Tutorial Algoritma Sorting', 'Visualisasi Bubble Sort, Quick Sort, & Merge Sort', 'INF-201', 'Algoritma Pengurutan', 'video', ${systemAuthorUserId}, 'terbit')
+      `;
+    }
+
+    // 6. Seed initial Question Bank Items if empty
+    const existingQuestions = await client`SELECT COUNT(*)::int as cnt FROM question_bank_items`;
+    if (existingQuestions[0]?.cnt === 0) {
+      const systemAuthorUserId = "00000000-0000-0000-0000-000000000001";
+      await client`
+        INSERT INTO question_bank_items (course_code, topic, question_text, question_type, correct_answer, difficulty_level, bloom_taxonomy, contributor_user_id, verification_status)
+        VALUES 
+        ('INF-101', 'Variabel', 'Manakah di bawah ini tipe data angka bulat pada C++?', 'pilihan_ganda', 'A', 'mudah', 'C1', ${systemAuthorUserId}, 'terbit'),
+        ('INF-201', 'Tree & Graph', 'Jelaskan perbedaan antara BFS dan DFS dalam penelusuran graf!', 'essai', 'BFS berbasis antrean (queue), DFS berbasis tumpukan (stack)', 'sedang', 'C2', ${systemAuthorUserId}, 'menunggu_prodi')
       `;
     }
 
