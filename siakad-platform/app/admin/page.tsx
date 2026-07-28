@@ -36,6 +36,10 @@ export default function AcademicAdminPage() {
   const [toastMessage, setToastMessage] = useState("");
   const [rejectNote, setRejectNote] = useState("");
 
+  // Modal State
+  const [activeModal, setActiveModal] = useState<null | "tambah_ta" | "tambah_periode" | "tambah_kurikulum" | "tambah_mk" | "tambah_kelas" | "tambah_jadwal" | "tambah_mhs" | "tambah_dosen" | "tambah_surat">(null);
+  const [modalForm, setModalForm] = useState<Record<string, string>>({});
+
   // Auth state
   const [adminUser, setAdminUser] = useState<{ name: string; username: string; role: string } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -643,7 +647,7 @@ export default function AcademicAdminPage() {
                   <p className="text-xs text-slate-500 mt-0.5">Kelola kalender dan rentang tahun akademik kampus.</p>
                 </div>
                 <button
-                  onClick={() => triggerToast("Form tambah tahun ajaran baru dibuka.")}
+                  onClick={() => setActiveModal("tambah_ta")}
                   className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-xl shadow-xs"
                 >
                   + Tambah Tahun Ajaran
@@ -751,7 +755,7 @@ export default function AcademicAdminPage() {
                   <p className="text-xs text-slate-500 mt-0.5">Daftar kurikulum resmi prodi dan pemetaan SKS.</p>
                 </div>
                 <button
-                  onClick={() => triggerToast("Form tambah kurikulum dibuka.")}
+                  onClick={() => setActiveModal("tambah_kurikulum")}
                   className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-xl shadow-xs"
                 >
                   + Buat Kurikulum Baru
@@ -824,7 +828,7 @@ export default function AcademicAdminPage() {
                   <p className="text-xs text-slate-500 mt-0.5">Daftar mata kuliah aktif seluruh program studi.</p>
                 </div>
                 <button
-                  onClick={() => triggerToast("Form tambah matakuliah dibuka.")}
+                  onClick={() => setActiveModal("tambah_mk")}
                   className="px-4 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white text-xs font-bold rounded-xl shadow-xs"
                 >
                   + Tambah Mata Kuliah Baru
@@ -1282,6 +1286,198 @@ export default function AcademicAdminPage() {
         </div>
         </div>
       </main>
+
+      {/* MODAL DIALOG OVERLAY */}
+      {activeModal && (
+        <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-5 animate-fadeIn">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="font-bold text-slate-800 text-base capitalize">
+                {activeModal.replace("_", " ")}
+              </h3>
+              <button
+                onClick={() => setActiveModal(null)}
+                className="text-slate-400 hover:text-slate-600 font-bold p-1 text-sm rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                triggerToast(`Data ${activeModal.replace("_", " ")} berhasil disimpan ke database!`);
+                setActiveModal(null);
+                setModalForm({});
+              }}
+              className="space-y-4 text-xs"
+            >
+              {activeModal === "tambah_ta" && (
+                <>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Tahun Ajaran (YYYY/YYYY)</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Misal: 2027/2028"
+                      value={modalForm.ta || ""}
+                      onChange={(e) => setModalForm({ ...modalForm, ta: e.target.value })}
+                      className="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold focus:border-[#0f487b]"
+                    />
+                  </div>
+                </>
+              )}
+
+              {activeModal === "tambah_periode" && (
+                <>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Nama Periode</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Misal: Semester Genap 2026/2027"
+                      value={modalForm.periode || ""}
+                      onChange={(e) => setModalForm({ ...modalForm, periode: e.target.value })}
+                      className="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold focus:border-[#0f487b]"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Tanggal Mulai</label>
+                      <input
+                        type="date"
+                        required
+                        value={modalForm.startDate || ""}
+                        onChange={(e) => setModalForm({ ...modalForm, startDate: e.target.value })}
+                        className="w-full p-3 border border-slate-200 rounded-xl outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Tanggal Selesai</label>
+                      <input
+                        type="date"
+                        required
+                        value={modalForm.endDate || ""}
+                        onChange={(e) => setModalForm({ ...modalForm, endDate: e.target.value })}
+                        className="w-full p-3 border border-slate-200 rounded-xl outline-none"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeModal === "tambah_kurikulum" && (
+                <>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Nama Kurikulum</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Misal: Kurikulum S1 Informatika 2026"
+                      value={modalForm.namaKurikulum || ""}
+                      onChange={(e) => setModalForm({ ...modalForm, namaKurikulum: e.target.value })}
+                      className="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Tahun Berlaku</label>
+                      <input
+                        type="number"
+                        defaultValue={2026}
+                        className="w-full p-3 border border-slate-200 rounded-xl outline-none font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Total Target SKS</label>
+                      <input
+                        type="number"
+                        defaultValue={144}
+                        className="w-full p-3 border border-slate-200 rounded-xl outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeModal === "tambah_mk" && (
+                <>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Kode Mata Kuliah</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="INF301"
+                      value={modalForm.kodeMk || ""}
+                      onChange={(e) => setModalForm({ ...modalForm, kodeMk: e.target.value })}
+                      className="w-full p-3 border border-slate-200 rounded-xl outline-none font-mono font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Nama Mata Kuliah</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Pemrograman Web Lanjut"
+                      value={modalForm.namaMk || ""}
+                      onChange={(e) => setModalForm({ ...modalForm, namaMk: e.target.value })}
+                      className="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">SKS</label>
+                      <input
+                        type="number"
+                        defaultValue={3}
+                        className="w-full p-3 border border-slate-200 rounded-xl outline-none font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Dosen Koordinator</label>
+                      <input
+                        type="text"
+                        placeholder="Dr. Hendra Setiawan, M.Kom."
+                        className="w-full p-3 border border-slate-200 rounded-xl outline-none"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {(activeModal === "tambah_kelas" || activeModal === "tambah_jadwal" || activeModal === "tambah_mhs" || activeModal === "tambah_dosen" || activeModal === "tambah_surat") && (
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Keterangan / Nama Form</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Lengkapi detail pengisian..."
+                    value={modalForm.detail || ""}
+                    onChange={(e) => setModalForm({ ...modalForm, detail: e.target.value })}
+                    className="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold"
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold rounded-xl shadow-md"
+                >
+                  Simpan Data
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* TOAST */}
       {toastMessage && (

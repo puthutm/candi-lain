@@ -253,12 +253,12 @@ export default function HrisAdminDashboard() {
 
   // Actions
   const handleTriggerSync = async () => {
-    triggerNotice("Memulai sinkronisasi database pegawai...");
+    triggerNotice("Memulai sinkronisasi akun pegawai HRIS dengan SSO Terpusat...");
     try {
-      const res = await fetch("/api/admin/sync", { method: "POST" });
+      const res = await fetch("/api/sync-sso", { method: "POST" });
       const data = await res.json();
       if (data.success) {
-        triggerNotice(data.message || "Sinkronisasi berhasil!");
+        triggerNotice(data.message || "Sinkronisasi SSO berhasil!");
         fetchCoreData();
       } else {
         triggerNotice("Sinkronisasi gagal: " + data.error);
