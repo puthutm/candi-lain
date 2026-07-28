@@ -266,11 +266,11 @@ export default async function HomePage() {
                       if (isLocalOrContainer) {
                         uriUrl.hostname = hostname;
                       }
-                      uriUrl.pathname = "/auth/login-start";
+                      uriUrl.pathname = "/admin";
                       uriUrl.search = "";
                       authUrl = uriUrl.toString();
                     } catch {
-                      authUrl = "/";
+                      authUrl = "/admin";
                     }
 
                     return { app, authUrl };
