@@ -111,7 +111,7 @@ export default function ApplicantDashboard() {
         if (data.success) {
           setUploadedFiles((prev) => ({
             ...prev,
-            [docCode]: data.fileUrl || `${docCode.toLowerCase()}_terunggah.pdf`,
+            [docCode]: data.fileUrl || "true",
           }));
           triggerToast(`✓ ${docCode} berhasil diunggah!`);
         } else {
