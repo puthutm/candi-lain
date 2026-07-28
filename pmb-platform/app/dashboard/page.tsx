@@ -1571,12 +1571,13 @@ export default function ApplicantDashboard() {
                         }}
                         onTouchStart={(e) => {
                           e.preventDefault();
+                          const touch = e.touches[0];
+                          if (!touch) return;
                           const canvas = e.currentTarget;
                           const ctx = canvas.getContext("2d")!;
                           const rect = canvas.getBoundingClientRect();
                           const scaleX = canvas.width / rect.width;
                           const scaleY = canvas.height / rect.height;
-                          const touch = e.touches[0];
                           ctx.beginPath();
                           ctx.moveTo((touch.clientX - rect.left) * scaleX, (touch.clientY - rect.top) * scaleY);
                           setIsDrawing(true);
@@ -1584,12 +1585,13 @@ export default function ApplicantDashboard() {
                         onTouchMove={(e) => {
                           e.preventDefault();
                           if (!isDrawing) return;
+                          const touch = e.touches[0];
+                          if (!touch) return;
                           const canvas = e.currentTarget;
                           const ctx = canvas.getContext("2d")!;
                           const rect = canvas.getBoundingClientRect();
                           const scaleX = canvas.width / rect.width;
                           const scaleY = canvas.height / rect.height;
-                          const touch = e.touches[0];
                           ctx.lineTo((touch.clientX - rect.left) * scaleX, (touch.clientY - rect.top) * scaleY);
                           ctx.strokeStyle = "#1e293b";
                           ctx.lineWidth = 2;
