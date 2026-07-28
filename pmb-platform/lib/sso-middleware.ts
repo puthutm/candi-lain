@@ -23,16 +23,24 @@ export type PmbRole = (typeof PMB_ROLES)[keyof typeof PMB_ROLES];
  */
 export const ALL_PMB_ROLES: PmbRole[] = Object.values(PMB_ROLES);
 
+const ALL_SUPER_ROLES: PmbRole[] = [
+  PMB_ROLES.SUPER_ADMIN,
+  PMB_ROLES.ADMIN,
+  PMB_ROLES.SUPERADMIN,
+  PMB_ROLES.SUPER_ADMIN_GENERIC,
+  PMB_ROLES.ADMIN_PMB,
+];
+
 /**
  * Roles that have access to all panels.
  */
-export const FULL_ACCESS_ROLES: PmbRole[] = [PMB_ROLES.SUPER_ADMIN];
+export const FULL_ACCESS_ROLES: PmbRole[] = ALL_SUPER_ROLES;
 
 /**
  * Roles that can access verification panel.
  */
 export const VERIFICATION_ROLES: PmbRole[] = [
-  PMB_ROLES.SUPER_ADMIN,
+  ...ALL_SUPER_ROLES,
   PMB_ROLES.VERIFIKATOR,
 ];
 
@@ -40,7 +48,7 @@ export const VERIFICATION_ROLES: PmbRole[] = [
  * Roles that can access payment panel.
  */
 export const PAYMENT_ROLES: PmbRole[] = [
-  PMB_ROLES.SUPER_ADMIN,
+  ...ALL_SUPER_ROLES,
   PMB_ROLES.STAFF_KEUANGAN,
 ];
 
@@ -48,19 +56,19 @@ export const PAYMENT_ROLES: PmbRole[] = [
  * Roles that can access communication panel.
  */
 export const COMMUNICATION_ROLES: PmbRole[] = [
-  PMB_ROLES.SUPER_ADMIN,
+  ...ALL_SUPER_ROLES,
   PMB_ROLES.STAFF_MARKETING,
 ];
 
 /**
  * Roles that can access settings panel.
  */
-export const SETTINGS_ROLES: PmbRole[] = [PMB_ROLES.SUPER_ADMIN];
+export const SETTINGS_ROLES: PmbRole[] = ALL_SUPER_ROLES;
 
 /**
  * Roles that can seed mock data.
  */
-export const SEED_ROLES: PmbRole[] = [PMB_ROLES.SUPER_ADMIN];
+export const SEED_ROLES: PmbRole[] = ALL_SUPER_ROLES;
 
 /**
  * Get the current admin session with role validation.
@@ -177,11 +185,15 @@ export function getAccessiblePanels(role: PmbRole): string[] {
  * Get the display name for a role.
  */
 export function getRoleDisplayName(role: PmbRole): string {
-  const displayNames: Record<PmbRole, string> = {
+  const displayNames: Partial<Record<PmbRole, string>> = {
     [PMB_ROLES.SUPER_ADMIN]: "Super Admin PMB",
     [PMB_ROLES.VERIFIKATOR]: "Verifikator Berkas",
     [PMB_ROLES.STAFF_KEUANGAN]: "Staff Keuangan",
     [PMB_ROLES.STAFF_MARKETING]: "Staff Marketing",
+    [PMB_ROLES.ADMIN]: "Admin",
+    [PMB_ROLES.SUPERADMIN]: "Superadmin",
+    [PMB_ROLES.SUPER_ADMIN_GENERIC]: "Super Admin",
+    [PMB_ROLES.ADMIN_PMB]: "Admin PMB",
   };
   return displayNames[role] || role;
 }
