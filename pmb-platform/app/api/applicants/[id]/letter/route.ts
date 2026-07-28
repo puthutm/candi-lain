@@ -5,7 +5,7 @@ import { pmbStudyPrograms as studyPrograms, pmbEntryPaths as entryPaths, pmbWave
 import { eq } from "drizzle-orm";
 
 // GET: Generate E-Acceptance Letter / Surat Keputusan Kelulusan PMB
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
 
