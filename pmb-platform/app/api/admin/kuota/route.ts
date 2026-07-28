@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbQuotas } from "@/db/schema/master";
 import { eq } from "drizzle-orm";
-import { requireRole, PMB_ROLES } from "@/lib/sso-middleware";
+import { requireRole, FULL_ACCESS_ROLES } from "@/lib/sso-middleware";
 
 export async function POST(req: Request) {
   try {
-    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN]);
+    const auth = await requireRole(FULL_ACCESS_ROLES);
     if (auth instanceof NextResponse) return auth;
 
     const body = await req.json();
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN]);
+    const auth = await requireRole(FULL_ACCESS_ROLES);
     if (auth instanceof NextResponse) return auth;
 
     const { quotaId, quotaTotal } = await req.json();
@@ -69,7 +69,7 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN]);
+    const auth = await requireRole(FULL_ACCESS_ROLES);
     if (auth instanceof NextResponse) return auth;
 
     const { searchParams } = new URL(req.url);

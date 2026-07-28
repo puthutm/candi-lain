@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pmbWaves } from "@/db/schema/master";
 import { desc } from "drizzle-orm";
-import { requireRole, PMB_ROLES } from "@/lib/sso-middleware";
+import { requireRole, FULL_ACCESS_ROLES } from "@/lib/sso-middleware";
 
 export async function GET() {
   try {
-    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN]);
+    const auth = await requireRole(FULL_ACCESS_ROLES);
     if (auth instanceof NextResponse) return auth;
 
     const waves = await db
@@ -22,7 +22,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN]);
+    const auth = await requireRole(FULL_ACCESS_ROLES);
     if (auth instanceof NextResponse) return auth;
 
     const body = await req.json();
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 }
 export async function PATCH(req: Request) {
   try {
-    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN]);
+    const auth = await requireRole(FULL_ACCESS_ROLES);
     if (auth instanceof NextResponse) return auth;
 
     const body = await req.json();

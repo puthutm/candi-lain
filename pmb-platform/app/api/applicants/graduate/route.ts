@@ -4,13 +4,13 @@ import { pmbApplicants, pmbApplicantProfiles, pmbApplicantStatusHistory } from "
 import { pmbStudyPrograms, pmbEntryPaths } from "@/db/schema/master";
 import { pmbExamResults } from "@/db/schema/exam";
 import { eq } from "drizzle-orm";
-import { getStaffId, requireRole, PMB_ROLES } from "@/lib/sso-middleware";
+import { getStaffId, requireRole, FULL_ACCESS_ROLES } from "@/lib/sso-middleware";
 import { publishAcceptedApplicantToSiakad } from "@/lib/siakad-publisher";
 
 export async function POST(req: Request) {
   try {
-    // RBAC: Only Super Admin can make graduation decisions
-    const auth = await requireRole([PMB_ROLES.SUPER_ADMIN]);
+    // RBAC: Admin roles can make graduation decisions
+    const auth = await requireRole(FULL_ACCESS_ROLES);
     if (auth instanceof NextResponse) return auth;
 
     const staffId = await getStaffId();
