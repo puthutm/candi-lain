@@ -38,7 +38,8 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/admin")) {
     const role = (session.user as any)?.role;
-    if (role !== "admin") {
+    const adminRoles = ["admin", "superadmin", "super_admin", "admin_pmb", "super_admin_pmb", "verifikator_berkas", "staff_keuangan", "staff_marketing"];
+    if (!role || !adminRoles.includes(role)) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }

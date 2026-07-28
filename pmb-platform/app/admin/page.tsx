@@ -93,34 +93,39 @@ export default function AdminPage() {
   const VERIFIKATOR_ROLE = "verifikator_berkas";
   const STAFF_KEUANGAN_ROLE = "staff_keuangan";
   const STAFF_MARKETING_ROLE = "staff_marketing";
-  const ALL_ADMIN_ROLES = [SUPER_ADMIN_ROLE, VERIFIKATOR_ROLE, STAFF_KEUANGAN_ROLE, STAFF_MARKETING_ROLE];
+  const ALL_ADMIN_ROLES = [SUPER_ADMIN_ROLE, VERIFIKATOR_ROLE, STAFF_KEUANGAN_ROLE, STAFF_MARKETING_ROLE, "admin", "superadmin", "super_admin", "admin_pmb"];
+
+  const isSuperAdminRole = (role: string) => {
+    return [SUPER_ADMIN_ROLE, "admin", "superadmin", "super_admin", "admin_pmb"].includes(role);
+  };
   
   const canAccessPanel = (panel: AdminPanelType): boolean => {
     if (!adminUser?.role) return false;
     const role = adminUser.role;
+    const isSuper = isSuperAdminRole(role);
     switch (panel) {
       case "dashboard":
       case "monitoring":
       case "pendaftar":
       case "gelombang":
-        return role === SUPER_ADMIN_ROLE;
+        return isSuper;
       case "seleksi":
-        return role === SUPER_ADMIN_ROLE || role === VERIFIKATOR_ROLE;
+        return isSuper || role === VERIFIKATOR_ROLE;
       case "verifikasi":
-        return role === SUPER_ADMIN_ROLE || role === VERIFIKATOR_ROLE;
+        return isSuper || role === VERIFIKATOR_ROLE;
       case "pembayaran":
-        return role === SUPER_ADMIN_ROLE || role === STAFF_KEUANGAN_ROLE;
+        return isSuper || role === STAFF_KEUANGAN_ROLE;
       case "komunikasi":
-        return role === SUPER_ADMIN_ROLE || role === STAFF_MARKETING_ROLE;
+        return isSuper || role === STAFF_MARKETING_ROLE;
       case "pengaturan":
-        return role === SUPER_ADMIN_ROLE;
+        return isSuper;
       default:
         return false;
     }
   };
   
   const canSeed = (): boolean => {
-    return adminUser?.role === SUPER_ADMIN_ROLE;
+    return isSuperAdminRole(adminUser?.role || "");
   };
   
   const getRoleDisplayName = (role: string): string => {

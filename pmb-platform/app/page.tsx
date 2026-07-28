@@ -328,12 +328,20 @@ export default function PmbPublikPage() {
           <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.22em] text-slate-500 font-semibold">
             {success ? "Selesai" : `Langkah ${step} dari 4`}
           </div>
-          <button
-            onClick={() => setIsLoginOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-semibold text-xs sm:text-sm shadow-md hover:brightness-110 transition-all gradient-btn"
-          >
-            <span>Login Kandidat</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <a
+              href="/admin"
+              className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-slate-200 font-semibold text-xs bg-slate-800/80 hover:bg-slate-700 hover:text-white transition-all border border-slate-700"
+            >
+              <span>🔑 Admin PMB</span>
+            </a>
+            <button
+              onClick={() => setIsLoginOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-semibold text-xs sm:text-sm shadow-md hover:brightness-110 transition-all gradient-btn"
+            >
+              <span>Login Kandidat</span>
+            </button>
+          </div>
         </div>
 
         <div className="relative p-5 sm:p-8 lg:p-14 xl:p-20 flex-1 flex flex-col justify-center">
