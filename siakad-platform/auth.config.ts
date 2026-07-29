@@ -51,7 +51,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
     {
       id: "unsia-sso",
       name: "UNSIA SSO",
-      type: "oidc",
+      type: "oauth",
       clientId: process.env.SSO_OAUTH_CLIENT_ID || "siakad-platform",
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "siakad-platform-client-secret-key-2026",
       issuer: process.env.SSO_OAUTH_ISSUER_URL || "http://10.10.20.56:3000",
@@ -89,6 +89,12 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
     async redirect({ url, baseUrl }) {
       if (url && url.includes("/auth/login")) {
         return baseUrl;
+      }
+      // Relative callback URLs (e.g. "/admin") must be resolved against baseUrl.
+      // Without this, `new URL("/admin")` throws and the user is redirected to
+      // the site root instead of the requested module after SSO login.
+      if (url && url.startsWith("/")) {
+        return `${baseUrl}${url}`;
       }
       try {
         const urlObj = new URL(url);

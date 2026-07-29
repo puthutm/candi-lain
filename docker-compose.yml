@@ -194,6 +194,8 @@ services:
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3003/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3003
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3003/api
+      - SSO_OAUTH_CLIENT_ID=siakad-platform
+      - SSO_OAUTH_CLIENT_SECRET=siakad-platform-client-secret-key-2026
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3003/api/health || exit 1"]
       interval: 30s
@@ -233,6 +235,8 @@ services:
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3004/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3004
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3004/api
+      - SSO_OAUTH_CLIENT_ID=lms-platform
+      - SSO_OAUTH_CLIENT_SECRET=lms-platform-client-secret-key-2026
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3004/api/health || exit 1"]
       interval: 30s
@@ -272,6 +276,8 @@ services:
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3005/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3005
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3005/api
+      - SSO_OAUTH_CLIENT_ID=keuangan-platform
+      - SSO_OAUTH_CLIENT_SECRET=keuangan-platform-client-secret-key-2026
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3005/api/health || exit 1"]
       interval: 30s
@@ -311,6 +317,8 @@ services:
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3006/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3006
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3006/api
+      - SSO_OAUTH_CLIENT_ID=hris-platform
+      - SSO_OAUTH_CLIENT_SECRET=hris-platform-client-secret-key-2026
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3006/api/health || exit 1"]
       interval: 30s
@@ -350,6 +358,8 @@ services:
       - SSO_OAUTH_CALLBACK_URL=http://10.10.20.56:3007/api/auth/callback/unsia-sso
       - NEXT_PUBLIC_APP_URL=http://10.10.20.56:3007
       - NEXT_PUBLIC_API_URL=http://10.10.20.56:3007/api
+      - SSO_OAUTH_CLIENT_ID=bank-konten-platform
+      - SSO_OAUTH_CLIENT_SECRET=bank-konten-platform-client-secret-key-2026
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3007/api/health || exit 1"]
       interval: 30s

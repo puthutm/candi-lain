@@ -51,7 +51,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
     {
       id: "unsia-sso",
       name: "UNSIA SSO",
-      type: "oidc",
+      type: "oauth",
       clientId: process.env.SSO_OAUTH_CLIENT_ID || "pmb-platform",
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "sec_pmb-platform_898f7b0bb665b73b751ad7b37c409ed3",
       // Issuer must match the `iss` claim from the ID token.
@@ -93,6 +93,12 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       // Prevent redirect back to the login page after successful sign‑in
       if (url && url.includes('/auth/login')) {
         return baseUrl;
+      }
+      // Relative callback URLs (e.g. "/admin") must be resolved against baseUrl.
+      // Without this, `new URL("/admin")` throws and the user is redirected to
+      // the site root instead of the requested module after SSO login.
+      if (url && url.startsWith('/')) {
+        return `${baseUrl}${url}`;
       }
       try {
         const urlObj = new URL(url);
