@@ -17,7 +17,7 @@ interface PeriodeTabProps {
 }
 
 export default function PeriodeTab({
-  setActiveModal: _setActiveModal,
+  setActiveModal,
   triggerToast: _triggerToast,
 }: PeriodeTabProps) {
   const [periods, setPeriods] = useState<AcademicPeriod[]>([]);

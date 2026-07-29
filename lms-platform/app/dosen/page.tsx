@@ -61,8 +61,6 @@ export default function DosenDashboard() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  const _dosenUserId = "0421098501"; // NIDN Dr. Aulia Rahman
-
   useEffect(() => {
     fetchClasses();
   }, []);

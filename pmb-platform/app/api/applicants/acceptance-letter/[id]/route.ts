@@ -17,7 +17,6 @@ export async function GET(
         id: pmbApplicants.id,
         registrationNumber: pmbApplicants.registrationNumber,
         fullName: pmbApplicants.fullName,
-        nik: pmbApplicants.nik,
         email: pmbApplicants.email,
         phone: pmbApplicants.phone,
         currentStage: pmbApplicants.currentStage,
@@ -82,7 +81,7 @@ export async function GET(
         <table class="table-info">
           <tr><td width="30%">Nomor Pendaftaran</td><td width="5%">:</td><td><strong>${applicant.registrationNumber}</strong></td></tr>
           <tr><td>Nama Pendaftar</td><td>:</td><td><strong>${applicant.fullName}</strong></td></tr>
-          <tr><td>NIK</td><td>:</td><td>${applicant.nik}</td></tr>
+          <tr><td>Email Pendaftar</td><td>:</td><td>${applicant.email}</td></tr>
           <tr><td>Program Studi Diterima</td><td>:</td><td><strong>${applicant.prodiName} (${applicant.prodiCode})</strong></td></tr>
           <tr><td>Jalur Pendaftaran</td><td>:</td><td>${applicant.entryPathName}</td></tr>
           <tr><td>Gelombang</td><td>:</td><td>${applicant.waveName}</td></tr>
