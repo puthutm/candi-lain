@@ -7,7 +7,7 @@ import { siakadClasses } from "@/db/schema/classes";
 import { eq, or } from "drizzle-orm";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
