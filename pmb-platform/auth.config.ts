@@ -60,7 +60,12 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       allowInsecureHTTP: true,
       checks: ["pkce", "state"],
       // Only custom parameters are needed here.
-      authorization: { params: { scope: "openid profile email" } },
+      authorization: {
+        url: process.env.SSO_OAUTH_AUTHORIZE_URL || "http://10.10.20.56:3000/oauth/authorize",
+        params: { scope: "openid profile email" },
+      },
+      token: process.env.SSO_OAUTH_TOKEN_URL || "http://10.10.20.56:3000/oauth/token",
+      userinfo: process.env.SSO_OAUTH_USERINFO_URL || "http://10.10.20.56:3000/oauth/userinfo",
       profile(profile: any) {
         return {
           id: profile.sub,
