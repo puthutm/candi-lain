@@ -5,7 +5,7 @@ import { pmbStudyPrograms, pmbEntryPaths, pmbWaves } from "@/db/schema/master";
 import { eq } from "drizzle-orm";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;

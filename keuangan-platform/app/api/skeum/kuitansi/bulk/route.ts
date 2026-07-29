@@ -1,12 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/db";
-import { studentInvoices, payments } from "@/db/schema/invoices";
+import { studentInvoices } from "@/db/schema/invoices";
 import { eq } from "drizzle-orm";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const period = searchParams.get("period");
 
     let query = db
       .select({

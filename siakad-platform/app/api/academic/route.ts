@@ -84,12 +84,13 @@ export async function POST(request: Request) {
     }
 
     if (action === "tambah_periode") {
+      const periodName = formData.periode || `Periode ${formData.semester || "Ganjil"} ${formData.ta || "2026/2027"}`;
       const [inserted] = await db
         .insert(siakadAcademicPeriods)
         .values({
-          name: formData.periode || "Semester Baru",
-          startDate: formData.startDate || "2027-03-01",
-          endDate: formData.endDate || "2027-08-31",
+          name: periodName,
+          startDate: formData.startDate || "2026-09-01",
+          endDate: formData.endDate || "2027-02-28",
           status: "terjadwal",
         })
         .returning();
