@@ -104,8 +104,6 @@ export async function POST(req: Request) {
           );
 
         let assignmentScore = 0;
-        let utsScore = 80; // default mock
-        let uasScore = 85; // default mock
 
         if (submissions.length > 0) {
           let sum = 0;
@@ -114,6 +112,9 @@ export async function POST(req: Request) {
           });
           assignmentScore = sum / submissions.length;
         }
+
+        const utsScore = assignmentScore;
+        const uasScore = assignmentScore;
 
         // C. Calculate final score: bobot (10% kehadiran, 50% tugas, 20% uts, 20% uas)
         const finalScore = (presenceScore * 0.1) + (assignmentScore * 0.5) + (utsScore * 0.2) + (uasScore * 0.2);

@@ -45,13 +45,13 @@ export default function MaterialsTab({
   materialUrl,
   setMaterialUrl,
   handleCreateMaterial,
-  verifierRole,
-  setVerifierRole,
-  verifyStatus,
-  setVerifyStatus,
-  verifyNote,
-  setVerifyNote,
-  handleVerifyMaterial,
+  verifierRole: _verifierRole,
+  setVerifierRole: _setVerifierRole,
+  verifyStatus: _verifyStatus,
+  setVerifyStatus: _setVerifyStatus,
+  verifyNote: _verifyNote,
+  setVerifyNote: _setVerifyNote,
+  handleVerifyMaterial: _handleVerifyMaterial,
 }: MaterialsTabProps) {
   if (!selectedSession) {
     return (

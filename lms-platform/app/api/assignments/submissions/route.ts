@@ -21,19 +21,7 @@ export async function GET(req: Request) {
       .where(eq(lmsAssignments.sessionId, sessionId));
 
     if (assignList.length === 0) {
-      // Auto-create a mock assignment if none exists for this session to keep it dynamic!
-      const [newAssign] = await db
-        .insert(lmsAssignments)
-        .values({
-          sessionId,
-          title: `Tugas Pembahasan Sesi`,
-          instructions: "Tuliskan rangkuman dan penyelesaian studi kasus untuk pertemuan ini.",
-          weightPercent: "20.00",
-          deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // H+7
-        })
-        .returning();
-      
-      assignList.push(newAssign!);
+      return NextResponse.json({ success: true, assignment: null, submissions: [] });
     }
 
     const assignment = assignList[0]!;

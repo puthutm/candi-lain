@@ -145,13 +145,16 @@ export default function DosenPage() {
     val: string
   ) => {
     const updated = [...grades];
-    updated[index][field] = val;
+    const item = updated[index];
+    if (!item) return;
 
-    const tugas = parseFloat(updated[index].tugasScore) || 0;
-    const uts = parseFloat(updated[index].utsScore) || 0;
-    const uas = parseFloat(updated[index].uasScore) || 0;
+    item[field] = val;
+
+    const tugas = parseFloat(item.tugasScore) || 0;
+    const uts = parseFloat(item.utsScore) || 0;
+    const uas = parseFloat(item.uasScore) || 0;
     const finalVal = tugas * 0.2 + uts * 0.3 + uas * 0.5;
-    updated[index].finalScore = finalVal.toFixed(1);
+    item.finalScore = finalVal.toFixed(1);
 
     let letter = "E";
     if (finalVal >= 85) letter = "A";
@@ -163,7 +166,7 @@ export default function DosenPage() {
     else if (finalVal >= 55) letter = "C";
     else if (finalVal >= 40) letter = "D";
 
-    updated[index].letterGrade = letter;
+    item.letterGrade = letter;
     setGrades(updated);
   };
 

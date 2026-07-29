@@ -113,7 +113,18 @@ export default function HrisAdminDashboard() {
   const [selectedEmployeeDetail, setSelectedEmployeeDetail] = useState<Employee | null>(null);
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
   const [savingEmployee, setSavingEmployee] = useState(false);
-  const [employeeForm, setEmployeeForm] = useState({
+  const [employeeForm, setEmployeeForm] = useState<{
+    employeeNumber: string;
+    fullName: string;
+    employeeType: "dosen" | "tendik";
+    organizationUnitId: string;
+    positionId: string;
+    rankGroup: string;
+    baseSalary: number;
+    status: "aktif" | "non_aktif";
+    bankName: string;
+    bankAccountNumber: string;
+  }>({
     employeeNumber: "",
     fullName: "",
     employeeType: "dosen",

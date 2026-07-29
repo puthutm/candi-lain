@@ -166,25 +166,25 @@ export async function ensurePmbSeeded() {
       if (ktpTypeId && ijazahTypeId && kkTypeId && fotoTypeId) {
         // Budi
         await db.insert(pmbApplicantDocuments).values([
-          { applicantId: budiId, documentTypeId: ktpTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", status: "menunggu_verifikasi" },
-          { applicantId: budiId, documentTypeId: ijazahTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", status: "menunggu_verifikasi" },
-          { applicantId: budiId, documentTypeId: kkTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", status: "menunggu_verifikasi" },
+          { applicantId: budiId, documentTypeId: ktpTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/sample-document.pdf", status: "menunggu_verifikasi" },
+          { applicantId: budiId, documentTypeId: ijazahTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/sample-document.pdf", status: "menunggu_verifikasi" },
+          { applicantId: budiId, documentTypeId: kkTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/sample-document.pdf", status: "menunggu_verifikasi" },
           { applicantId: budiId, documentTypeId: fotoTypeId, fileUrl: "https://ui-avatars.com/api/?name=Budi+Santoso&size=200", status: "menunggu_verifikasi" },
         ]);
 
         // Andi
         await db.insert(pmbApplicantDocuments).values([
-          { applicantId: andiId, documentTypeId: ktpTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", status: "terverifikasi" },
-          { applicantId: andiId, documentTypeId: ijazahTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", status: "terverifikasi" },
-          { applicantId: andiId, documentTypeId: kkTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", status: "terverifikasi" },
+          { applicantId: andiId, documentTypeId: ktpTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/sample-document.pdf", status: "terverifikasi" },
+          { applicantId: andiId, documentTypeId: ijazahTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/sample-document.pdf", status: "terverifikasi" },
+          { applicantId: andiId, documentTypeId: kkTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/sample-document.pdf", status: "terverifikasi" },
           { applicantId: andiId, documentTypeId: fotoTypeId, fileUrl: "https://ui-avatars.com/api/?name=Andi+Pratama&size=200", status: "terverifikasi" },
         ]);
 
         // Dedi
         await db.insert(pmbApplicantDocuments).values([
-          { applicantId: dediId, documentTypeId: ktpTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", status: "terverifikasi" },
-          { applicantId: dediId, documentTypeId: ijazahTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", status: "terverifikasi" },
-          { applicantId: dediId, documentTypeId: kkTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", status: "terverifikasi" },
+          { applicantId: dediId, documentTypeId: ktpTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/sample-document.pdf", status: "terverifikasi" },
+          { applicantId: dediId, documentTypeId: ijazahTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/sample-document.pdf", status: "terverifikasi" },
+          { applicantId: dediId, documentTypeId: kkTypeId, fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/sample-document.pdf", status: "terverifikasi" },
           { applicantId: dediId, documentTypeId: fotoTypeId, fileUrl: "https://ui-avatars.com/api/?name=Dedi+Kurniawan&size=200", status: "terverifikasi" },
         ]);
       }

@@ -235,13 +235,13 @@ export async function GET() {
       console.log(`Synced ${courses.length} courses from SIAKAD.`);
     } else {
       // Fallback Seed if siakad_courses is not initialized
-      const dummyCourses = [
+      const defaultCourses = [
         { code: "INF-101", name: "Dasar Pemrograman" },
         { code: "INF-201", name: "Struktur Data & Algoritma" },
         { code: "INF-302", name: "Rekayasa Perangkat Lunak" },
         { code: "INF-401", name: "Kecerdasan Buatan" },
       ];
-      for (const c of dummyCourses) {
+      for (const c of defaultCourses) {
         await postgresClient`
           INSERT INTO bank_courses (code, name, faculty, degree_level)
           VALUES (${c.code}, ${c.name}, 'Teknologi Informasi', 'S1')

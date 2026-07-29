@@ -20,38 +20,7 @@ export async function GET(req: Request) {
       .limit(1);
 
     if (videos.length === 0) {
-      // Auto-create a mock interactive video if none exists to keep it dynamic and testable!
-      const [newVideo] = await db
-        .insert(interactiveVideos)
-        .values({
-          sessionId,
-          title: "Video Kuliah Pengantar Rekayasa Perangkat Lunak",
-          sourceType: "youtube_url",
-          videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-          durationSeconds: 300,
-        })
-        .returning();
-
-      // Seed 2 markers for this video at 15s and 45s
-      const markersToInsert = [
-        {
-          interactiveVideoId: newVideo!.id,
-          timestampSeconds: 15,
-          questionText: "Apakah tujuan utama dari rekayasa perangkat lunak?",
-          questionType: "pilihan_ganda" as const,
-          options: ["Menghasilkan perangkat lunak berkualitas tinggi", "Menulis kode secepat mungkin", "Membuat situs web pribadi"],
-        },
-        {
-          interactiveVideoId: newVideo!.id,
-          timestampSeconds: 45,
-          questionText: "Sebutkan satu tahapan dalam siklus SDLC!",
-          questionType: "esai" as const,
-          options: [],
-        }
-      ];
-      await db.insert(videoMarkers).values(markersToInsert);
-
-      videos = [newVideo!];
+      return NextResponse.json({ success: true, video: null, markers: [] });
     }
 
     const video = videos[0]!;
