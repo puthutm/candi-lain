@@ -53,7 +53,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       name: "UNSIA SSO",
       type: "oidc",
       clientId: process.env.SSO_OAUTH_CLIENT_ID || "hris-platform",
-      clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "sec_hris-platform_client-secret-key-2026",
+      clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "hris-platform-client-secret-key-2026",
       issuer: process.env.SSO_OAUTH_ISSUER_URL || "http://10.10.20.56:3000",
       allowInsecureHTTP: true,
       checks: ["pkce", "state"],

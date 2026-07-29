@@ -146,7 +146,7 @@ services:
       - SSO_OAUTH_USERINFO_URL=http://10.10.20.56:3000/oauth/userinfo
       # Auth.js / NextAuth — use public IP so callbacks match the request host (prevents "Configuration" error)
       - NEXTAUTH_URL=http://10.10.20.56:3002
-      - AUTH_URL=http://10.10.20.56:3002/api/auth
+      - AUTH_URL=http://10.10.20.56:3002
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-pmb-platform-2026
       - AUTH_SECRET=super-secret-nextauth-key-pmb-platform-2026
@@ -187,7 +187,7 @@ services:
       - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://10.10.20.56:3000/oauth/userinfo
       - NEXTAUTH_URL=http://10.10.20.56:3003
-      - AUTH_URL=http://10.10.20.56:3003/api/auth
+      - AUTH_URL=http://10.10.20.56:3003
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-siakad-platform-2026
       - AUTH_SECRET=super-secret-nextauth-key-siakad-platform-2026
@@ -226,7 +226,7 @@ services:
       - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://10.10.20.56:3000/oauth/userinfo
       - NEXTAUTH_URL=http://10.10.20.56:3004
-      - AUTH_URL=http://10.10.20.56:3004/api/auth
+      - AUTH_URL=http://10.10.20.56:3004
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-lms-platform-2026
       - AUTH_SECRET=super-secret-nextauth-key-lms-platform-2026
@@ -265,7 +265,7 @@ services:
       - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://10.10.20.56:3000/oauth/userinfo
       - NEXTAUTH_URL=http://10.10.20.56:3005
-      - AUTH_URL=http://10.10.20.56:3005/api/auth
+      - AUTH_URL=http://10.10.20.56:3005
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-keuangan-platform-2026
       - AUTH_SECRET=super-secret-nextauth-key-keuangan-platform-2026
@@ -304,7 +304,7 @@ services:
       - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://10.10.20.56:3000/oauth/userinfo
       - NEXTAUTH_URL=http://10.10.20.56:3006
-      - AUTH_URL=http://10.10.20.56:3006/api/auth
+      - AUTH_URL=http://10.10.20.56:3006
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-hris-platform-2026
       - AUTH_SECRET=super-secret-nextauth-key-hris-platform-2026
@@ -343,7 +343,7 @@ services:
       - SSO_OAUTH_AUTHORIZE_URL=http://10.10.20.56:3000/oauth/authorize
       - SSO_OAUTH_USERINFO_URL=http://10.10.20.56:3000/oauth/userinfo
       - NEXTAUTH_URL=http://10.10.20.56:3007
-      - AUTH_URL=http://10.10.20.56:3007/api/auth
+      - AUTH_URL=http://10.10.20.56:3007
       - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=super-secret-nextauth-key-bank-konten-platform-2026
       - AUTH_SECRET=super-secret-nextauth-key-bank-konten-platform-2026

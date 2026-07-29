@@ -53,7 +53,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       name: "UNSIA SSO",
       type: "oidc",
       clientId: process.env.SSO_OAUTH_CLIENT_ID || "siakad-platform",
-      clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "sec_siakad-platform_client-secret-key-2026",
+      clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "siakad-platform-client-secret-key-2026",
       issuer: process.env.SSO_OAUTH_ISSUER_URL || "http://10.10.20.56:3000",
       allowInsecureHTTP: true,
       checks: ["pkce", "state"],
