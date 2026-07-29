@@ -1,21 +1,23 @@
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const code = searchParams.get("code");
-
-    if (!code) {
-      return NextResponse.json({ success: false, error: "Missing authorization code" }, { status: 400 });
-    }
-
-    // Redirect to NextAuth's expected callback path
-    const nextAuthCallbackUrl = new URL(`/api/auth/callback/unsia-sso`, req.url);
-    nextAuthCallbackUrl.search = searchParams.toString();
-    
-    return NextResponse.redirect(nextAuthCallbackUrl.toString());
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
+/**
+ * Legacy OAuth callback endpoint — intentionally disabled.
+ *
+ * SSO must call the NextAuth provider callback directly:
+ *   /api/auth/callback/unsia-sso
+ *
+ * Redirecting from here to the provider callback creates a second hop
+ * that can break Auth.js cookie context (PKCE/state/nonce), causing
+ * "InvalidCheck: state value could not be parsed" errors.
+ */
+export async function GET() {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Legacy callback disabled. Configure SSO redirect_uri to /api/auth/callback/unsia-sso.",
+    },
+    { status: 410 }
+  );
 }
+
 export const dynamic = "force-dynamic";

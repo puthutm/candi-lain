@@ -69,6 +69,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
           name: profile.name,
           email: profile.email,
           role: profile.roles?.[0] || "admin_data_sdm",
+          roles: profile.roles || [],
           username: profile.preferred_username,
         };
       },
@@ -111,6 +112,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
           refreshToken: account.refresh_token,
           expiresAt: account.expires_at ?? Math.floor(Date.now() / 1000) + 3600,
           role: (user as any).role,
+          roles: (user as any).roles || [],
           username: (user as any).username,
         };
       }
@@ -121,6 +123,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       if (session.user) {
         (session.user as any).id = token.sub as string;
         (session.user as any).role = token.role as string;
+        (session.user as any).roles = token.roles as string[];
         (session.user as any).username = token.username as string;
       }
       return session;
