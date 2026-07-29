@@ -1,5 +1,4 @@
 import NextAuth from "next-auth";
-import { env } from "@/lib/env";
 
 /**
  * Refresh the access token using the refresh token.
@@ -12,8 +11,8 @@ async function refreshAccessToken(token: any) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         grant_type: "refresh_token",
-        client_id: env.SSO_OAUTH_CLIENT_ID || "hris-platform",
-        client_secret: env.SSO_OAUTH_CLIENT_SECRET || "",
+        client_id: process.env.SSO_OAUTH_CLIENT_ID || "hris-platform",
+        client_secret: process.env.SSO_OAUTH_CLIENT_SECRET || "",
         refresh_token: token.refreshToken || "",
       }),
     });
