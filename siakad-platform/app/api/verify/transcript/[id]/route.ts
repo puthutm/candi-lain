@@ -25,7 +25,7 @@ export async function GET(
         ipk: siakadStudents.ipk,
         totalSksLulus: siakadStudents.totalSksLulus,
         prodiName: siakadStudyPrograms.name,
-        prodiCode: siakadStudyPrograms.code,
+        prodiCode: siakadStudyPrograms.degreeLevel,
       })
       .from(siakadStudents)
       .leftJoin(siakadStudyPrograms, eq(siakadStudents.studyProgramId, siakadStudyPrograms.id))
