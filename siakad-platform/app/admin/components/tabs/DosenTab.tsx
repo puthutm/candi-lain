@@ -42,12 +42,7 @@ export default function DosenTab({
         setLecturers(data.data);
       }
     } catch {
-      setLecturers([
-        { nidn: "0421098501", fullName: "Dr. Aulia Rahman, M.Kom.", prodi: "FTI · S1 Informatika", mk: "Algoritma & Struktur Data", beban: "12 Jam", position: "Lektor Kepala", status: "Dosen Tetap" },
-        { nidn: "0415088203", fullName: "Noviandri, S.Kom., MMSI.", prodi: "FTI · S1 Informatika", mk: "Pemrograman Web", beban: "14 Jam", position: "Lektor", status: "Dosen Tetap" },
-        { nidn: "0408127902", fullName: "Dr. Bayu Setiawan, M.T.", prodi: "FTI · S1 Sistem Informasi", mk: "Basis Data", beban: "10 Jam", position: "Lektor Kepala", status: "Dosen Tetap" },
-        { nidn: "0401017001", fullName: "Prof. Dr. Hendro Wijaksono", prodi: "FTI · S1 Informatika", mk: "Jaringan Komputer", beban: "8 Jam", position: "Guru Besar", status: "Dosen Tetap" },
-      ]);
+      setLecturers([]);
     } finally {
       setLoading(false);
     }

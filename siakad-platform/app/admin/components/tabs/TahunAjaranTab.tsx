@@ -1,7 +1,16 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ModalType } from "../AdminModals";
 import { AdminTab } from "../AdminSidebar";
+
+interface AcademicPeriod {
+  id: string;
+  name: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+}
 
 interface TahunAjaranTabProps {
   setActiveModal: (modal: ModalType) => void;
@@ -12,8 +21,30 @@ interface TahunAjaranTabProps {
 export default function TahunAjaranTab({
   setActiveModal,
   setActiveTab,
-  triggerToast,
+  triggerToast: _triggerToast,
 }: TahunAjaranTabProps) {
+  const [periods, setPeriods] = useState<AcademicPeriod[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPeriods();
+  }, []);
+
+  const fetchPeriods = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/academic?type=periode");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setPeriods(data.data);
+      }
+    } catch {
+      setPeriods([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 fade-in pb-10">
       {/* Gradient Banner */}
@@ -29,7 +60,7 @@ export default function TahunAjaranTab({
             </div>
             <h2 className="font-display font-black text-2xl">Tahun Ajaran UNSIA</h2>
             <p className="text-blue-100 text-sm mt-1.5 leading-relaxed">
-              Master tahun ajaran berformat <strong>YYYY/YYYY</strong> saja (misal 2026/2027). Setting Ganjil/Genap dan detail kalender akademik dikelola di menu <strong>Periode Akademik</strong>.
+              Master tahun ajaran terhubung dengan database Periode Akademik SIAKAD.
             </p>
           </div>
           <button
@@ -50,86 +81,37 @@ export default function TahunAjaranTab({
       </div>
 
       {/* Card Grid Roster */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border-2 border-emerald-500 shadow-sm relative overflow-hidden space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400">TA 2026/2027</span>
-            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">
-              Aktif Berjalan
-            </span>
-          </div>
-          <h3 className="text-2xl font-black text-slate-800 font-display">2026 / 2027</h3>
-          <div className="text-xs text-slate-500 space-y-1 font-medium border-t border-slate-100 pt-3">
-            <p>• Periode Ganjil & Genap</p>
-            <p>• Total Mahasiswa: 3.719</p>
-          </div>
-          <button
-            onClick={() => setActiveTab("periode")}
-            className="w-full mt-2 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer"
-          >
-            Kelola Periode →
-          </button>
+      {loading ? (
+        <div className="p-8 text-center text-xs text-slate-400 font-bold bg-white rounded-2xl border border-slate-200">
+          Memuat data tahun ajaran...
         </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400">TA 2025/2026</span>
-            <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 font-bold text-[10px] rounded-full">
-              Selesai
-            </span>
-          </div>
-          <h3 className="text-2xl font-bold text-slate-800 font-display">2025 / 2026</h3>
-          <div className="text-xs text-slate-500 space-y-1 font-medium border-t border-slate-100 pt-3">
-            <p>• Periode Ganjil & Genap</p>
-            <p>• Total Mahasiswa: 3.580</p>
-          </div>
-          <button
-            onClick={() => triggerToast("Melihat arsip TA 2025/2026")}
-            className="w-full mt-2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
-          >
-            Lihat Arsip →
-          </button>
+      ) : periods.length === 0 ? (
+        <div className="p-8 text-center text-xs text-slate-400 font-bold bg-white rounded-2xl border border-slate-200">
+          Belum ada tahun ajaran terdaftar di database.
         </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400">TA 2024/2025</span>
-            <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 font-bold text-[10px] rounded-full">
-              Arsip
-            </span>
-          </div>
-          <h3 className="text-2xl font-bold text-slate-800 font-display">2024 / 2025</h3>
-          <div className="text-xs text-slate-500 space-y-1 font-medium border-t border-slate-100 pt-3">
-            <p>• Periode Ganjil & Genap</p>
-            <p>• Total Mahasiswa: 3.240</p>
-          </div>
-          <button
-            onClick={() => triggerToast("Melihat arsip TA 2024/2025")}
-            className="w-full mt-2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
-          >
-            Lihat Arsip →
-          </button>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+          {periods.map((p) => (
+            <div key={p.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400">{p.name}</span>
+                <span className={`px-2.5 py-0.5 font-bold text-[10px] rounded-full ${p.status === "berjalan" ? "bg-emerald-100 text-emerald-800 border-2 border-emerald-500" : "bg-slate-100 text-slate-600"}`}>
+                  {p.status || "Terjadwal"}
+                </span>
+              </div>
+              <div className="text-xs text-slate-500 space-y-1 font-medium border-t border-slate-100 pt-3">
+                <p>• Tanggal: {p.startDate || "-"} s/d {p.endDate || "-"}</p>
+              </div>
+              <button
+                onClick={() => setActiveTab("periode")}
+                className="w-full mt-2 py-2 bg-[#0f487b] hover:bg-[#00719f] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer"
+              >
+                Kelola Periode →
+              </button>
+            </div>
+          ))}
         </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400">TA 2023/2024</span>
-            <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 font-bold text-[10px] rounded-full">
-              Arsip
-            </span>
-          </div>
-          <h3 className="text-2xl font-bold text-slate-800 font-display">2023 / 2024</h3>
-          <div className="text-xs text-slate-500 space-y-1 font-medium border-t border-slate-100 pt-3">
-            <p>• Periode Ganjil & Genap</p>
-          </div>
-          <button
-            onClick={() => triggerToast("Melihat arsip TA 2023/2024")}
-            className="w-full mt-2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
-          >
-            Lihat Arsip →
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

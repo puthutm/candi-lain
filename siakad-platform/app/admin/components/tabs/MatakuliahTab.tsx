@@ -44,20 +44,7 @@ export default function MatakuliahTab({
         setCourses(data.data);
       }
     } catch {
-      // Fallback sample data
-      setCourses([
-        { code: "IF201", name: "Algoritma & Struktur Data", sks: 3, semester: 2, prodi: "S1 Informatika", dosen: "Dr. Aulia Rahman, M.Kom.", kelas: "3 Kelas (87 Mhs)", type: "Wajib" },
-        { code: "IF203", name: "Pemrograman Berorientasi Objek", sks: 4, semester: 2, prodi: "S1 Informatika", dosen: "Noviandri, S.Kom., MMSI.", kelas: "3 Kelas (87 Mhs)", type: "Wajib" },
-        { code: "IF205", name: "Basis Data", sks: 3, semester: 2, prodi: "S1 Informatika", dosen: "Dr. Bayu Setiawan, M.T.", kelas: "3 Kelas (87 Mhs)", type: "Wajib" },
-        { code: "IF207", name: "Jaringan Komputer", sks: 3, semester: 2, prodi: "S1 Informatika", dosen: "Prof. Dr. Hendro Wijaksono", kelas: "2 Kelas (58 Mhs)", type: "Wajib" },
-        { code: "MK101", name: "Pendidikan Pancasila", sks: 2, semester: 1, prodi: "Universal MKWU", dosen: "Bp. Surya Hartanto", kelas: "6 Kelas (320 Mhs)", type: "Wajib" },
-        { code: "MK103", name: "Bahasa Inggris", sks: 2, semester: 1, prodi: "Universal MKWU", dosen: "Ms. Diana Kartika", kelas: "6 Kelas (320 Mhs)", type: "Wajib" },
-        { code: "MK105", name: "Kewirausahaan", sks: 2, semester: 3, prodi: "Universal MKWU", dosen: "Dr. Rini Susilowati", kelas: "5 Kelas (280 Mhs)", type: "Wajib" },
-        { code: "IF209", name: "Pemrograman Web", sks: 4, semester: 3, prodi: "S1 Informatika", dosen: "Noviandri, S.Kom., MMSI.", kelas: "3 Kelas (85 Mhs)", type: "Wajib" },
-        { code: "IF301", name: "Rekayasa Perangkat Lunak", sks: 3, semester: 4, prodi: "S1 Informatika", dosen: "Dr. Aulia Rahman, M.Kom.", kelas: "2 Kelas (76 Mhs)", type: "Wajib" },
-        { code: "IF401", name: "AI & Machine Learning", sks: 3, semester: 5, prodi: "S1 Informatika", dosen: "Prof. Dr. Hendro Wijaksono", kelas: "1 Kelas (32 Mhs)", type: "Pilihan" },
-        { code: "SI201", name: "Manajemen Proyek SI", sks: 3, semester: 2, prodi: "S1 Sistem Informasi", dosen: "Dr. Bayu Setiawan, M.T.", kelas: "2 Kelas (64 Mhs)", type: "Wajib" },
-      ]);
+      setCourses([]);
     } finally {
       setLoading(false);
     }

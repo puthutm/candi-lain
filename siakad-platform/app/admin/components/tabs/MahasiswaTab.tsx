@@ -45,12 +45,7 @@ export default function MahasiswaTab({
         setStudents(data.data);
       }
     } catch {
-      setStudents([
-        { nim: "26090182", fullName: "Budi Santoso", prodi: "S1 Informatika · 2026", currentSemester: 1, ipk: "3.85", jenis: "Reguler", academicStatus: "aktif" },
-        { nim: "26090183", fullName: "Siti Aminah", prodi: "S1 Sistem Informasi · 2026", currentSemester: 1, ipk: "3.90", jenis: "Reguler", academicStatus: "aktif" },
-        { nim: "25090110", fullName: "Ahmad Fauzi", prodi: "S1 Informatika · 2025", currentSemester: 3, ipk: "3.42", jenis: "Alih Jenjang", academicStatus: "cuti" },
-        { nim: "24090099", fullName: "Dewi Lestari", prodi: "S1 Manajemen · 2024", currentSemester: 5, ipk: "3.75", jenis: "Reguler", academicStatus: "aktif" },
-      ]);
+      setStudents([]);
     } finally {
       setLoading(false);
     }

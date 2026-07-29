@@ -1,6 +1,15 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ModalType } from "../AdminModals";
+
+interface AcademicPeriod {
+  id: string;
+  name: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+}
 
 interface PeriodeTabProps {
   setActiveModal: (modal: ModalType) => void;
@@ -11,6 +20,28 @@ export default function PeriodeTab({
   setActiveModal,
   triggerToast,
 }: PeriodeTabProps) {
+  const [periods, setPeriods] = useState<AcademicPeriod[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPeriods();
+  }, []);
+
+  const fetchPeriods = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/academic?type=periode");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setPeriods(data.data);
+      }
+    } catch {
+      setPeriods([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 fade-in pb-10">
       {/* Gradient Banner */}
@@ -26,7 +57,7 @@ export default function PeriodeTab({
             </div>
             <h2 className="font-display font-black text-2xl">Periode Akademik (Semester)</h2>
             <p className="text-blue-100 text-sm mt-1.5 leading-relaxed">
-              Setiap Tahun Ajaran terdiri dari periode Ganjil & Genap. Setting periode ini otomatis mempengaruhi pendaftaran KRS, pembuatan kelas, jadwal sesi, dan kalender akademik mahasiswa.
+              Daftar periode akademik semester aktif & mendatang terhubung dengan database SIAKAD.
             </p>
           </div>
           <button
@@ -38,92 +69,32 @@ export default function PeriodeTab({
         </div>
       </div>
 
-      {/* Active Period Card */}
-      <div className="bg-white rounded-2xl border-2 border-emerald-500 shadow-sm p-6 space-y-5">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
-            <div>
-              <h3 className="text-lg font-black text-slate-800 font-display">
-                Periode Ganjil 2026/2027 (P-2026-GANJIL)
-              </h3>
-              <p className="text-xs text-slate-500">01 Sep 2026 – 15 Feb 2027 (16 Sesi Pertemuan Wajib)</p>
+      {/* List Card */}
+      {loading ? (
+        <div className="p-8 text-center text-xs text-slate-400 font-bold bg-white rounded-2xl border border-slate-200">
+          Memuat data periode...
+        </div>
+      ) : periods.length === 0 ? (
+        <div className="p-8 text-center text-xs text-slate-400 font-bold bg-white rounded-2xl border border-slate-200">
+          Belum ada periode akademik di database.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {periods.map((p) => (
+            <div key={p.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="text-lg font-black text-slate-800 font-display">{p.name}</h3>
+                <span className={`px-3 py-1 text-xs font-bold rounded-full ${p.status === "berjalan" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>
+                  ● Status: {p.status || "terjadwal"}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-medium">
+                Tanggal: {p.startDate || "-"} s/d {p.endDate || "-"}
+              </p>
             </div>
-          </div>
-          <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full">
-            ● Periode Berjalan (Aktif)
-          </span>
+          ))}
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Masa Pengisian KRS</span>
-            <p className="font-bold text-slate-800 text-sm">15 Aug – 29 Aug 2026</p>
-            <p className="text-emerald-600 font-semibold">✓ Selesai Terverifikasi</p>
-          </div>
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Masa Perkuliahan</span>
-            <p className="font-bold text-slate-800 text-sm">01 Sep – 20 Des 2026</p>
-            <p className="text-emerald-600 font-semibold">● Minggu ke-10 Berjalan</p>
-          </div>
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Jadwal UTS</span>
-            <p className="font-bold text-slate-800 text-sm">27 Okt – 07 Nov 2026</p>
-            <p className="text-amber-600 font-semibold">📌 Nilai 92% Masuk</p>
-          </div>
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Jadwal UAS</span>
-            <p className="font-bold text-slate-800 text-sm">12 Jan – 23 Jan 2027</p>
-            <p className="text-slate-500 font-semibold">⏳ Mendatang</p>
-          </div>
-        </div>
-
-        {/* National Holidays & Academic Activities */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-100 text-xs">
-          <div>
-            <h4 className="font-bold text-slate-700 mb-2">🌴 Libur Nasional Periodik:</h4>
-            <ul className="space-y-1 text-slate-600 font-medium">
-              <li>• 17 Aug 2026 — Hari Kemerdekaan RI</li>
-              <li>• 10 Sep 2026 — Maulid Nabi Muhammad SAW</li>
-              <li>• 25 Des 2026 — Hari Raya Natal</li>
-              <li>• 01 Jan 2027 — Tahun Baru Masehi</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold text-slate-700 mb-2">📌 Agenda Aktivitas Akademik:</h4>
-            <ul className="space-y-1 text-slate-600 font-medium">
-              <li>• Pendaftaran Maba Gelombang 1: 01–30 Jun 2026</li>
-              <li>• Daftar Ulang Mahasiswa: 15–29 Aug 2026</li>
-              <li>• Pengumuman Nilai Akhir KHS: 06 Feb 2027</li>
-              <li>• Yudisium Semester Ganjil: 10 Feb 2027</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Past Period Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h3 className="text-base font-bold text-slate-800 font-display">
-              Periode Genap 2025/2026 (P-2025-GENAP)
-            </h3>
-            <p className="text-xs text-slate-500">16 Feb 2026 – 31 Aug 2026 (16 Sesi Pertemuan)</p>
-          </div>
-          <span className="px-3 py-1 bg-slate-100 text-slate-600 font-bold text-xs rounded-full">
-            Selesai / Terarsip
-          </span>
-        </div>
-        <div className="flex items-center justify-between text-xs text-slate-600 font-medium">
-          <span>Total Mahasiswa Terdaftar: 3.580 Mahasiswa</span>
-          <button
-            onClick={() => triggerToast("Melihat detail arsip Periode Genap 2025/2026")}
-            className="text-[#0f487b] hover:underline font-bold cursor-pointer"
-          >
-            Detail Kalender & Hasil →
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

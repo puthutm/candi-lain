@@ -51,7 +51,7 @@ export default function DashboardTab({
             <span>🎓</span>
           </div>
           <p className="font-display font-black text-3xl text-slate-800 mt-2">
-            {overviewData?.stats.mahasiswaAktif?.toLocaleString("id-ID") || "3.719"}
+            {overviewData?.stats.mahasiswaAktif?.toLocaleString("id-ID") ?? 0}
           </p>
           <p className="text-[10px] font-bold text-emerald-600 mt-1">
             Linked to PMB & SIAKAD DB
@@ -66,7 +66,7 @@ export default function DashboardTab({
             <span>👩‍🏫</span>
           </div>
           <p className="font-display font-black text-3xl text-slate-800 mt-2">
-            {overviewData?.stats.dosenAktif || "152"}
+            {overviewData?.stats.dosenAktif ?? 0}
           </p>
           <p className="text-[10px] font-bold text-blue-600 mt-1">
             Linked to HRIS Platform
@@ -81,7 +81,7 @@ export default function DashboardTab({
             <span>👨‍🏫</span>
           </div>
           <p className="font-display font-black text-3xl text-slate-800 mt-2">
-            {overviewData?.stats.kelasBerjalan || "42"}
+            {overviewData?.stats.kelasBerjalan ?? 0}
           </p>
           <p className="text-[10px] font-bold text-violet-600 mt-1">
             Synchronized with LMS

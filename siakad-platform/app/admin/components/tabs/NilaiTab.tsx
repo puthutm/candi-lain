@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { AdminTab } from "../AdminSidebar";
 
 interface NilaiTabProps {
@@ -11,6 +12,22 @@ export default function NilaiTab({
   setActiveTab,
   triggerToast,
 }: NilaiTabProps) {
+  const [totalClasses, setTotalClasses] = useState(0);
+
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  const fetchClasses = async () => {
+    try {
+      const res = await fetch("/api/academic?type=kelas");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setTotalClasses(data.data.length);
+      }
+    } catch {}
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 fade-in pb-10">
       {/* Gradient Banner */}
@@ -57,7 +74,7 @@ export default function NilaiTab({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-1">
           <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Total Kelas</span>
-          <p className="font-display font-black text-2xl text-slate-800">42</p>
+          <p className="font-display font-black text-2xl text-slate-800">{totalClasses}</p>
           <p className="text-[10px] text-slate-500 font-bold">22 prodi</p>
         </div>
         <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-1">

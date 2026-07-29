@@ -40,11 +40,11 @@ export async function GET() {
       success: true,
       data: {
         stats: {
-          mahasiswaAktif: (mhsCount?.value || 0) + 3718, // Combine DB count with UNSIA active roster
-          dosenAktif: (dosenCount?.value || 0) + 151,
-          kelasBerjalan: (classCount?.value || 0) + 37,
-          totalMataKuliah: (courseCount?.value || 0) + 120,
-          totalKurikulum: (curriculumCount?.value || 0) + 4,
+          mahasiswaAktif: mhsCount?.value || 0,
+          dosenAktif: dosenCount?.value || 0,
+          kelasBerjalan: classCount?.value || 0,
+          totalMataKuliah: courseCount?.value || 0,
+          totalKurikulum: curriculumCount?.value || 0,
           krsPending: krsPendingCount?.value || 0,
         },
         periodeAktif: activePeriod || {

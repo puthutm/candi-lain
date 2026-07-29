@@ -30,7 +30,7 @@ export default function SessionsTab({
   sessions,
   selectedSession,
   handleSelectSession,
-  showMsg,
+  showMsg: _showMsg,
 }: SessionsTabProps) {
   if (!selectedClass) {
     return (
