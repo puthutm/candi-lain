@@ -131,6 +131,22 @@ export default function JalurMasukPanel({ triggerToast, refreshData }: JalurMasu
     }
   };
 
+  const handleSyncKeuangan = async () => {
+    try {
+      const res = await fetch("/api/admin/sync-keuangan-fees", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast(data.message || "Tarif biaya pendaftaran dari Keuangan berhasil disinkronkan!");
+        fetchEntryPaths();
+        if (refreshData) refreshData();
+      } else {
+        triggerToast("Gagal sync dari Keuangan: " + data.error);
+      }
+    } catch (err: any) {
+      triggerToast("Galat: " + err.message);
+    }
+  };
+
   return (
     <div className="space-y-6 fade-in pb-10">
       {/* Header Bar */}
@@ -143,13 +159,22 @@ export default function JalurMasukPanel({ triggerToast, refreshData }: JalurMasu
             <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[11px] font-bold rounded-full">
               Master Data Jalur
             </span>
+            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full border border-emerald-200">
+              ✓ Integrated with Keuangan
+            </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Kelola pilihan Jalur Masuk calon mahasiswa baru (Reguler, Beasiswa, Prestasi, Transfer, Mitra, dll) & biaya formulirnya.
+            Kelola pilihan Jalur Masuk calon mahasiswa baru. Biaya pendaftaran juga dapat di-setting langsung dari **Modul Keuangan**.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleSyncKeuangan}
+            className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-xl border border-emerald-200 cursor-pointer flex items-center gap-1.5"
+          >
+            <span>💳</span> Sync Biaya dari Keuangan
+          </button>
           <button
             onClick={fetchEntryPaths}
             className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 cursor-pointer flex items-center gap-1"
