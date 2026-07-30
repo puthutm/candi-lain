@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       updateFields.nimGeneratedAt = new Date();
 
       // Provision SSO Student Account & Sync to SIAKAD
-      const provResult = await provisionStudentSsoAndSiakad({
+      await provisionStudentSsoAndSiakad({
         nim: generatedNim,
         email: app.email,
         fullName: app.fullName,
