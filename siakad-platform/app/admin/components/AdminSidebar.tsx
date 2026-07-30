@@ -2,6 +2,7 @@
 
 export type AdminTab =
   | "dashboard"
+  | "prodi"
   | "tahun_ajaran"
   | "periode"
   | "kurikulum"
@@ -116,6 +117,7 @@ export default function AdminSidebar({
             Master Akademik
           </p>
           {[
+            { id: "prodi", icon: "🏛️", label: "Program Studi (Prodi)" },
             { id: "tahun_ajaran", icon: "📅", label: "Tahun Ajaran" },
             { id: "periode", icon: "🗓️", label: "Periode Akademik" },
             { id: "kurikulum", icon: "🌳", label: "Kurikulum" },

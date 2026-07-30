@@ -7,6 +7,7 @@ import AdminModals, { ModalType } from "./components/AdminModals";
 
 // Tab Components
 import DashboardTab from "./components/tabs/DashboardTab";
+import ProdiTab from "./components/tabs/ProdiTab";
 import TahunAjaranTab from "./components/tabs/TahunAjaranTab";
 import PeriodeTab from "./components/tabs/PeriodeTab";
 import KurikulumTab from "./components/tabs/KurikulumTab";
@@ -229,6 +230,10 @@ export default function AcademicAdminPage() {
               overviewData={overviewData}
               submissionsCount={submissions.length}
             />
+          )}
+
+          {activeTab === "prodi" && (
+            <ProdiTab triggerToast={triggerToast} />
           )}
 
           {activeTab === "tahun_ajaran" && (

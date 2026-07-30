@@ -3,6 +3,7 @@ import { pgTable, uuid, text, integer, date, boolean, jsonb } from "drizzle-orm/
 export const siakadStudyPrograms = pgTable("siakad_study_programs", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
+  code: text("code"),
   faculty: text("faculty").notNull(),
   degreeLevel: text("degree_level").default("S1").notNull(),
   kaprodiLecturerId: uuid("kaprodi_lecturer_id"), // Refers to lecturers.id
