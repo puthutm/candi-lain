@@ -122,6 +122,7 @@ export async function GET() {
           {
             employeeNumber: "DOS-2026-001",
             fullName: "Dr. Hendra Setiawan, M.Kom.",
+            email: "dosen@unsia.ac.id",
             employeeType: "dosen" as const,
             employmentStatus: "tetap" as const,
             nidn: "0412345678",
@@ -138,6 +139,7 @@ export async function GET() {
           {
             employeeNumber: "PEG-2026-002",
             fullName: "Budi Prasetyo, S.Kom.",
+            email: "pegawai@unsia.ac.id",
             employeeType: "tendik" as const,
             employmentStatus: "tetap" as const,
             organizationUnitId: unitSDM.id,
@@ -152,13 +154,14 @@ export async function GET() {
           },
           {
             employeeNumber: "SDM-2026-003",
-            fullName: "Budi Santoso, M.Kom",
+            fullName: "Super Admin",
+            email: "admin@unsia.ac.id",
             employeeType: "tendik" as const,
             employmentStatus: "tetap" as const,
             organizationUnitId: unitSDM.id,
             positionId: posKabir.id,
             rankGroup: "IV/a",
-baseSalary: 7500000,
+            baseSalary: 7500000,
             status: "aktif" as const,
             ptkpStatus: "K/1",
             npwp: "12.345.678.9-012.000",

@@ -57,20 +57,54 @@ export async function POST() {
     let skippedCount = 0;
 
     for (const ssoUser of usersList) {
-      // Check if employee record already exists for this SSO user
-      const [existingEmployee] = await db
+      // 1. Check if employee already linked to this SSO user
+      const [existingBySsoId] = await db
         .select()
         .from(employees)
         .where(eq(employees.ssoUserId, ssoUser.id))
         .limit(1);
 
-      if (existingEmployee) {
+      if (existingBySsoId) {
+        // Update name and email to keep in sync with SSO
+        await db
+          .update(employees)
+          .set({
+            fullName: ssoUser.fullName,
+            email: ssoUser.email,
+            updatedAt: new Date(),
+          })
+          .where(eq(employees.id, existingBySsoId.id));
         skippedCount++;
         continue;
       }
 
-      // Check if this SSO user matches a SIAKAD lecturer
-      const matchedLecturer = activeLecturers.find(l => l.userId === ssoUser.id || l.nidn === ssoUser.username);
+      // 2. Check if an unlinked employee record matches by email, username/employeeNumber, or fullName
+      const unlinkedList = await db.select().from(employees);
+      const matchedEmployee = unlinkedList.find(
+        (e) =>
+          !e.ssoUserId &&
+          ((e.email && e.email.toLowerCase() === ssoUser.email.toLowerCase()) ||
+            e.employeeNumber === ssoUser.username ||
+            e.fullName.toLowerCase() === ssoUser.fullName.toLowerCase())
+      );
+
+      if (matchedEmployee) {
+        // Link existing employee to SSO user and sync name/email
+        await db
+          .update(employees)
+          .set({
+            ssoUserId: ssoUser.id,
+            fullName: ssoUser.fullName,
+            email: ssoUser.email,
+            updatedAt: new Date(),
+          })
+          .where(eq(employees.id, matchedEmployee.id));
+        createdCount++;
+        continue;
+      }
+
+      // 3. Otherwise create new employee for this SSO user
+      const matchedLecturer = activeLecturers.find((l) => l.userId === ssoUser.id || l.nidn === ssoUser.username);
 
       let employeeType: "dosen" | "tendik" = "tendik";
       let employeeNumber = ssoUser.username;
@@ -88,7 +122,7 @@ export async function POST() {
         positionId = defaultPositionId;
       }
 
-      // Generate a clean NIP for tendik if username is not a numeric NIP
+      // Generate a clean NIP for tendik if username is not numeric NIP
       if (employeeType === "tendik" && !/^\d+$/.test(employeeNumber)) {
         employeeNumber = `19850512201012${Math.floor(1000 + Math.random() * 9000)}`;
       }
@@ -96,6 +130,7 @@ export async function POST() {
       await db.insert(employees).values({
         employeeNumber,
         fullName,
+        email: ssoUser.email,
         employeeType,
         organizationUnitId: defaultUnitId,
         positionId,

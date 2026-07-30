@@ -5,6 +5,7 @@ export const employees = pgTable("employees", {
   id: uuid("id").primaryKey().defaultRandom(),
   employeeNumber: text("employee_number").unique().notNull(),
   fullName: text("full_name").notNull(),
+  email: text("email"),
   employeeType: text("employee_type", { enum: ["dosen", "tendik"] }).notNull(),
   organizationUnitId: uuid("organization_unit_id").references(() => organizationUnits.id).notNull(),
   positionId: uuid("position_id").references(() => positions.id).notNull(),
