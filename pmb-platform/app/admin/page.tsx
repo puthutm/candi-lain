@@ -380,6 +380,8 @@ export default function PmbAdminDashboard() {
               setWaveForm={setWaveForm}
               handleToggleWaveStatus={handleToggleWaveStatus}
               handleSaveQuota={handleSaveQuota}
+              triggerToast={triggerToast}
+              refreshData={fetchData}
             />
           )}
 

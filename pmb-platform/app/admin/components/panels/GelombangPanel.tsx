@@ -12,6 +12,8 @@ interface GelombangPanelProps {
   setWaveForm: (form: any) => void;
   handleToggleWaveStatus: (id: string, status: string) => void;
   handleSaveQuota: (quotaId: string) => void;
+  triggerToast?: (msg: string) => void;
+  refreshData?: () => void;
 }
 
 export default function GelombangPanel({
@@ -26,6 +28,8 @@ export default function GelombangPanel({
   setWaveForm,
   handleToggleWaveStatus,
   handleSaveQuota,
+  triggerToast,
+  refreshData,
 }: GelombangPanelProps) {
   const activeCount = waves.filter((w) => w.status === "aktif").length;
   const totalCount = waves.length;
@@ -35,20 +39,33 @@ export default function GelombangPanel({
       {/* Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-xl font-bold text-slate-800">
               Manajemen Gelombang PMB & Kuota Kursi
             </h2>
+            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full flex items-center gap-1 border border-emerald-200">
+              <span>✓</span> Synchronized with SIAKAD
+            </span>
             <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[11px] font-bold rounded-full">
               Multi-Active Enabled
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Anda dapat **mengaktifkan lebih dari 1 gelombang secara bersamaan**. Gunakan sakelar **ON/OFF** pada masing-masing gelombang.
+            Data **Periode Akademik** & **Program Studi** terhubung langsung secara real-time dari database **SIAKAD Platform**.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              if (refreshData) refreshData();
+              if (triggerToast) triggerToast("Menyingkronkan Periode Akademik & Prodi dari SIAKAD...");
+            }}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <span>🔄</span> Sync Data SIAKAD
+          </button>
+
           <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
             <span className="text-slate-500 font-medium">Gelombang Aktif:</span>
             <span className="font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-md font-mono">
