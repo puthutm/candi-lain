@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef } from "react";
 
@@ -9,9 +9,8 @@ export default function SsoLaunchPage() {
     if (started.current) return;
     started.current = true;
 
-    console.info("[pmb][auth][launch] redirect to /api/auth/signin/unsia-sso");
-    // Redirect directly to Auth.js signin endpoint which properly sets state/PKCE cookies.
-    window.location.href = "/api/auth/signin/unsia-sso";
+    console.info("[pmb][auth][launch] redirect to /auth/login");
+    window.location.href = "/auth/login";
   }, []);
 
   return <p>Mengarahkan ke SSO...</p>;

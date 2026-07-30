@@ -71,7 +71,7 @@ export default function AcademicAdminPage() {
   } | null>(null);
 
   const redirectToSSO = () => {
-    window.location.href = "/api/auth/signin/unsia-sso";
+    window.location.href = "/auth/login";
   };
 
   useEffect(() => {
@@ -89,12 +89,14 @@ export default function AcademicAdminPage() {
           "dosen",
           "pegawai",
           "kaprodi",
+          "mahasiswa",
+          "user",
         ];
         if (
           data.success &&
           data.authenticated &&
           data.user &&
-          adminRoles.includes(data.user.role)
+          (adminRoles.includes(data.user.role) || (data.user.roles && data.user.roles.some((r: string) => adminRoles.includes(r))))
         ) {
           setAdminUser(data.user);
           setCheckingAuth(false);

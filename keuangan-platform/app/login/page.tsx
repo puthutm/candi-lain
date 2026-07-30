@@ -5,7 +5,7 @@ import { INSTITUTION_SHORT_NAME } from "@/lib/client-config";
 
 export default function LoginPage() {
   useEffect(() => {
-    window.location.href = "/api/auth/signin/unsia-sso";
+    window.location.href = "/auth/login";
   }, []);
 
   return (

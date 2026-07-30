@@ -143,7 +143,7 @@ export default function HrisAdminDashboard() {
   };
 
   const redirectToSSO = () => {
-    window.location.href = "/api/auth/signin/unsia-sso";
+    window.location.href = "/auth/login";
   };
 
   useEffect(() => {
@@ -151,8 +151,19 @@ export default function HrisAdminDashboard() {
       try {
         const res = await fetch("/api/auth/session");
         const data = await res.json();
-        const allowedRoles = ["admin", "superadmin", "super_admin", "staff_hris", "pegawai"];
-        if (data.success && data.authenticated && data.user && allowedRoles.includes(data.user.role)) {
+        const allowedRoles = [
+          "admin",
+          "superadmin",
+          "super_admin",
+          "super_admin_sdm",
+          "admin_data_sdm",
+          "admin_payroll",
+          "approver",
+          "staff_hris",
+          "pegawai",
+          "user",
+        ];
+        if (data.success && data.authenticated && data.user && (allowedRoles.includes(data.user.role) || (data.user.roles && data.user.roles.some((r: string) => allowedRoles.includes(r))))) {
           setAdminUser(data.user);
           fetchOverview();
         } else {
