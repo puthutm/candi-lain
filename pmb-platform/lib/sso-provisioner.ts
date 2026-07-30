@@ -1,6 +1,6 @@
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { pgTable, uuid, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text } from "drizzle-orm/pg-core";
 import { eq, or } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
