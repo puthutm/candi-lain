@@ -59,16 +59,22 @@ export default function PmbAdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const [academicPeriods, setAcademicPeriods] = useState<any[]>([]);
+  const [entryPaths, setEntryPaths] = useState<any[]>([]);
+  const [studyPrograms, setStudyPrograms] = useState<any[]>([]);
+
   // Wave Modal Form States
   const [showWaveModal, setShowWaveModal] = useState(false);
   const [waveForm, setWaveForm] = useState({
     name: "",
     code: "",
     academicPeriodLabel: "2026/2027 Ganjil",
+    entryPathId: "",
     defaultPassword: "Pmb2026!",
     startDate: "",
     endDate: "",
     status: "belum_dibuka",
+    openedProdis: [],
   });
   const [editingWaveId, setEditingWaveId] = useState<string | null>(null);
   const [isCreatingWave, setIsCreatingWave] = useState(false);
@@ -94,6 +100,42 @@ export default function PmbAdminDashboard() {
         setQuotas(data.data.quotas || []);
       } else {
         setError(data.error || "Gagal mengambil data overview PMB");
+      }
+
+      // Fetch SIAKAD Academic Periods
+      try {
+        const pRes = await fetch("/api/admin/academic-periods");
+        const pData = await pRes.json();
+        if (pData.success && pData.periods) {
+          setAcademicPeriods(pData.periods);
+          if (pData.periods.length > 0 && !waveForm.academicPeriodLabel) {
+            setWaveForm((prev) => ({ ...prev, academicPeriodLabel: pData.periods[0].name }));
+          }
+        }
+      } catch (e) {
+        console.warn("Could not fetch academic periods:", e);
+      }
+
+      // Fetch Entry Paths
+      try {
+        const epRes = await fetch("/api/admin/entry-paths");
+        const epData = await epRes.json();
+        if (epData.success && epData.entryPaths) {
+          setEntryPaths(epData.entryPaths);
+        }
+      } catch (e) {
+        console.warn("Could not fetch entry paths:", e);
+      }
+
+      // Fetch Study Programs (from SIAKAD / Reference Data)
+      try {
+        const spRes = await fetch("/api/admin/study-programs");
+        const spData = await spRes.json();
+        if (spData.success && spData.studyPrograms) {
+          setStudyPrograms(spData.studyPrograms);
+        }
+      } catch (e) {
+        console.warn("Could not fetch study programs:", e);
       }
     } catch (err: any) {
       setError(err.message || "Gagal menghubungi server");
@@ -359,6 +401,9 @@ export default function PmbAdminDashboard() {
         editingWaveId={editingWaveId}
         isCreatingWave={isCreatingWave}
         handleSaveWave={handleSaveWave}
+        academicPeriods={academicPeriods}
+        entryPaths={entryPaths}
+        studyPrograms={studyPrograms}
       />
 
       {/* Toast Notification */}
