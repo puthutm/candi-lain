@@ -14,6 +14,10 @@ const pmbFeeRates = pgTable("pmb_fee_rates", {
   reregistrationFee: numeric("reregistration_fee", { precision: 12, scale: 2 }).default("0.00").notNull(),
 });
 
+export async function GET() {
+  return POST();
+}
+
 export async function POST() {
   let keuanganClient;
   try {
