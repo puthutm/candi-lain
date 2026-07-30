@@ -4,6 +4,7 @@ import { pmbApplicants, pmbApplicantProfiles, pmbStudyPrograms, pmbEntryPaths } 
 import { eq, isNotNull, count } from "drizzle-orm";
 import { generateStudentNim } from "@/lib/nim-generator";
 import { publishAcceptedApplicantToSiakad } from "@/lib/siakad-publisher";
+import { provisionStudentSsoAndSiakad } from "@/lib/sso-provisioner";
 
 export async function POST(req: NextRequest) {
   try {
@@ -81,6 +82,16 @@ export async function POST(req: NextRequest) {
       .from(pmbApplicantProfiles)
       .where(eq(pmbApplicantProfiles.applicantId, applicantId));
 
+    // Provision SSO Student Account & Sync to SIAKAD
+    if (finalNim) {
+      await provisionStudentSsoAndSiakad({
+        nim: finalNim,
+        email: applicant.email,
+        fullName: applicant.fullName,
+        phone: applicant.phone,
+      });
+    }
+
     // Publish event to SIAKAD
     const siakadResult = await publishAcceptedApplicantToSiakad({
       pmbApplicantId: applicant.id,
@@ -94,7 +105,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `NIM ${finalNim} berhasil diterbitkan dan disinkronkan ke SIAKAD!`,
+      message: `NIM ${finalNim} berhasil diterbitkan, disinkronkan ke SIAKAD, dan Akun SSO Mahasiswa aktif! (Username: ${finalNim}, Pass: Mahasiswa2026!)`,
       nim: finalNim,
       siakadSync: siakadResult,
     });

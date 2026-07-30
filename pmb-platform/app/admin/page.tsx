@@ -342,6 +342,7 @@ export default function PmbAdminDashboard() {
               setFilterEntryPath={setFilterEntryPath}
               handleExportCsv={handleExportCsv}
               triggerToast={triggerToast}
+              refreshData={fetchData}
               waves={waves}
               entryPaths={entryPaths}
             />

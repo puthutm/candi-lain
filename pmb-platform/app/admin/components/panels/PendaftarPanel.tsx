@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 interface PendaftarPanelProps {
   applicants: any[];
   filterWave: string;
@@ -8,6 +10,7 @@ interface PendaftarPanelProps {
   setFilterEntryPath: (path: string) => void;
   handleExportCsv: () => void;
   triggerToast: (msg: string) => void;
+  refreshData?: () => void;
   waves?: any[];
   entryPaths?: any[];
 }
@@ -20,9 +23,13 @@ export default function PendaftarPanel({
   setFilterEntryPath,
   handleExportCsv,
   triggerToast,
+  refreshData,
   waves = [],
   entryPaths = [],
 }: PendaftarPanelProps) {
+  const [selectedApplicant, setSelectedApplicant] = useState<any | null>(null);
+  const [loadingAction, setLoadingAction] = useState(false);
+
   // Extract unique wave & path names from applicants as fallback if props empty
   const waveOptions = waves.length > 0 
     ? waves.map((w) => w.name)
@@ -37,6 +44,29 @@ export default function PendaftarPanel({
     const matchPath = filterEntryPath === "all" || a.entryPath === filterEntryPath;
     return matchWave && matchPath;
   });
+
+  const handleUpdateStatus = async (applicantId: string, payload: any) => {
+    try {
+      setLoadingAction(true);
+      const res = await fetch("/api/admin/applicants/update-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applicantId, ...payload }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerToast("Status pendaftar berhasil diperbarui!");
+        setSelectedApplicant(null);
+        if (refreshData) refreshData();
+      } else {
+        triggerToast("Gagal update status: " + data.error);
+      }
+    } catch (err: any) {
+      triggerToast("Galat: " + err.message);
+    } finally {
+      setLoadingAction(false);
+    }
+  };
 
   return (
     <div className="space-y-6 fade-in pb-10">
@@ -155,7 +185,7 @@ export default function PendaftarPanel({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
-                        onClick={() => triggerToast(`Melihat profil pendaftar ${item.fullName}`)}
+                        onClick={() => setSelectedApplicant(item)}
                         className="text-blue-600 font-bold hover:underline cursor-pointer bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200"
                       >
                         Detail →
@@ -168,6 +198,93 @@ export default function PendaftarPanel({
           </table>
         </div>
       </div>
+
+      {/* Applicant Profile Detail Modal */}
+      {selectedApplicant && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="font-mono text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded">
+                  {selectedApplicant.registrationNumber}
+                </span>
+                <h3 className="font-bold text-slate-800 text-base mt-1">{selectedApplicant.fullName}</h3>
+              </div>
+              <button
+                onClick={() => setSelectedApplicant(null)}
+                className="text-slate-400 hover:text-slate-600 font-bold text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div>
+                <span className="text-slate-400 block text-[10px]">EMAIL KANDIDAT:</span>
+                <span className="font-bold text-slate-800">{selectedApplicant.email}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">NOMOR WHATSAPP:</span>
+                <span className="font-bold text-slate-800">{selectedApplicant.phone || "081234567890"}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">PROGRAM STUDI:</span>
+                <span className="font-bold text-blue-700">{selectedApplicant.studyProgram}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">JALUR & GELOMBANG:</span>
+                <span className="font-bold text-slate-800">{selectedApplicant.entryPath} · {selectedApplicant.wave}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">STATUS PEMBAYARAN:</span>
+                <span className={`font-bold px-2 py-0.5 rounded text-[10px] inline-block mt-0.5 ${selectedApplicant.paymentStatus === "lunas" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+                  {selectedApplicant.paymentStatus === "lunas" ? "LUNAS" : "BELUM BAYAR"}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">TAHAP SELEKSI:</span>
+                <span className="font-bold text-slate-800 capitalize">{selectedApplicant.currentStage.replace(/_/g, " ")}</span>
+              </div>
+              {selectedApplicant.nim && (
+                <div className="col-span-2 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                  <span className="text-emerald-800 block text-[10px] font-bold">NOMOR INDUK MAHASISWA (NIM SIAKAD):</span>
+                  <span className="font-mono text-base font-black text-emerald-700">{selectedApplicant.nim}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-2 pt-2">
+              <span className="font-bold text-slate-700 block">Aksi Cepat Admin:</span>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  disabled={loadingAction || selectedApplicant.paymentStatus === "lunas"}
+                  onClick={() => handleUpdateStatus(selectedApplicant.id, { paymentStatus: "lunas" })}
+                  className="p-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold rounded-xl transition cursor-pointer text-center"
+                >
+                  ✓ Verifikasi Lunas
+                </button>
+                <button
+                  disabled={loadingAction || selectedApplicant.currentStage === "diterima"}
+                  onClick={() => handleUpdateStatus(selectedApplicant.id, { currentStage: "diterima" })}
+                  className="p-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-xl transition cursor-pointer text-center"
+                >
+                  🎓 Setujui Lulus & NIM
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button
+                onClick={() => setSelectedApplicant(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
