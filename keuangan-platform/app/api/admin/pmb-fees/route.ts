@@ -43,7 +43,9 @@ export async function GET() {
               matriculationFee: "500000.00",
             })
             .returning();
-          rates.push(inserted);
+          if (inserted) {
+            rates.push(inserted);
+          }
         }
       } catch (e: any) {
         console.warn("Could not auto-seed from PMB entry paths:", e.message);
