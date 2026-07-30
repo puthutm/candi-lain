@@ -287,14 +287,16 @@ export default function ProdiTab({ triggerToast }: ProdiTabProps) {
 
               <div>
                 <label className="block mb-1">Fakultas / Unit Pengampu</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Fakultas Teknologi Informasi (FTI)"
+                <select
                   value={formData.faculty}
                   onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-600"
-                />
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-600 font-medium"
+                >
+                  <option value="Fakultas Teknologi Informasi">Fakultas Teknologi Informasi (FTI)</option>
+                  <option value="Fakultas Ekonomi dan Bisnis">Fakultas Ekonomi dan Bisnis (FEB)</option>
+                  <option value="Fakultas Ilmu Komunikasi">Fakultas Ilmu Komunikasi (FIKOM)</option>
+                  <option value="Fakultas Sastra & Ilmu Budaya">Fakultas Sastra & Ilmu Budaya (FSS)</option>
+                </select>
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">

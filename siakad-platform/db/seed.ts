@@ -12,8 +12,11 @@ export async function ensureSiakadSeeded() {
     let infId = "";
     if (prodisCount.length === 0) {
       const insertedProdis = await db.insert(siakadStudyPrograms).values([
-        { name: "S1 Informatika", faculty: "FTI", degreeLevel: "S1" },
-        { name: "S1 Sistem Informasi", faculty: "FTI", degreeLevel: "S1" }
+        { name: "S1 Informatika", code: "INF", faculty: "Fakultas Teknologi Informasi", degreeLevel: "S1" },
+        { name: "S1 Sistem Informasi", code: "SI", faculty: "Fakultas Teknologi Informasi", degreeLevel: "S1" },
+        { name: "S1 Manajemen", code: "MNJ", faculty: "Fakultas Ekonomi dan Bisnis", degreeLevel: "S1" },
+        { name: "S1 Akuntansi", code: "AKT", faculty: "Fakultas Ekonomi dan Bisnis", degreeLevel: "S1" },
+        { name: "S1 Ilmu Komunikasi", code: "KOM", faculty: "Fakultas Ilmu Komunikasi", degreeLevel: "S1" }
       ]).returning();
       infId = insertedProdis[0]?.id || "";
     } else {

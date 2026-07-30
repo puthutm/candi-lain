@@ -62,6 +62,8 @@ export default function PmbPublikPage() {
   const formatIDR = (n: number) =>
     n === 0 ? "Gratis" : new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n);
 
+  const [isAdminUser, setIsAdminUser] = useState(false);
+
   useEffect(() => {
     async function checkAdminSession() {
       try {
@@ -79,10 +81,10 @@ export default function PmbPublikPage() {
           "staff_marketing",
           "dosen",
           "pegawai",
+          "super_admin_sdm",
         ];
         if (role && adminRoles.includes(role)) {
-          window.location.href = "/admin";
-          return;
+          setIsAdminUser(true);
         }
       } catch {
         // ignore
@@ -95,34 +97,42 @@ export default function PmbPublikPage() {
         const res = await fetch("/api/meta");
         const json = await res.json();
         if (json.success) {
-          // NOTE: ikon/label sebaiknya datang dari API bila tersedia.
-          // Saat ini, kita tetap render data meta dari DB tanpa memanggil seed mock dari client.
+          const formatDate = (dateStr: string) => {
+            if (!dateStr) return "";
+            try {
+              const d = new Date(dateStr);
+              return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString("id-ID");
+            } catch {
+              return dateStr;
+            }
+          };
+
           setWaves(
-            json.waves.map((w: any) => ({
+            (json.waves || []).map((w: any) => ({
               id: w.id,
               name: w.name,
-              period: `${new Date(w.startDate).toLocaleDateString("id-ID")} - ${new Date(w.endDate).toLocaleDateString("id-ID")}`,
+              period: `${formatDate(w.startDate)} - ${formatDate(w.endDate)}`,
               quota: "Kuota tersedia",
               status: w.status === "aktif" ? "active" : "disabled",
             }))
           );
 
           setEntryPaths(
-            json.entryPaths.map((p: any) => ({
+            (json.entryPaths || []).map((p: any) => ({
               id: p.id,
               name: p.name,
               desc: p.isFree ? "Pembebasan biaya pendaftaran" : "Jalur pendaftaran berbayar",
-              price: parseFloat(p.formFee),
+              price: parseFloat(p.formFee || 0),
               free: p.isFree,
               icon: p.code === "BEAS" ? "🎁" : p.code === "PRES" ? "🏆" : "✨",
             }))
           );
 
           setStudyPrograms(
-            json.studyPrograms.map((p: any) => ({
+            (json.studyPrograms || []).map((p: any) => ({
               id: p.id,
-              name: p.name.replace("S1 ", ""),
-              faculty: p.faculty === "FTI" ? "Fakultas Sains & Teknologi" : "Fakultas Bisnis",
+              name: p.name ? p.name.replace("S1 ", "") : "Program Studi",
+              faculty: p.faculty || "Fakultas",
               icon: p.code === "INF" ? "💻" : p.code === "SI" ? "📊" : "💼",
             }))
           );
@@ -273,14 +283,25 @@ export default function PmbPublikPage() {
 
         <div className="relative flex flex-col h-full p-6 sm:p-8 lg:p-10 overflow-y-auto dark-scrollbar">
           {/* Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#ecc94b] flex items-center justify-center pmb-accent-glow shrink-0 text-[#0f487b] font-bold text-xl">
-              🎓
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#ecc94b] flex items-center justify-center pmb-accent-glow shrink-0 text-[#0f487b] font-bold text-xl">
+                🎓
+              </div>
+              <div className="leading-tight min-w-0">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-slate-200/80 font-bold">Portal PMB</div>
+                <div className="font-display font-bold text-sm sm:text-base truncate">{INSTITUTION_NAME}</div>
+              </div>
             </div>
-            <div className="leading-tight min-w-0">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-slate-200/80 font-bold">Portal PMB</div>
-              <div className="font-display font-bold text-sm sm:text-base truncate">{INSTITUTION_NAME}</div>
-            </div>
+
+            {isAdminUser && (
+              <Link
+                href="/admin"
+                className="px-3 py-1.5 bg-[#ecc94b] hover:bg-yellow-400 text-[#0f487b] font-bold rounded-xl text-xs shadow-md shrink-0 transition-all flex items-center gap-1"
+              >
+                <span>⚙️</span> Admin
+              </Link>
+            )}
           </div>
 
           <div className="mt-8 lg:mt-12">

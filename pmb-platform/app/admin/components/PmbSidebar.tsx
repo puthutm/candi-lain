@@ -9,6 +9,7 @@ export type AdminPanelType =
   | "pembayaran"
   | "komunikasi"
   | "gelombang"
+  | "jalur_masuk"
   | "mahasiswa"
   | "pengaturan";
 
@@ -34,6 +35,7 @@ export default function PmbSidebar({
     { id: "pembayaran", label: "Verifikasi Pembayaran", icon: "💳" },
     { id: "komunikasi", label: "Pesan & Pengumuman", icon: "📢" },
     { id: "gelombang", label: "Manajemen Gelombang", icon: "🗓️" },
+    { id: "jalur_masuk", label: "Jenis & Jalur Masuk", icon: "🛣️" },
     { id: "mahasiswa", label: "Daftar Ulang & NIM", icon: "🎓" },
     { id: "pengaturan", label: "Pengaturan Biaya", icon: "⚙️" },
   ];

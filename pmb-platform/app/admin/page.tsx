@@ -14,6 +14,7 @@ import VerifikasiPanel from "./components/panels/VerifikasiPanel";
 import PembayaranPanel from "./components/panels/PembayaranPanel";
 import KomunikasiPanel from "./components/panels/KomunikasiPanel";
 import GelombangPanel from "./components/panels/GelombangPanel";
+import JalurMasukPanel from "./components/panels/JalurMasukPanel";
 import MahasiswaPanel from "./components/panels/MahasiswaPanel";
 import PengaturanPanel from "./components/panels/PengaturanPanel";
 
@@ -383,6 +384,10 @@ export default function PmbAdminDashboard() {
               triggerToast={triggerToast}
               refreshData={fetchData}
             />
+          )}
+
+          {activePanel === "jalur_masuk" && (
+            <JalurMasukPanel triggerToast={triggerToast} refreshData={fetchData} />
           )}
 
           {activePanel === "mahasiswa" && (
