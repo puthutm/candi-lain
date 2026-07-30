@@ -82,6 +82,10 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
           });
           const tokens = await res.json();
           if (!res.ok) throw new Error(tokens.error_description || tokens.error || "Token exchange failed");
+          // Strip id_token to prevent oauth4webapi from validating the JWT
+          // issuer claim (which fails because there is no configured issuer).
+          // User profile is fetched via the custom userinfo request instead.
+          delete tokens.id_token;
           return { tokens };
         },
       },
