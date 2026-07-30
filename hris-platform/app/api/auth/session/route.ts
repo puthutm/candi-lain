@@ -54,7 +54,7 @@ export async function GET() {
             const units = await db.select().from(organizationUnits).limit(1);
             const posList = await db.select().from(positions).limit(1);
 
-            if (units.length > 0 && posList.length > 0) {
+            if (units.length > 0 && posList.length > 0 && units[0] && posList[0]) {
               const role = (session.user as any).role || "";
               const isDosen = role.includes("dosen") || username.toLowerCase().includes("dosen");
               await db.insert(employees).values({
