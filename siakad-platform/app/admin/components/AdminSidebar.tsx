@@ -151,9 +151,6 @@ export default function AdminSidebar({
           >
             <span>👨‍🏫</span>
             <span>Kelas Kuliah</span>
-            <span className="ml-auto px-1.5 py-0.5 bg-[#FED524]/20 text-[#FED524] text-[9px] font-bold rounded">
-              42
-            </span>
           </button>
 
           {[
@@ -205,9 +202,6 @@ export default function AdminSidebar({
           >
             <span>🎓</span>
             <span>Data Mahasiswa</span>
-            <span className="ml-auto px-1.5 py-0.5 bg-[#FED524]/20 text-[#FED524] text-[9px] font-bold rounded">
-              3.719
-            </span>
           </button>
 
           <button
@@ -220,9 +214,6 @@ export default function AdminSidebar({
           >
             <span>👩‍🏫</span>
             <span>Dosen & Pengampu</span>
-            <span className="ml-auto px-1.5 py-0.5 bg-[#FED524]/20 text-[#FED524] text-[9px] font-bold rounded">
-              152
-            </span>
           </button>
 
           <button

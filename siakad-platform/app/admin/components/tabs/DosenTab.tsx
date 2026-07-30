@@ -71,7 +71,7 @@ export default function DosenTab({
             </div>
             <h2 className="font-display font-black text-2xl">Dosen & Pengampu UNSIA</h2>
             <p className="text-blue-100 text-sm mt-1.5 leading-relaxed">
-              Data dosen <strong>synced & read-only</strong> dari modul HRIS. Total 98 Dosen Tetap + 54 Dosen LB. Cek beban mengajar SKS dan penugasan MK Koordinator.
+              Total {lecturers.length} Dosen terdaftar di database (synced & read-only dari HRIS). Cek beban mengajar SKS dan penugasan MK Koordinator.
             </p>
           </div>
           <div className="flex gap-2">

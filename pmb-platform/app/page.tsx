@@ -111,8 +111,10 @@ export default function PmbPublikPage() {
             (json.waves || []).map((w: any) => ({
               id: w.id,
               name: w.name,
-              period: `${formatDate(w.startDate)} - ${formatDate(w.endDate)}`,
-              quota: "Kuota tersedia",
+              period: w.academicPeriodLabel
+                ? `Periode Akademik SIAKAD: ${w.academicPeriodLabel}`
+                : `${formatDate(w.startDate)} - ${formatDate(w.endDate)}`,
+              quota: "Kuota Tersedia (Real-time DB)",
               status: w.status === "aktif" ? "active" : "disabled",
             }))
           );
@@ -121,7 +123,7 @@ export default function PmbPublikPage() {
             (json.entryPaths || []).map((p: any) => ({
               id: p.id,
               name: p.name,
-              desc: p.isFree ? "Pembebasan biaya pendaftaran" : "Jalur pendaftaran berbayar",
+              desc: p.isFree ? "Pembebasan biaya pendaftaran (Beasiswa / Promo)" : "Jalur pendaftaran berbayar",
               price: parseFloat(p.formFee || 0),
               free: p.isFree,
               icon: p.code === "BEAS" ? "🎁" : p.code === "PRES" ? "🏆" : "✨",
@@ -131,9 +133,9 @@ export default function PmbPublikPage() {
           setStudyPrograms(
             (json.studyPrograms || []).map((p: any) => ({
               id: p.id,
-              name: p.name ? p.name.replace("S1 ", "") : "Program Studi",
+              name: p.name,
               faculty: p.faculty || "Fakultas",
-              icon: p.code === "INF" ? "💻" : p.code === "SI" ? "📊" : "💼",
+              icon: p.code === "INF" ? "💻" : p.code === "SI" ? "📊" : p.code === "KOM" ? "📢" : "💼",
             }))
           );
         }

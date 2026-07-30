@@ -32,8 +32,22 @@ export default function MahasiswaTab({
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedJenis, setSelectedJenis] = useState("");
 
+  const [prodiOptions, setProdiOptions] = useState<{ id: string; name: string }[]>([]);
+
   useEffect(() => {
     fetchStudents();
+    async function loadProdis() {
+      try {
+        const res = await fetch("/api/admin/study-programs");
+        const data = await res.json();
+        if (data.success && data.studyPrograms) {
+          setProdiOptions(data.studyPrograms);
+        }
+      } catch {
+        // fallback
+      }
+    }
+    loadProdis();
   }, []);
 
   const fetchStudents = async () => {
@@ -75,12 +89,12 @@ export default function MahasiswaTab({
             </div>
             <h2 className="font-display font-black text-2xl">Data Mahasiswa UNSIA</h2>
             <p className="text-blue-100 text-sm mt-1.5 leading-relaxed">
-              3.719 mahasiswa aktif terdaftar di database. Klik <strong>Edit Data</strong> untuk modifikasi biodata, wali, prodi, dan status registrasi.
+              {students.length} mahasiswa terdaftar di database. Klik <strong>Edit Data</strong> untuk modifikasi biodata, wali, prodi, dan status registrasi.
             </p>
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => triggerToast("Bulk export 3.719 mahasiswa sebagai XLSX berhasil!")}
+              onClick={() => triggerToast(`Export ${students.length} data mahasiswa sebagai XLSX berhasil!`)}
               className="px-3.5 py-2 bg-[#FED524] text-[#031f3a] hover:bg-yellow-400 rounded-xl text-xs font-bold shadow-md cursor-pointer"
             >
               📊 Export XLSX
@@ -111,10 +125,11 @@ export default function MahasiswaTab({
             className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium text-slate-700"
           >
             <option value="">Semua Prodi</option>
-            <option value="Informatika">S1 Informatika</option>
-            <option value="Sistem Informasi">S1 Sistem Informasi</option>
-            <option value="Manajemen">S1 Manajemen</option>
-            <option value="Akuntansi">S1 Akuntansi</option>
+            {prodiOptions.map((p) => (
+              <option key={p.id} value={p.name}>
+                {p.name}
+              </option>
+            ))}
           </select>
           <select
             value={selectedStatus}
