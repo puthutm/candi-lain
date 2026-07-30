@@ -165,10 +165,12 @@ export default function GelombangPanel({
                         name: w.name,
                         code: w.code,
                         academicPeriodLabel: w.academicPeriodLabel || "",
+                        entryPathId: w.entryPathId || "",
                         defaultPassword: w.defaultPassword || "",
                         startDate: w.startDate,
                         endDate: w.endDate,
                         status: w.status,
+                        openedProdis: w.openedProdis || [],
                       });
                       setShowWaveModal(true);
                     }}

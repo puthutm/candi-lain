@@ -175,10 +175,12 @@ export default function PmbAdminDashboard() {
           name: "",
           code: "",
           academicPeriodLabel: "2026/2027 Ganjil",
+          entryPathId: "",
           defaultPassword: "Pmb2026!",
           startDate: "",
           endDate: "",
           status: "belum_dibuka",
+          openedProdis: [],
         });
         fetchData();
       } else {
