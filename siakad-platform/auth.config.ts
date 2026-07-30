@@ -55,7 +55,6 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       clientId: process.env.SSO_OAUTH_CLIENT_ID || "siakad-platform",
       clientSecret: process.env.SSO_OAUTH_CLIENT_SECRET || "siakad-platform-client-secret-key-2026",
       issuer: process.env.SSO_OAUTH_ISSUER_URL || "http://10.10.20.56:3000",
-      idToken: false,
       checks: ["pkce", "state"],
       authorization: {
         url: process.env.SSO_OAUTH_AUTHORIZE_URL || "http://10.10.20.56:3000/oauth/authorize",
@@ -63,20 +62,37 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
       },
       token: {
         url: process.env.SSO_OAUTH_TOKEN_URL || "http://10.10.20.56:3000/oauth/token",
-        async conform(response: Response) {
-          if (response.ok) {
-            const data = await response.json();
-            delete data.id_token;
-            return new Response(JSON.stringify(data), {
-              status: response.status,
-              statusText: response.statusText,
-              headers: response.headers,
-            });
-          }
-          return response;
+        async request({ params, provider }: any) {
+          const tokenUrl = (provider.token as any)?.url || process.env.SSO_OAUTH_TOKEN_URL || "http://10.10.20.56:3000/oauth/token";
+          const res = await fetch(tokenUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              grant_type: "authorization_code",
+              code: params.get("code"),
+              redirect_uri: provider.callbackUrl,
+              client_id: provider.clientId!,
+              client_secret: provider.clientSecret!,
+              code_verifier: params.get("code_verifier") || "",
+            }),
+          });
+          const tokens = await res.json();
+          if (!res.ok) throw new Error(tokens.error_description || tokens.error || "Token exchange failed");
+          delete tokens.id_token;
+          return { tokens };
         },
       },
-      userinfo: process.env.SSO_OAUTH_USERINFO_URL || "http://10.10.20.56:3000/oauth/userinfo",
+      userinfo: {
+        url: process.env.SSO_OAUTH_USERINFO_URL || "http://10.10.20.56:3000/oauth/userinfo",
+        async request({ tokens, provider }: any) {
+          const userinfoUrl = (provider.userinfo as any)?.url || process.env.SSO_OAUTH_USERINFO_URL || "http://10.10.20.56:3000/oauth/userinfo";
+          const res = await fetch(userinfoUrl, {
+            headers: { Authorization: `Bearer ${tokens.access_token}` },
+          });
+          if (!res.ok) throw new Error("Failed to fetch userinfo");
+          return await res.json();
+        },
+      },
       profile(profile: any) {
         return {
           id: profile.sub,
