@@ -341,11 +341,13 @@ export default function PmbAdminDashboard() {
               setFilterEntryPath={setFilterEntryPath}
               handleExportCsv={handleExportCsv}
               triggerToast={triggerToast}
+              waves={waves}
+              entryPaths={entryPaths}
             />
           )}
 
           {activePanel === "seleksi" && (
-            <SeleksiPanel applicants={applicants} triggerToast={triggerToast} />
+            <SeleksiPanel applicants={applicants} triggerToast={triggerToast} refreshData={fetchData} />
           )}
 
           {activePanel === "verifikasi" && (
@@ -353,11 +355,12 @@ export default function PmbAdminDashboard() {
               applicants={applicants}
               unverifiedDocsCount={unverifiedDocsCount}
               triggerToast={triggerToast}
+              refreshData={fetchData}
             />
           )}
 
           {activePanel === "pembayaran" && (
-            <PembayaranPanel applicants={applicants} triggerToast={triggerToast} />
+            <PembayaranPanel applicants={applicants} triggerToast={triggerToast} refreshData={fetchData} />
           )}
 
           {activePanel === "komunikasi" && (

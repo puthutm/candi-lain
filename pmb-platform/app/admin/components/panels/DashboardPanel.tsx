@@ -15,6 +15,12 @@ export default function DashboardPanel({
   totalFeesCollected,
   triggerToast,
 }: DashboardPanelProps) {
+  const total = applicantsCount || 1;
+  const berkasCount = Math.max(0, applicantsCount - unverifiedDocsCount);
+  const berkasPct = Math.round((berkasCount / total) * 100);
+  const cbtPct = Math.round((Math.min(applicantsCount, acceptedCount + berkasCount) / total) * 100);
+  const acceptedPct = Math.round((acceptedCount / total) * 100);
+
   return (
     <div className="space-y-6 fade-in">
       <div className="flex items-center justify-between">
@@ -43,7 +49,7 @@ export default function DashboardPanel({
           <p className="font-display font-black text-3xl text-slate-800">
             {applicantsCount}
           </p>
-          <p className="text-[10px] text-emerald-600 font-bold">Terdaftar Gelombang 1 & 2</p>
+          <p className="text-[10px] text-emerald-600 font-bold">Seluruh Gelombang Aktif</p>
         </div>
 
         <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-1">
@@ -80,28 +86,28 @@ export default function DashboardPanel({
       {/* Conversion Funnel Banner */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-          <span>🎯</span> Funnel Konversi Pendaftaran Maba
+          <span>🎯</span> Funnel Konversi Pendaftaran Maba (Dinamis Data Real-Time)
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs text-center font-bold">
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
             <span className="text-slate-500 block text-[10px]">1. PEMINAT</span>
             <span className="text-xl text-blue-700 font-mono">100%</span>
-            <span className="text-[10px] text-slate-500 block font-normal mt-1">Isi Akun PMB</span>
+            <span className="text-[10px] text-slate-500 block font-normal mt-1">{applicantsCount} Akun Terbuat</span>
           </div>
           <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
             <span className="text-slate-500 block text-[10px]">2. UNGGAH BERKAS</span>
-            <span className="text-xl text-indigo-700 font-mono">82%</span>
-            <span className="text-[10px] text-slate-500 block font-normal mt-1">Ijazah & Transkrip</span>
+            <span className="text-xl text-indigo-700 font-mono">{berkasPct}%</span>
+            <span className="text-[10px] text-slate-500 block font-normal mt-1">{berkasCount} Terverifikasi</span>
           </div>
           <div className="p-4 bg-violet-50 border border-violet-200 rounded-xl">
             <span className="text-slate-500 block text-[10px]">3. UJIAN CBT</span>
-            <span className="text-xl text-violet-700 font-mono">75%</span>
-            <span className="text-[10px] text-slate-500 block font-normal mt-1">Selesai Ujian</span>
+            <span className="text-xl text-violet-700 font-mono">{cbtPct}%</span>
+            <span className="text-[10px] text-slate-500 block font-normal mt-1">Selesai Evaluasi</span>
           </div>
           <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
             <span className="text-slate-500 block text-[10px]">4. REGISTRASI ULANG</span>
-            <span className="text-xl text-emerald-700 font-mono">68%</span>
-            <span className="text-[10px] text-slate-500 block font-normal mt-1">Lunas & Terbit NIM</span>
+            <span className="text-xl text-emerald-700 font-mono">{acceptedPct}%</span>
+            <span className="text-[10px] text-slate-500 block font-normal mt-1">{acceptedCount} Terbit NIM</span>
           </div>
         </div>
       </div>

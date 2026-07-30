@@ -48,7 +48,6 @@ export async function POST(req: Request) {
     // Process opened prodis and create quotas for this wave
     if (Array.isArray(openedProdis) && openedProdis.length > 0 && insertedWave) {
       const { pmbQuotas, pmbStudyPrograms } = await import("@/db/schema/master");
-      const { eq } = await import("drizzle-orm");
 
       for (const item of openedProdis) {
         const prodiName = item.prodiName || item.name || "Program Studi";
