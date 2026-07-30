@@ -19,7 +19,7 @@ export async function GET() {
       try {
         const { db } = await import("@/db");
         const { employees, organizationUnits, positions } = await import("@/db/schema");
-        const { eq, or } = await import("drizzle-orm");
+        const { eq } = await import("drizzle-orm");
 
         const [existingBySsoId] = await db
           .select()
