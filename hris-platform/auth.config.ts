@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { env } from "@/lib/env";
 
 /**
  * Refresh the access token using the refresh token.
@@ -11,8 +12,8 @@ async function refreshAccessToken(token: any) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         grant_type: "refresh_token",
-        client_id: process.env.SSO_OAUTH_CLIENT_ID || "hris-platform",
-        client_secret: process.env.SSO_OAUTH_CLIENT_SECRET || "",
+        client_id: env.SSO_OAUTH_CLIENT_ID || "hris-platform",
+        client_secret: env.SSO_OAUTH_CLIENT_SECRET || "",
         refresh_token: token.refreshToken || "",
       }),
     });
@@ -110,7 +111,7 @@ export const authConfig: Parameters<typeof NextAuth>[0] = {
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
           expiresAt: account.expires_at ?? Math.floor(Date.now() / 1000) + 3600,
-          role: (user as any).role,
+          role: (user as any).role || "admin_data_sdm",
           roles: (user as any).roles || [],
           username: (user as any).username,
         };
