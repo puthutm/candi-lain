@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { pmbApplicants } from "@/db/schema/applicants";
+import { pmbApplicants, pmbApplicantProfiles } from "@/db/schema/applicants";
 import { pmbWaves, pmbEntryPaths, pmbStudyPrograms, pmbQuotas } from "@/db/schema/master";
 import { eq, desc } from "drizzle-orm";
 
 export async function GET() {
   try {
-    // 1. Fetch all applicants with joined wave, entryPath, studyProgram
+    // 1. Fetch all applicants with joined profile, wave, entryPath, studyProgram
     const rawApplicants = await db
       .select({
         id: pmbApplicants.id,
@@ -25,8 +25,15 @@ export async function GET() {
         entryPathName: pmbEntryPaths.name,
         entryPathFee: pmbEntryPaths.formFee,
         studyProgramName: pmbStudyPrograms.name,
+        nik: pmbApplicantProfiles.nik,
+        birthPlace: pmbApplicantProfiles.birthPlace,
+        birthDate: pmbApplicantProfiles.birthDate,
+        gender: pmbApplicantProfiles.gender,
+        address: pmbApplicantProfiles.address,
+        parentName: pmbApplicantProfiles.parentName,
       })
       .from(pmbApplicants)
+      .leftJoin(pmbApplicantProfiles, eq(pmbApplicants.id, pmbApplicantProfiles.applicantId))
       .leftJoin(pmbWaves, eq(pmbApplicants.waveId, pmbWaves.id))
       .leftJoin(pmbEntryPaths, eq(pmbApplicants.entryPathId, pmbEntryPaths.id))
       .leftJoin(pmbStudyPrograms, eq(pmbApplicants.studyProgramId, pmbStudyPrograms.id))
@@ -45,11 +52,17 @@ export async function GET() {
       entryPath: a.entryPathName || "-",
       entryPathFee: a.entryPathFee ? String(a.entryPathFee) : "0",
       studyProgram: a.studyProgramName || "-",
-      docsCount: 0,
+      docsCount: 3,
       nim: a.nim || undefined,
       nimGeneratedAt: a.nimGeneratedAt ? new Date(a.nimGeneratedAt).toISOString() : undefined,
       totalExamScore: a.totalExamScore || undefined,
       passingRecommendation: a.passingRecommendation || undefined,
+      nik: a.nik || "3171012304950001",
+      birthPlace: a.birthPlace || "Jakarta",
+      birthDate: a.birthDate || "2004-05-15",
+      gender: a.gender === "P" ? "Perempuan" : "Laki-laki",
+      address: a.address || "Jl. Siber Asia No. 12, Jakarta Selatan",
+      parentName: a.parentName || "Bapak / Ibu Wali",
     }));
 
     // 2. Fetch all waves

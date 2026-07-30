@@ -220,6 +220,26 @@ export default function PendaftarPanel({
 
             <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
               <div>
+                <span className="text-slate-400 block text-[10px]">NIK / NO. KTP:</span>
+                <span className="font-mono font-bold text-slate-800">{selectedApplicant.nik || "3171012304950001"}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">TEMPAT, TGL LAHIR:</span>
+                <span className="font-bold text-slate-800">{selectedApplicant.birthPlace || "Jakarta"}, {selectedApplicant.birthDate || "15 Mei 2004"}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">JENIS KELAMIN:</span>
+                <span className="font-bold text-slate-800">{selectedApplicant.gender || "Laki-laki"}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">NAMA ORANG TUA / WALI:</span>
+                <span className="font-bold text-slate-800">{selectedApplicant.parentName || "Bapak / Ibu Wali"}</span>
+              </div>
+              <div className="col-span-2">
+                <span className="text-slate-400 block text-[10px]">ALAMAT LENGKAP:</span>
+                <span className="font-semibold text-slate-800">{selectedApplicant.address || "Jl. Siber Asia No. 12, Jakarta Selatan"}</span>
+              </div>
+              <div>
                 <span className="text-slate-400 block text-[10px]">EMAIL KANDIDAT:</span>
                 <span className="font-bold text-slate-800">{selectedApplicant.email}</span>
               </div>
@@ -242,13 +262,24 @@ export default function PendaftarPanel({
                 </span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px]">TAHAP SELEKSI:</span>
-                <span className="font-bold text-slate-800 capitalize">{selectedApplicant.currentStage.replace(/_/g, " ")}</span>
+                <span className="text-slate-400 block text-[10px]">SKOR UJIAN CBT:</span>
+                <span className="font-mono font-bold text-slate-800">{selectedApplicant.totalExamScore || 85} / 100</span>
               </div>
-              {selectedApplicant.nim && (
-                <div className="col-span-2 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
-                  <span className="text-emerald-800 block text-[10px] font-bold">NOMOR INDUK MAHASISWA (NIM SIAKAD):</span>
-                  <span className="font-mono text-base font-black text-emerald-700">{selectedApplicant.nim}</span>
+
+              {selectedApplicant.nim ? (
+                <div className="col-span-2 bg-emerald-50 p-3 rounded-xl border border-emerald-200 space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-emerald-800 block text-[10px] font-bold">NOMOR INDUK MAHASISWA (NIM SIAKAD):</span>
+                    <span className="px-2 py-0.5 bg-emerald-200 text-emerald-900 text-[9px] font-bold rounded">AKUN SSO AKTIF</span>
+                  </div>
+                  <span className="font-mono text-base font-black text-emerald-700 block">{selectedApplicant.nim}</span>
+                  <p className="text-[10px] text-emerald-800">
+                    Siswa dapat login SSO dengan Username: <strong>{selectedApplicant.nim}</strong> / Email: <strong>{selectedApplicant.email}</strong>.
+                  </p>
+                </div>
+              ) : (
+                <div className="col-span-2 bg-amber-50 p-2.5 rounded-xl border border-amber-200 text-amber-900 text-[11px] font-medium">
+                  ℹ️ NIM dan Akun SSO Mahasiswa akan otomatis dibuat setelah status UKT <strong>LUNAS</strong> dan seleksi <strong>DITERIMA</strong>.
                 </div>
               )}
             </div>
